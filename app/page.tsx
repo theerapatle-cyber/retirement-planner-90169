@@ -9,13 +9,14 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
   Filler,
   ChartOptions,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
+import { Line, Bar } from "react-chartjs-2";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
@@ -39,8 +41,11 @@ const nfNoDecimal = new Intl.NumberFormat("th-TH", { maximumFractionDigits: 0 })
 const nf2 = (value: number, digits = 2) =>
   new Intl.NumberFormat("th-TH", { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
 
+const nfInput = new Intl.NumberFormat("th-TH", { maximumFractionDigits: 2 });
+
 const formatNumber = (value: string | number) => {
   const num = typeof value === "string" ? Number(String(value).replace(/,/g, "") || 0) : value;
+  // Keep using no-decimal for general display, unless small? No, keep it clean for tables.
   return isNaN(num) ? "0" : nfNoDecimal.format(num);
 };
 
@@ -52,7 +57,7 @@ const round2 = (num: number) => Math.round(num * 100) / 100;
 
 function formatInputDisplay(v: string | number) {
   const num = typeof v === "string" ? Number(String(v).replace(/,/g, "") || 0) : v;
-  return isNaN(num) ? "0" : nfNoDecimal.format(num);
+  return isNaN(num) ? "0" : nfInput.format(num);
 }
 
 function parseInputValue(v: string | number) {
@@ -129,6 +134,7 @@ type InsurancePlan = {
   pensionTiers: { startAge: string; endAge: string; amount: string }[];
   surrenderMode?: "single" | "table";
   surrenderTableData?: { age: number; amount: string }[];
+  showTable?: boolean;
 };
 
 type FormState = {
@@ -1005,135 +1011,126 @@ type MemberProfile = {
 
 /* ---------- Login Screen Component ---------- */
 /* ---------- Login Screen Component (Premium Design) ---------- */
+/* ---------- Login Screen Component (Redesigned: Open Landing Style) ---------- */
 const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
   const [name, setName] = React.useState("User");
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans selection:bg-indigo-500/30">
-      {/* Animated Background Mesh */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/20 blur-[100px] animate-in fade-in zoom-in duration-1000" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-500/20 blur-[100px] animate-in fade-in zoom-in duration-1000 delay-300" />
-        <div className="absolute top-[40%] left-[40%] w-[30vw] h-[30vw] rounded-full bg-emerald-400/10 blur-[80px] animate-pulse delay-700" />
+    <div className="min-h-screen w-full bg-[#0B0F19] relative flex items-center justify-center p-4 lg:p-8 font-sans overflow-hidden selection:bg-indigo-500/30">
+
+      {/* --- Dynamic Background --- */}
+      <div className="absolute inset-0 w-full h-full">
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 opacity-[0.15]"
+          style={{
+            backgroundImage: "linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px)",
+            backgroundSize: "40px 40px"
+          }}
+        />
+        {/* Ambient Glows */}
+        <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-purple-600/10 rounded-full blur-[100px] delay-1000 animate-pulse" />
       </div>
 
-      <div className="w-full max-w-6xl h-[85vh] max-h-[800px] grid grid-cols-1 lg:grid-cols-12 shadow-[0_40px_100px_-15px_rgba(0,0,0,0.1)] rounded-[32px] overflow-hidden z-10 bg-white/80 backdrop-blur-2xl ring-1 ring-white/50 animate-in fade-in slide-in-from-bottom-8 duration-700 relative">
+      <div className="w-full max-w-7xl relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
 
-        {/* Decorative branding overlay */}
-        <div className="absolute top-6 left-8 z-20 flex items-center gap-2 lg:hidden">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-blue-600/30">R</div>
-          <span className="font-bold text-slate-800 tracking-tight">Retirement Planner</span>
-        </div>
+        {/* --- Left Column: Value Proposition (Open Layout) --- */}
+        <div className="space-y-10 text-center lg:text-left lg:pl-8 order-2 lg:order-1 animate-in slide-in-from-left-8 fade-in duration-700">
 
-        {/* Left Side: Illustration & Value Prop (7 cols) */}
-        <div className="hidden lg:flex lg:col-span-7 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white relative flex-col justify-between p-16 overflow-hidden">
-          {/* Abstract Pattern */}
-          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(#ffffff 1px, transparent 1px)", backgroundSize: "32px 32px" }}></div>
+          {/* Brand Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mx-auto lg:mx-0">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-bold tracking-widest text-indigo-200 uppercase">Financial Freedom OS v2.0</span>
+          </div>
 
-          {/* Glowing Orbs */}
-          <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-500/30 rounded-full blur-[64px] mix-blend-screen animate-pulse"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-[80px] mix-blend-screen"></div>
-
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md text-white shadow-inner ring-1 ring-white/20">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M2 12h20" /><path d="m4.93 4.93 14.14 14.14" /><path d="m19.07 4.93-14.14 14.14" /></svg>
-              </div>
-              <span className="text-xl font-bold tracking-tight text-blue-50">Retirement Planner</span>
-            </div>
-
-            <h1 className="text-5xl font-bold leading-tight tracking-tight mb-6">
+          <div className="space-y-6">
+            <h1 className="text-5xl lg:text-7xl font-bold leading-[1.1] tracking-tight text-white">
               วางแผนอนาคต<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-indigo-200">เพื่อชีวิตที่คุณเลือกได้</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-emerald-300">
+                เพื่อชีวิตที่คุณเลือกได้
+              </span>
             </h1>
-            <p className="text-blue-100/80 text-lg font-light leading-relaxed max-w-lg">
-              ไม่ใช่แค่เครื่องมือคำนวณ แต่คือแผนที่นำทางสู่ความมั่นคงทางการเงิน ด้วยระบบจำลองสถานการณ์อัจฉริยะที่เข้าใจง่ายและแม่นยำ
+            <p className="text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+              แพลตฟอร์มวางแผนเกษียณอัจฉริยะ ที่ช่วยให้คุณเห็นภาพอนาคตทางการเงินชัดเจนที่สุด ด้วยระบบจำลองสถานการณ์และความแม่นยำระดับมืออาชีพ
             </p>
           </div>
 
-          {/* Feature Highlights */}
-          <div className="relative z-10 grid grid-cols-2 gap-8 mt-12">
-            <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-emerald-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
+          {/* Feature Pills */}
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
+            <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors cursor-default">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
               </div>
-              <h3 className="font-semibold text-white">Visual Analytics</h3>
-              <p className="text-xs text-blue-200/60 leading-relaxed">เห็นภาพการเติบโตของสินทรัพย์ด้วยกราฟที่เข้าใจง่าย</p>
-            </div>
-            <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-indigo-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M2 12h20" /><path d="m4.93 4.93 14.14 14.14" /><path d="m19.07 4.93-14.14 14.14" /></svg>
+              <div className="text-left">
+                <div className="text-xs font-bold text-white">Visual Analytics</div>
+                <div className="text-[10px] text-slate-400">กราฟแสดงผลเข้าใจง่าย</div>
               </div>
-              <h3 className="font-semibold text-white">Monte Carlo Sim</h3>
-              <p className="text-xs text-blue-200/60 leading-relaxed">ประเมินความเสี่ยงด้วยการจำลองสถานการณ์กว่า 1,000 รูปแบบ</p>
             </div>
-          </div>
 
-          <div className="relative z-10 pt-8 border-t border-white/10 flex justify-between items-end">
-            <div className="text-[10px] text-blue-300/40 uppercase tracking-widest font-semibold">
-              Financial Freedom OS v2.0
+            <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors cursor-default">
+              <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-bold text-white">Monte Carlo Sim</div>
+                <div className="text-[10px] text-slate-400">จำลองความเสี่ยง 1,000+ ครั้ง</div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right Side: Login Form (5 cols) */}
-        <div className="col-span-1 lg:col-span-5 flex flex-col justify-center p-10 lg:p-16 bg-white/60 relative">
-          <div className="absolute top-0 right-0 p-8 hidden lg:block">
-            <div className="flex gap-1">
-              <div className="w-3 h-3 rounded-full bg-slate-200"></div>
-              <div className="w-3 h-3 rounded-full bg-slate-200"></div>
-              <div className="w-3 h-3 rounded-full bg-slate-200"></div>
-            </div>
-          </div>
+        {/* --- Right Column: Floating Form Card --- */}
+        <div className="order-1 lg:order-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200">
+          <div className="relative w-full max-w-md mx-auto bg-white/95 backdrop-blur-2xl p-8 lg:p-10 rounded-[32px] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.3)] ring-1 ring-white/50">
 
-          <div className="max-w-sm w-full mx-auto">
-            <div className="mb-10 text-center lg:text-left">
-              <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-wider mb-4 inline-block">Welcome Back</span>
-              <h2 className="text-3xl font-bold text-slate-800 mb-2 tracking-tight">เริ่มต้นวางแผน</h2>
-              <p className="text-sm text-slate-500">กรอกชื่อของคุณเพื่อเข้าสู่ระบบจำลอง (Demo)</p>
+            {/* Decor */}
+            <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
+              <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M30 0C46.5685 0 60 13.4315 60 30C60 46.5685 46.5685 60 30 60C13.4315 60 0 46.5685 0 30C0 13.4315 13.4315 0 30 0Z" fill="url(#paint0_linear)" />
+                <defs>
+                  <linearGradient id="paint0_linear" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#6366f1" />
+                    <stop offset="1" stopColor="#a855f7" />
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
 
-            <div className="space-y-6">
-              <div className="space-y-3 group">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center justify-between">
-                  <span>ชื่อผู้ใช้งาน</span>
-                  <span className="text-[10px] text-slate-400 font-normal group-focus-within:text-blue-500 transition-colors">ระบุอะไรก็ได้</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                  </div>
-                  <input
-                    className="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-200 bg-white shadow-sm text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium text-slate-800 placeholder:text-slate-300"
-                    placeholder="เช่น สมชาย ใจดี"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && onLogin(name || "User")}
-                  />
-                </div>
+            <div className="space-y-8 relative z-10">
+              <div>
+                <span className="text-xs font-bold tracking-wider text-indigo-600 uppercase bg-indigo-50 px-3 py-1 rounded-full">Welcome Back</span>
+                <h2 className="text-3xl font-bold text-slate-900 mt-4 tracking-tight">เริ่มต้นใช้งาน</h2>
+                <p className="text-sm text-slate-500 mt-2">กรอกชื่อของคุณเพื่อเข้าสู่ระบบจำลอง (Demo)</p>
               </div>
 
-              <div className="pt-2">
+              <div className="space-y-4">
+                <div className="space-y-2 group">
+                  <Label className="text-xs font-bold text-slate-700 ml-1">ชื่อผู้ใช้งาน (User Name)</Label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    </div>
+                    <Input
+                      className="h-14 pl-12 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-base"
+                      placeholder="Ex. Somchai"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && onLogin(name || "User")}
+                    />
+                  </div>
+                </div>
+
                 <Button
                   onClick={() => onLogin(name || "User")}
-                  className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold text-lg shadow-xl shadow-indigo-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
-                  <span>เข้าสู่ระบบ</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                  เข้าสู่ระบบ
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
                 </Button>
               </div>
 
-              <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-slate-100" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white/60 px-2 text-slate-400">หรือ</span>
-                </div>
-              </div>
-
               <div className="text-center">
-                <button onClick={() => onLogin("Guest")} className="text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors">
+                <button onClick={() => onLogin("Guest")} className="text-xs font-semibold text-slate-400 hover:text-indigo-600 hover:underline transition-all">
                   เข้าใช้งานแบบ Guest Mode (ไม่ต้องกรอกชื่อ)
                 </button>
               </div>
@@ -1142,9 +1139,10 @@ const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
         </div>
       </div>
 
-      {/* Footer simple mark */}
-      <div className="absolute bottom-4 text-[10px] text-slate-400 font-medium">
-        Secure • Private • No Data Leaving Your Browser
+      <div className="absolute bottom-6 w-full text-center">
+        <p className="text-[10px] uppercase tracking-widest text-slate-500 font-medium opacity-60">
+          Secure • Private • Local Storage Only
+        </p>
       </div>
     </div>
   );
@@ -1201,7 +1199,8 @@ export default function HomePage() {
   const [familyMembers, setFamilyMembers] = React.useState<MemberProfile[]>([]);
   const [currentMemberId, setCurrentMemberId] = React.useState<string>("primary");
   const [showFamilyPanel, setShowFamilyPanel] = React.useState(false);
-  const [showFamilySummaryModal, setShowFamilySummaryModal] = React.useState(false);
+
+  const [isRelationOpen, setIsRelationOpen] = React.useState(false);
 
   const [form, setForm] = React.useState<FormState>(initialForm);
   const [inputStep, setInputStep] = React.useState(1); // 1=Personal, 2=Financial, 3=Goal
@@ -1330,7 +1329,20 @@ export default function HomePage() {
       id: newId,
       name: `สมาชิกใหม่ ${updatedList.length + 1}`,
       relation: "child",
-      form: { ...initialForm, currentAge: "0", planName: `แผนของสมาชิก ${updatedList.length + 1}` },
+      form: {
+        ...initialForm,
+        currentAge: "0",
+        retireAge: "60",
+        lifeExpectancy: "85",
+        currentSavings: "0",
+        monthlySaving: "0",
+        retireMonthlyIncome: "0",
+        retireFundOther: "0",
+        legacyFund: "0",
+        retireExtraExpense: "0",
+        retireSpecialAnnual: "0",
+        planName: `แผนของสมาชิก ${updatedList.length + 1}`
+      },
       gender: "male",
       savingMode: "flat",
       returnMode: "avg",
@@ -1350,6 +1362,7 @@ export default function HomePage() {
 
     // Switch to new member
     loadMember(newMember);
+    setInputStep(1);
   };
 
   const handleRemoveMember = (id: string, e: React.MouseEvent) => {
@@ -1423,15 +1436,7 @@ export default function HomePage() {
 
 
   /* ---------- Authentication (mock) ---------- */
-  const [user, setUser] = React.useState<{ name: string } | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const raw = window.localStorage.getItem("mock-user");
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = React.useState<{ name: string } | null>(null);
 
 
   React.useEffect(() => {
@@ -1913,15 +1918,16 @@ export default function HomePage() {
           tooltip: {
             mode: "index",
             intersect: false,
-            backgroundColor: "#ffffff",
-            titleColor: "#1e293b",
-            bodyColor: "#1e293b",
-            borderColor: "#e2e8f0",
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            titleColor: '#f8fafc',
+            bodyColor: '#e2e8f0',
+            borderColor: 'rgba(255,255,255,0.1)',
             borderWidth: 1,
-            titleFont: { size: 16, weight: "bold", family: "'Inter', sans-serif" },
-            bodyFont: { size: 14, family: "'Inter', sans-serif" },
+            titleFont: { size: 14, weight: "bold", family: "'Inter', sans-serif" },
+            bodyFont: { size: 13, family: "'Inter', sans-serif" },
             padding: 12,
-            displayColors: false,
+            displayColors: true,
+            boxPadding: 4,
             callbacks: {
               title: (items: any[]) => {
                 if (!items.length) return "";
@@ -2280,366 +2286,623 @@ export default function HomePage() {
   const heroImageSrc = gender === "female" ? "/images/retirement/pic2.png" : "/images/retirement/pic1.png";
 
   return (
-    <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary/20 selection:text-primary">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-white/70 backdrop-blur-xl print:hidden transition-all duration-200 supports-[backdrop-filter]:bg-white/60 shadow-sm">
-        <div className="mx-auto flex max-w-[1800px] items-center justify-between px-4 py-4 lg:px-6">
-          <div className="flex items-center gap-3 transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/20 ring-1 ring-white/20">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+      {/* --- HEADER --- */}
+      {/* --- HEADER --- */}
+      {/* --- HEADER --- */}
+      <header className="sticky top-0 z-[100] bg-white/70 backdrop-blur-2xl border-b border-white/40 shadow-sm transition-all duration-300 print:hidden">
+        <div className="mx-auto flex h-16 w-full items-center justify-between px-6 lg:px-8">
+          {/* Logo Section */}
+          <div className="flex items-center gap-3 cursor-pointer group">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-lg shadow-indigo-900/20 group-hover:scale-105 transition-transform duration-300 ring-1 ring-black/5">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white animate-pulse shadow-sm"></div>
             </div>
             <div className="flex flex-col justify-center">
-              <span className="text-base font-bold tracking-tight text-slate-900 leading-none">Retirement<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Planner</span></span>
-              <span className="text-[10px] font-medium text-slate-400 leading-tight mt-0.5">Financial Freedom OS</span>
+              <span className="text-lg font-bold tracking-tight text-slate-900 leading-none font-display">Retirement<span className="text-indigo-600">OS</span></span>
+              <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-0.5 ml-0.5">Financial Planner</span>
             </div>
           </div>
-          <div className="hidden items-center gap-3 text-xs lg:flex">
 
-
-            {/* Add Family Member Button */}
+          {/* Right Actions */}
+          <div className="hidden md:flex items-center gap-4">
+            {/* Add Member Button (Only if Room) */}
             {user && user.name !== "Guest" && familyMembers.length < 10 && (
-              <Button variant="outline" className="h-9 rounded-full px-4 text-xs font-semibold text-slate-600 border-dashed border-slate-300 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all mr-2" onClick={handleAddMember}>
-                + เพิ่มสมาชิก
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-10 rounded-xl px-4 text-xs font-bold text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/50 hover:border-indigo-100 transition-all gap-2"
+                onClick={handleAddMember}
+              >
+                <div className="w-5 h-5 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-indigo-500 mb-[1px]">+</div>
+                เพิ่มสมาชิก
               </Button>
             )}
 
-            <div className="flex items-center gap-3 pl-1 group cursor-pointer p-1 rounded-full hover:bg-slate-50 transition-colors pr-3 border border-transparent hover:border-slate-100">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 border border-white shadow-sm flex items-center justify-center text-blue-700 font-bold overflow-hidden">
-                {user.name.charAt(0).toUpperCase()}
+            {/* User Profile */}
+            <div className={`flex items-center gap-3 pl-2 pr-1 py-1 rounded-2xl border border-white/50 bg-white/50 hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 cursor-default group/profile backdrop-blur-sm`}>
+              <div className="flex flex-col items-end leading-none gap-0.5 pl-2">
+                <span className="text-xs font-bold text-slate-700">{user.name}</span>
               </div>
-              <div className="flex flex-col items-start leading-none gap-0.5">
-                <span className="text-xs font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{user.name}</span>
-                <span className="text-[9px] text-slate-400">Free Account</span>
+              <div className="h-9 w-9 rounded-xl bg-slate-200 border-2 border-white shadow-sm overflow-hidden relative group-hover:scale-105 transition-transform">
+                <Image src={heroImageSrc} alt="Profile" fill className="object-cover" />
               </div>
-              <Button variant="ghost" className="h-6 w-6 rounded-full p-0 text-slate-400 hover:bg-red-50 hover:text-red-600 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleLogout} title="Log out">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
-              </Button>
+              <button
+                onClick={handleLogout}
+                className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-100 hover:bg-rose-50 transition-all active:scale-95"
+                title="Log out"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
+              </button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* FAMILY PANEL (Display only if logged in AND has more than 1 member) */}
+      {/* --- FAMILY CONTROL BAR --- */}
       {user && familyMembers.length > 1 && (
-        <div className="bg-slate-50/80 backdrop-blur-md border-b border-white/20 px-4 py-2 lg:px-6 transition-all duration-200 supports-[backdrop-filter]:bg-slate-50/60 sticky top-[72px] z-40">
-          <div className="mx-auto max-w-[1800px] flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto scrollbar-hide">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap mr-2">Family Members</span>
-              {familyMembers.map(m => (
-                <div
-                  key={m.id}
-                  onClick={() => handleSwitchMember(m.id)}
-                  className={`
-                        relative flex items-center gap-2 px-4 py-1.5 rounded-full cursor-pointer border transition-all duration-300 group
-                        ${m.id === currentMemberId ? "bg-white border-blue-200 shadow-sm ring-2 ring-blue-100 text-blue-700" : "bg-white/50 border-transparent hover:bg-white hover:border-slate-200 text-slate-500"}
-                      `}
-                >
-                  <div className={`w-2 h-2 rounded-full transition-all ${m.id === currentMemberId ? "bg-blue-500 scale-110" : "bg-slate-300 group-hover:bg-slate-400"}`} />
-                  <span className={`text-xs font-bold`}>
+        <div className="sticky top-16 z-[90] bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-md transition-all animate-in fade-in slide-in-from-top-2 duration-500">
+          <div className="w-full flex items-center justify-between px-6 py-3 gap-4 overflow-x-auto scrollbar-hide">
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full border border-slate-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                <span className="text-xs font-bold text-slate-600">Family Members</span>
+              </div>
+              <div className="h-4 w-px bg-slate-300"></div>
+
+              {/* Member List */}
+              <div className="flex items-center gap-2">
+                {familyMembers.map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => handleSwitchMember(m.id)}
+                    className={`
+                      relative group flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border text-xs font-bold transition-all duration-300
+                      ${m.id === currentMemberId
+                        ? "bg-slate-800 border-slate-800 text-white shadow-lg shadow-slate-900/20 scale-105"
+                        : "bg-white border-slate-200 text-slate-500 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50"
+                      }
+                    `}
+                  >
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border ${m.id === currentMemberId ? "bg-white/20 border-white/20" : "bg-slate-100 border-slate-200 group-hover:bg-white"}`}>
+                      <span className="mb-0.5">{m.id === "primary" ? "👑" : m.relation === "spouse" ? "💍" : m.relation === "child" ? "👶" : "👤"}</span>
+                    </div>
                     {m.name}
-                  </span>
-                  {familyMembers.length > 1 && (
-                    <button
-                      onClick={(e) => handleRemoveMember(m.id, e)}
-                      className="ml-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full p-0.5 transition-colors opacity-0 group-hover:opacity-100"
-                    >
-                      <CloseIcon className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                onClick={handleAddMember}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-dashed border-slate-300 text-xs text-slate-400 hover:bg-white hover:text-blue-600 hover:border-blue-300 transition-all whitespace-nowrap ml-1"
-              >
-                <span>+</span>
-              </button>
+                    {familyMembers.length > 1 && (
+                      <span
+                        onClick={(e) => { e.stopPropagation(); handleRemoveMember(m.id, e); }}
+                        className={`ml-1.5 p-0.5 rounded-full hover:bg-white/20 transition-colors ${m.id === currentMemberId ? "text-slate-400 hover:text-white" : "text-slate-300 hover:text-rose-500 hover:bg-rose-50"}`}
+                      >
+                        <CloseIcon className="w-3 h-3" />
+                      </span>
+                    )}
+                  </button>
+                ))}
+
+                <button
+                  onClick={handleAddMember}
+                  className="group flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border border-dashed border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-xs h-[34px]"
+                  title="Add Member"
+                >
+                  <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-blue-100 group-hover:text-blue-600 text-slate-400 transition-colors">
+                    <span className="text-sm leading-none mb-0.5">+</span>
+                  </div>
+                  Add
+                </button>
+              </div>
             </div>
 
-            {/* Family Summary (Mini) */}
-            <div className="flex items-center gap-5 text-xs bg-white/60 backdrop-blur-sm px-5 py-2 rounded-full border border-white/40 shadow-sm ml-auto hover:bg-white/80 transition-all ring-1 ring-black/5">
-              <div className="flex flex-col items-end hidden lg:flex">
-                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">เป้าหมายรวม</span>
-                <span className="font-bold text-slate-800 text-sm">
-                  {formatNumber(getFamilySummary().totalTarget)}
-                </span>
-              </div>
-              <div className="h-6 w-px bg-slate-200 hidden lg:block"></div>
-              <div className="flex flex-col items-end">
-                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">ขาดอีก (รวม)</span>
-                <span className={`${getFamilySummary().totalGap < 0 ? "text-rose-500" : "text-emerald-500"} font-bold text-sm`}>
-                  {formatNumber(Math.abs(getFamilySummary().totalGap))}
-                </span>
-              </div>
-              <div className="h-6 w-px bg-slate-200 hidden lg:block"></div>
-              <Button variant="ghost" className="h-7 text-[10px] px-3 rounded-full text-blue-600 hover:bg-blue-50 bg-blue-50/50 font-bold tracking-wide" onClick={() => setShowFamilySummaryModal(true)}>
-                VIEW ALL
-              </Button>
-            </div>
+
           </div>
         </div>
       )}
 
+      {/* --- CONTENT LAYOUT --- */}
+      <div className={`flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden relative transition-all duration-500 ${!showResult ? "items-center justify-center p-4 lg:p-6" : ""}`}>
 
-      <div className={`flex h-[calc(100vh-60px)] overflow-hidden ${!showResult ? "items-center justify-center bg-slate-50 relative" : ""}`}>
+        {/* Background Decor (Persistent throughout app) */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-slate-50">
+          {/* Mesh Gradients (Light Theme) */}
+          <div className="absolute top-[10%] left-[20%] w-[40vw] h-[40vw] bg-indigo-300/10 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-[10%] right-[10%] w-[30vw] h-[30vw] bg-purple-300/10 rounded-full blur-[80px] delay-1000 animate-pulse" />
+          <div className="absolute top-[40%] left-[60%] w-[25vw] h-[25vw] bg-emerald-300/10 rounded-full blur-[60px] delay-500" />
+          <div className="absolute inset-0 opacity-[0.3]" style={{ backgroundImage: "radial-gradient(#94a3b8 1px, transparent 1px)", backgroundSize: "32px 32px" }}></div>
+        </div>
 
-        {/* Decorative background when centered */}
-        {!showResult && (
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[100px] -mr-40 -mt-40"></div>
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[100px] -ml-40 -mb-40"></div>
+        {/* LEFT PANEL: INPUT FORM */}
+        <aside className={`
+          relative z-10 flex flex-col transition-all duration-700 ease-in-out bg-white/90 backdrop-blur-xl border border-white/60
+          ${!showResult
+            ? "w-full max-w-3xl mx-auto h-auto max-h-[85vh] rounded-[32px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] ring-1 ring-white/50 my-auto"
+            : "w-full lg:w-[480px] xl:w-[500px] h-full shrink-0 shadow-xl lg:shadow-none bg-white border-r border-slate-100/60 z-50"
+          }
+        `}>
+          {/* Wizard Header (Modern Stepper) */}
+          <div className="px-6 pt-6 pb-4 bg-white shrink-0">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">สร้างแผนเกษียณ</h2>
+                <p className="text-xs text-slate-500 font-medium mt-1.5 flex items-center gap-2">
+                  <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">STEP {inputStep}</span>
+                  {inputStep === 1 ? "ข้อมูลส่วนตัว" : inputStep === 2 ? "สุขภาพการเงิน" : "เป้าหมายเกษียณ"}
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3].map((step) => (
+                  <div key={step} className="flex items-center">
+                    <button
+                      onClick={() => setInputStep(step)}
+                      className={`w-3 h-3 rounded-full transition-all duration-300 ${inputStep >= step ? "bg-indigo-600 ring-4 ring-indigo-50" : "bg-slate-200"}`}
+                    />
+                    {step < 3 && <div className={`w-12 h-0.5 rounded-full mx-1 transition-all duration-300 ${inputStep > step ? "bg-indigo-600" : "bg-slate-100"}`} />}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        )}
 
-        {/* LEFT PANEL: INPUTS */}
-        <aside className={`${!showResult ? "w-full max-w-lg shadow-2xl rounded-2xl border border-white/50 bg-white/80 my-auto h-auto max-h-[85vh] relative z-10 backdrop-blur-xl flex flex-col transition-all duration-700 ease-in-out" : "w-full lg:w-[400px] xl:w-[450px] shrink-0 flex flex-col border-r border-border bg-card/50 print:hidden z-20 backdrop-blur-sm transition-all duration-700 ease-in-out"}`}>
-          {/* Wizard Header */}
-          <div className="p-6 border-b border-border bg-white/50 backdrop-blur-sm shrink-0">
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
-              {inputStep === 1 && "ข้อมูลส่วนตัว"}
-              {inputStep === 2 && "การเงินปัจจุบัน"}
-              {inputStep === 3 && "เป้าหมายเกษียณ"}
-            </h2>
-            <p className="text-sm text-slate-500 mt-1">
-              {inputStep === 1 && "Start by telling us a bit about yourself."}
-              {inputStep === 2 && "Let's look at your current financial health."}
-              {inputStep === 3 && "Define your retirement lifestyle goals."}
-            </p>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          <div className="flex-1 overflow-y-auto p-5 space-y-5 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {/* ... (Input Cards) ... */}
             {/* ... Card อายุ ... */}
-            {/* 1. PROFILE SECTION */}
+            {/* 1. PROFILE SECTION (Redesigned) */}
             {inputStep === 1 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
-                <CollapsibleSection
-                  title="ข้อมูลส่วนตัว"
-                  defaultOpen={true}
-                  icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
-                  iconColorClass="bg-blue-50 text-blue-600"
-                >
-                  <div className="flex items-center justify-between p-1">
-                    <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">เพศ</Label>
-                    <div className="flex bg-secondary rounded-lg p-1 ring-1 ring-border/50">
-                      <button type="button" onClick={() => setGender("male")} className={`px-4 py-1.5 rounded-md text-[11px] font-bold transition-all ${gender === "male" ? "bg-background text-blue-600 shadow-sm ring-1 ring-black/5" : "text-muted-foreground hover:text-foreground"}`}>ชาย</button>
-                      <button type="button" onClick={() => setGender("female")} className={`px-4 py-1.5 rounded-md text-[11px] font-bold transition-all ${gender === "female" ? "bg-background text-pink-500 shadow-sm ring-1 ring-black/5" : "text-muted-foreground hover:text-foreground"}`}>หญิง</button>
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+
+                {/* Header Card: Identity */}
+                <div className="bg-white rounded-[24px] p-5 border border-slate-100 shadow-xl shadow-slate-200/50 relative z-30 group">
+                  {/* Background Decor (Clipped) */}
+                  <div className="absolute inset-0 rounded-[24px] overflow-hidden pointer-events-none z-0">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-50/50 transition-colors"></div>
+                  </div>
+
+                  <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center">
+                    <div className="flex-1 w-full space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm ring-1 ring-indigo-100">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-slate-800 text-base tracking-tight">ข้อมูลส่วนตัว</h3>
+                          <p className="text-xs text-slate-400 font-medium">เริ่มต้นจากตัวคุณ</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        {/* Gender Selection */}
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-slate-600 pl-1">เพศสภาพ (Gender)</Label>
+                          <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-200">
+                            {["male", "female"].map((g) => (
+                              <button
+                                key={g}
+                                type="button"
+                                onClick={() => setGender(g as any)}
+                                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${gender === g
+                                  ? g === "male"
+                                    ? "bg-white text-indigo-600 shadow-md ring-1 ring-indigo-50"
+                                    : "bg-white text-rose-500 shadow-md ring-1 ring-rose-50"
+                                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-100/50"
+                                  }`}
+                              >
+                                {g === "male" ? "ชาย" : "หญิง"}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Relationship Selection */}
+                        {currentMemberId !== "primary" && (
+                          <div className="space-y-2 relative z-50">
+                            <Label className="text-xs font-semibold text-slate-600 pl-1">สถานะกับหัวหน้าครอบครัว</Label>
+                            <div className="relative">
+                              {/* Trigger */}
+                              <button
+                                type="button"
+                                onClick={() => setIsRelationOpen(!isRelationOpen)}
+                                className={`w-full h-12 flex items-center justify-between px-4 bg-white border rounded-2xl transition-all duration-300 ${isRelationOpen
+                                  ? "border-indigo-500 ring-4 ring-indigo-500/10 shadow-md"
+                                  : "border-slate-200 hover:border-indigo-300 hover:shadow-sm"
+                                  }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">
+                                    {relation === "spouse" ? "💍" : relation === "child" ? "👶" : relation === "father" ? "👴" : relation === "mother" ? "👵" : "🤝"}
+                                  </span>
+                                  <span className={`text-sm font-bold ${relation ? "text-slate-700" : "text-slate-400"}`}>
+                                    {relation === "spouse" ? "คู่สมรส (Spouse)" :
+                                      relation === "child" ? "บุตร (Child)" :
+                                        relation === "father" ? "บิดา (Father)" :
+                                          relation === "mother" ? "มารดา (Mother)" :
+                                            "ญาติ/อื่นๆ (Other)"}
+                                  </span>
+                                </div>
+                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isRelationOpen ? "rotate-180 text-indigo-500" : ""}`} />
+                              </button>
+
+                              {/* Dropdown Menu (Absolute but high z-index) */}
+                              {isRelationOpen && (
+                                <>
+                                  <div className="fixed inset-0 z-[90]" onClick={() => setIsRelationOpen(false)} />
+                                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl shadow-indigo-100 border border-slate-100 z-[100] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 p-1.5">
+                                    {[
+                                      { val: "spouse", label: "คู่สมรส (Spouse)", icon: "💍" },
+                                      { val: "child", label: "บุตร (Child)", icon: "👶" },
+                                      { val: "father", label: "บิดา (Father)", icon: "👴" },
+                                      { val: "mother", label: "มารดา (Mother)", icon: "👵" },
+                                      { val: "relative", label: "ญาติ/อื่นๆ (Other)", icon: "🤝" },
+                                    ].map((opt) => (
+                                      <button
+                                        key={opt.val}
+                                        type="button"
+                                        onClick={() => {
+                                          setRelation(opt.val as any);
+                                          setIsRelationOpen(false);
+                                        }}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group ${relation === opt.val ? "bg-indigo-50 text-indigo-700" : "hover:bg-slate-50 text-slate-600"
+                                          }`}
+                                      >
+                                        <span className="text-lg group-hover:scale-110 transition-transform">{opt.icon}</span>
+                                        <span className="text-sm font-bold">{opt.label}</span>
+                                        {relation === opt.val && <div className="ml-auto w-2 h-2 rounded-full bg-indigo-500" />}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Dynamic Profile Picture (Right Side - Large) */}
+                    <div className="shrink-0">
+                      <div className="w-32 h-32 rounded-full bg-slate-50 border-4 border-white shadow-xl shadow-indigo-100/50 overflow-hidden relative group-hover:scale-105 transition-transform duration-500">
+                        <Image src={currentMemberId === "primary" ? (gender === "female" ? "/images/retirement/pic2.png" : "/images/retirement/pic1.png") : (familyMembers.find(m => String(m.id) === currentMemberId)?.gender === "female" ? "/images/retirement/pic2.png" : "/images/retirement/pic1.png")} alt="Profile" fill className="object-cover" />
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    {currentMemberId !== "primary" && (
-                      <div className="space-y-1.5">
-                        <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">ความสัมพันธ์</Label>
-                        <select
-                          className="h-9 w-full rounded-lg border-transparent bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 focus:bg-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                          value={relation}
-                          onChange={(e) => setRelation(e.target.value as any)}
-                        >
-                          <option value="spouse">คู่สมรส (Spouse)</option>
-                          <option value="child">ลูก (Child)</option>
-                          <option value="father">พ่อ (Father)</option>
-                          <option value="mother">แม่ (Mother)</option>
-                          <option value="relative">ญาติ (Relative)</option>
-                        </select>
+                </div>
+
+                {/* Timeline Card */}
+                <div className="bg-white rounded-[24px] p-5 border border-slate-100 shadow-xl shadow-slate-200/50 relative z-20 overflow-hidden group">
+                  <div className="flex items-center gap-3 mb-4 relative z-10 w-full justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm ring-1 ring-emerald-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                       </div>
-                    )}
-                    <div className="space-y-1.5">
-                      <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">อายุปัจจุบัน (ปี)</Label>
-                      <div className="flex items-center gap-2">
-                        <Input className="h-9 bg-slate-50/50 border-input/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 text-xs font-medium text-slate-700 rounded-lg transition-all" type="text" value={form.currentAge} onChange={handleChange("currentAge")} onFocus={handleNumericFocus("currentAge")} onBlur={handleNumericBlur("currentAge")} />
-                        <div className="flex gap-1"><SmallStepButton onClick={changeBy("currentAge", -1)}>-</SmallStepButton><SmallStepButton onClick={changeBy("currentAge", 1)}>+</SmallStepButton></div>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">อายุที่ต้องการเกษียณ (ปี)</Label>
-                      <div className="flex items-center gap-2">
-                        <Input className="h-9 bg-slate-50/50 border-input/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 text-xs font-medium text-slate-700 rounded-lg transition-all" type="text" value={form.retireAge} onChange={handleChange("retireAge")} onFocus={handleNumericFocus("retireAge")} onBlur={handleNumericBlur("retireAge")} />
-                        <div className="flex gap-1"><SmallStepButton onClick={changeBy("retireAge", -1)}>-</SmallStepButton><SmallStepButton onClick={changeBy("retireAge", 1)}>+</SmallStepButton></div>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">จะอยู่ถึงอายุ (ปี)</Label>
-                      <div className="flex items-center gap-2">
-                        <Input className="h-9 bg-slate-50/50 border-input/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 text-xs font-medium text-slate-700 rounded-lg transition-all" type="text" value={form.lifeExpectancy} onChange={handleChange("lifeExpectancy")} onFocus={handleNumericFocus("lifeExpectancy")} onBlur={handleNumericBlur("lifeExpectancy")} />
-                        <div className="flex gap-1"><SmallStepButton onClick={changeBy("lifeExpectancy", -1)}>-</SmallStepButton><SmallStepButton onClick={changeBy("lifeExpectancy", 1)}>+</SmallStepButton></div>
+                      <div>
+                        <h3 className="font-bold text-slate-800 text-base tracking-tight">อายุ</h3>
+                        <p className="text-xs text-slate-400 font-medium">กำหนดช่วงเวลาสำคัญ</p>
                       </div>
                     </div>
                   </div>
-                </CollapsibleSection>
+
+                  <div className={`relative z-10 grid gap-3 ${showResult ? "grid-cols-1" : "grid-cols-3"}`}>
+                    {/* Current Age */}
+                    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-300 group/item">
+                      <div className="flex justify-between items-start mb-2">
+                        <Label className="text-xs font-bold text-slate-500 pl-1">อายุปัจจุบัน</Label>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 w-full my-2">
+                        <button onClick={changeBy("currentAge", -1)} className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-all active:scale-95"><span className="text-xl font-medium">-</span></button>
+                        <div className="flex-1 flex flex-col items-center">
+                          <Input
+                            className="h-10 w-full text-center text-4xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200"
+                            value={form.currentAge}
+                            onChange={handleChange("currentAge")}
+                            onFocus={handleNumericFocus("currentAge")}
+                            onBlur={handleNumericBlur("currentAge")}
+                          />
+                          <span className="text-xs font-bold text-slate-400 mt-1">ปี</span>
+                        </div>
+                        <button onClick={changeBy("currentAge", 1)} className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-all active:scale-95"><span className="text-xl font-medium">+</span></button>
+                      </div>
+                      <input
+                        type="range"
+                        min="0" max="100"
+                        value={form.currentAge}
+                        onChange={handleChange("currentAge")}
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-600 hover:accent-slate-800 transition-all mt-2"
+                      />
+                    </div>
+
+                    {/* Retire Age */}
+                    <div className="bg-white rounded-2xl p-4 border border-indigo-100 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all duration-300 group/item">
+                      <div className="flex justify-between items-start mb-2">
+                        <Label className="text-xs font-bold text-indigo-500 pl-1">เกษียณ</Label>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 w-full my-2">
+                        <button onClick={changeBy("retireAge", -1)} className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-400 hover:bg-indigo-100 hover:text-indigo-600 flex items-center justify-center transition-all active:scale-95"><span className="text-xl font-medium">-</span></button>
+                        <div className="flex-1 flex flex-col items-center">
+                          <Input
+                            className="h-10 w-full text-center text-4xl font-black bg-transparent border-none p-0 focus:ring-0 text-indigo-600 leading-none placeholder:text-indigo-200"
+                            value={form.retireAge}
+                            onChange={handleChange("retireAge")}
+                            onFocus={handleNumericFocus("retireAge")}
+                            onBlur={handleNumericBlur("retireAge")}
+                          />
+                          <span className="text-xs font-bold text-indigo-400 mt-1">ปี</span>
+                        </div>
+                        <button onClick={changeBy("retireAge", 1)} className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-400 hover:bg-indigo-100 hover:text-indigo-600 flex items-center justify-center transition-all active:scale-95"><span className="text-xl font-medium">+</span></button>
+                      </div>
+                      <input
+                        type="range"
+                        min="0" max="100"
+                        value={form.retireAge}
+                        onChange={handleChange("retireAge")}
+                        className="w-full h-1.5 bg-indigo-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-700 transition-all mt-2"
+                      />
+                    </div>
+
+                    {/* Life Expectancy */}
+                    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-300 group/item">
+                      <div className="flex justify-between items-start mb-2">
+                        <Label className="text-xs font-bold text-slate-500 pl-1">อายุขัย</Label>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 w-full my-2">
+                        <button onClick={changeBy("lifeExpectancy", -1)} className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-all active:scale-95"><span className="text-xl font-medium">-</span></button>
+                        <div className="flex-1 flex flex-col items-center">
+                          <Input
+                            className="h-10 w-full text-center text-4xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-500 leading-none placeholder:text-slate-200"
+                            value={form.lifeExpectancy}
+                            onChange={handleChange("lifeExpectancy")}
+                            onFocus={handleNumericFocus("lifeExpectancy")}
+                            onBlur={handleNumericBlur("lifeExpectancy")}
+                          />
+                          <span className="text-xs font-bold text-slate-400 mt-1">ปี</span>
+                        </div>
+                        <button onClick={changeBy("lifeExpectancy", 1)} className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-all active:scale-95"><span className="text-xl font-medium">+</span></button>
+                      </div>
+                      <input
+                        type="range"
+                        min="0" max="120"
+                        value={form.lifeExpectancy}
+                        onChange={handleChange("lifeExpectancy")}
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-400 hover:accent-slate-600 transition-all mt-2"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
             {/* ... Card ปัจจุบัน ... */}
-            {/* 2. FINANCIALS SECTION */}
+            {/* 2. FINANCIALS SECTION (Redesigned) */}
             {inputStep === 2 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
-                <CollapsibleSection
-                  title="การเงินปัจจุบัน"
-                  defaultOpen={true}
-                  icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" /><path d="M12 18V6" /></svg>}
-                  iconColorClass="bg-emerald-50 text-emerald-600"
-                >
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-slate-600">เงินออมปัจจุบัน (บาท)</Label>
-                    <div className="flex items-center gap-2">
-                      <Input className="h-9 bg-secondary/50 border-transparent focus:bg-background focus:ring-2 focus:ring-primary/20 text-xs font-medium text-foreground rounded-lg transition-all" type="text" value={form.currentSavings} onChange={handleChange("currentSavings")} onFocus={handleNumericFocus("currentSavings")} onBlur={handleNumericBlur("currentSavings")} />
-                      <div className="flex gap-1"><SmallStepButton onClick={changeBy("currentSavings", -1000)}>-</SmallStepButton><SmallStepButton onClick={changeBy("currentSavings", 1000)}>+</SmallStepButton></div>
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+                {/* Wealth Status Card */}
+                <div className="bg-white rounded-[24px] p-5 border border-slate-100 shadow-xl shadow-slate-200/50 relative overflow-hidden group">
+                  <div className="flex items-center gap-3 mb-4 relative z-10">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm ring-1 ring-emerald-100">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" x2="12" y1="2" y2="22" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
                     </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-slate-600">การออมต่อเดือน (บาท)</Label>
-                    <div className="flex items-center gap-2">
-                      <Input className="h-9 bg-secondary/50 border-transparent focus:bg-background focus:ring-2 focus:ring-primary/20 text-xs font-medium text-foreground rounded-lg transition-all" type="text" value={form.monthlySaving} onChange={handleChange("monthlySaving")} onFocus={handleNumericFocus("monthlySaving")} onBlur={handleNumericBlur("monthlySaving")} />
-                      <div className="flex gap-1"><SmallStepButton onClick={changeBy("monthlySaving", -500)}>-</SmallStepButton><SmallStepButton onClick={changeBy("monthlySaving", 500)}>+</SmallStepButton></div>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-slate-600">รูปแบบการออม</Label>
-                    <div className="flex flex-col gap-1">
-                      <label className="flex items-center gap-2">
-                        <input type="radio" name="savingMode" value="flat" checked={savingMode === "flat"} onChange={() => setSavingMode("flat")} className="h-3 w-3" />
-                        <span>ออมเท่าเดิมทุกปี</span>
-                      </label>
-                      <label className="flex items-center gap-2 text-[11px]">
-                        <input type="radio" name="savingMode" value="step5" checked={savingMode === "step5"} onChange={() => setSavingMode("step5")} className="h-3 w-3" />
-                        <span>ปรับตามอายุทุกปีที่ 5 <span className="rounded-full bg-indigo-50 px-2 py-[1px] text-[10px] text-indigo-600">Premium Plan</span></span>
-                      </label>
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-base tracking-tight">ปัจจุบัน</h3>
+                      <p className="text-xs text-slate-400 font-medium">ระบุเงินออมและการเติบโต</p>
                     </div>
                   </div>
 
-                  {savingMode === "step5" && (
-                    <div className="space-y-2 rounded-md bg-slate-50 p-3">
-                      <div className="text-[11px] font-medium text-slate-700">ออมเพิ่มเติมตามอายุ</div>
-                      {[{ label: "อายุ 35", key: "savingAt35" as const }, { label: "อายุ 40", key: "savingAt40" as const }, { label: "อายุ 45", key: "savingAt45" as const }, { label: "อายุ 50", key: "savingAt50" as const }, { label: "อายุ 55", key: "savingAt55" as const },].map((row) => (
-                        <div key={row.key} className="space-y-1">
-                          <Label className="text-[11px] text-slate-600">{row.label}</Label>
-                          <div className="flex items-center gap-2">
-                            <Input className="h-9 bg-secondary/50 border-transparent focus:bg-background focus:ring-2 focus:ring-primary/20 text-xs font-medium text-foreground rounded-lg transition-all" type="text" value={form[row.key]} onChange={handleChange(row.key)} onFocus={handleNumericFocus(row.key)} onBlur={handleNumericBlur(row.key)} />
-                            <div className="flex gap-1">
-                              <SmallStepButton onClick={changeBy(row.key, -500)}>-</SmallStepButton>
-                              <SmallStepButton onClick={changeBy(row.key, 500)}>+</SmallStepButton>
-                            </div>
-                          </div>
+                  <div className={`relative z-10 space-y-3 ${showResult ? "grid grid-cols-1 gap-3 space-y-0" : ""}`}>
+                    <div className={`grid gap-3 ${showResult ? "grid-cols-1" : "grid-cols-2"}`}>
+                      {/* Current Savings */}
+                      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all duration-300 group/item">
+                        <div className="flex justify-between items-start mb-2">
+                          <Label className="text-xs font-bold text-slate-600 pl-1">เงินออมปัจจุบัน</Label>
                         </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-slate-600">ผลตอบแทนคาดหวัง (% ต่อปี)</Label>
-                    <div className="flex items-center gap-2">
-                      <Input className="h-9 bg-secondary/50 border-transparent focus:bg-background focus:ring-2 focus:ring-primary/20 text-xs font-medium text-foreground rounded-lg transition-all" type="text" value={form.expectedReturn} onChange={handleChange("expectedReturn")} onFocus={handleNumericFocus("expectedReturn")} onBlur={handleNumericBlur("expectedReturn")} />
-                      <div className="flex gap-1"><SmallStepButton onClick={changeBy("expectedReturn", -0.1)}>-</SmallStepButton><SmallStepButton onClick={changeBy("expectedReturn", 0.1)}>+</SmallStepButton></div>
-                    </div>
-                    <div className="mt-1 flex flex-col gap-1">
-                      <label className="flex items-center gap-2 text-[11px]">
-                        <input type="radio" name="returnMode" value="avg" checked={returnMode === "avg"} onChange={() => setReturnMode("avg")} className="h-3 w-3" />
-                        <span>เฉลี่ยรวม</span>
-                      </label>
-                      <label className="flex items-center gap-2 text-[11px]">
-                        <input type="radio" name="returnMode" value="custom" checked={returnMode === "custom"} onChange={() => setReturnMode("custom")} className="h-3 w-3" />
-                        <span>จัดสรรเงินลงทุนเอง</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {returnMode === "custom" && (
-                    <div className="space-y-2 rounded-md bg-slate-50 p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-medium text-slate-700">การจัดสรรสินทรัพย์</span>
-                        <span className="rounded-full bg-indigo-50 px-2 py-[1px] text-[10px] text-indigo-600">Premium Plan</span>
+                        <div className="flex items-center gap-2 mt-2">
+                          <button onClick={changeBy("currentSavings", -10000)} className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-all active:scale-95 text-xl font-medium">-</button>
+                          <div className="flex-1 flex items-baseline justify-center gap-1 border-b border-transparent hover:border-emerald-200 transition-colors">
+                            <span className="text-sm font-bold text-slate-400">฿</span>
+                            <Input
+                              className="h-10 pl-1 text-3xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 w-full text-center"
+                              value={form.currentSavings}
+                              onChange={handleChange("currentSavings")}
+                              onFocus={handleNumericFocus("currentSavings")}
+                              onBlur={handleNumericBlur("currentSavings")}
+                            />
+                          </div>
+                          <button onClick={changeBy("currentSavings", 10000)} className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 flex items-center justify-center transition-all active:scale-95 text-xl font-medium">+</button>
+                        </div>
+                        <input
+                          type="range"
+                          min="0" max="10000000" step="10000"
+                          value={Number(String(form.currentSavings).replace(/,/g, ""))}
+                          onChange={(e) => setForm(prev => ({ ...prev, currentSavings: formatInputDisplay(e.target.value) }))}
+                          className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-600 transition-all mt-3"
+                        />
                       </div>
-                      {allocations.map((a) => (
-                        <div key={a.id} className="space-y-1 rounded-md border border-slate-200 bg-white p-2">
-                          <div className="flex items-center justify-between">
-                            <Input className="h-8 flex-1 text-xs" value={a.name} onChange={updateAllocation(a.id, "name")} />
-                            <button type="button" onClick={() => removeAllocation(a.id)} className="ml-2 h-6 w-6 rounded-full bg-rose-100 text-xs font-bold text-rose-600">×</button>
-                          </div>
-                          <div className="mt-1 grid grid-cols-3 gap-2 text-[11px]">
-                            <div>
-                              <Label className="text-[11px]">สัดส่วน (%)</Label>
-                              <Input className="mt-1 h-7 text-xs" type="text" value={a.weight} onChange={updateAllocation(a.id, "weight")} />
-                            </div>
-                            <div>
-                              <Label className="text-[11px]">ผลตอบแทนคาดหวัง (%)</Label>
-                              <Input className="mt-1 h-7 text-xs" type="text" value={a.expectedReturn} onChange={updateAllocation(a.id, "expectedReturn")} />
-                            </div>
-                            <div>
-                              <Label className="text-[11px]">ผันผวน (%)</Label>
-                              <Input className="mt-1 h-7 text-xs" type="text" value={a.volatility} onChange={updateAllocation(a.id, "volatility")} />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      <Button type="button" variant="outline" className="mt-1 h-7 w-full text-[11px]" onClick={addAllocation}>+ เพิ่มสินทรัพย์</Button>
-                    </div>
-                  )}
 
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-slate-600">อัตราเงินเฟ้อ (% ต่อปี)</Label>
-                    <div className="flex items-center gap-2">
-                      <Input className="h-9 bg-secondary/50 border-transparent focus:bg-background focus:ring-2 focus:ring-primary/20 text-xs font-medium text-foreground rounded-lg transition-all" type="text" value={form.inflation} onChange={handleChange("inflation")} onFocus={handleNumericFocus("inflation")} onBlur={handleNumericBlur("inflation")} />
-                      <div className="flex gap-1"><SmallStepButton onClick={changeBy("inflation", -1)}>-</SmallStepButton><SmallStepButton onClick={changeBy("inflation", 1)}>+</SmallStepButton></div>
+                      {/* Monthly Savings */}
+                      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all duration-300 group/item">
+                        <div className="flex justify-between items-start mb-2">
+                          <Label className="text-xs font-bold text-slate-600 pl-1">ออมต่อเดือน</Label>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <button onClick={changeBy("monthlySaving", -500)} className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-all active:scale-95 text-xl font-medium">-</button>
+                          <div className="flex-1 flex items-baseline justify-center gap-1 border-b border-transparent hover:border-emerald-200 transition-colors">
+                            <span className="text-sm font-bold text-slate-400">฿</span>
+                            <Input
+                              className="h-10 pl-1 text-3xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 w-full text-center"
+                              value={form.monthlySaving}
+                              onChange={handleChange("monthlySaving")}
+                              onFocus={handleNumericFocus("monthlySaving")}
+                              onBlur={handleNumericBlur("monthlySaving")}
+                            />
+                          </div>
+                          <button onClick={changeBy("monthlySaving", 500)} className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 flex items-center justify-center transition-all active:scale-95 text-xl font-medium">+</button>
+                        </div>
+                        <input
+                          type="range"
+                          min="0" max="200000" step="500"
+                          value={Number(String(form.monthlySaving).replace(/,/g, ""))}
+                          onChange={(e) => setForm(prev => ({ ...prev, monthlySaving: formatInputDisplay(e.target.value) }))}
+                          className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-600 transition-all mt-3"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Saving Mode Toggle */}
+                    <div className="pt-2 border-t border-slate-100">
+                      <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                        <button onClick={() => setSavingMode("flat")} className={`flex-1 py-1.5 text-[9px] font-bold rounded-lg transition-all ${savingMode === "flat" ? "bg-slate-800 text-white shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>ออมเท่าเดิม</button>
+                        <button onClick={() => setSavingMode("step5")} className={`flex-1 py-1.5 text-[9px] font-bold rounded-lg transition-all ${savingMode === "step5" ? "bg-emerald-500 text-white shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>ปรับเพิ่มทุก 5 ปี</button>
+                      </div>
+
+                      {savingMode === "step5" && (
+                        <div className="mt-2 grid grid-cols-3 gap-2 animate-in fade-in slide-in-from-top-1">
+                          {[{ label: "Age 35", key: "savingAt35" as const }, { label: "Age 40", key: "savingAt40" as const }, { label: "Age 45", key: "savingAt45" as const }].map((row) => (
+                            <div key={row.key} className="bg-white rounded-lg border border-slate-100 p-1.5 text-center">
+                              <div className="text-[8px] text-slate-400 font-bold mb-0.5">{row.label}</div>
+                              <Input className="h-6 w-full text-center text-[10px] font-bold border-none bg-emerald-50/50 p-0 text-emerald-700 focus:ring-0" value={form[row.key]} onChange={handleChange(row.key)} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Investment Strategy Card */}
+                <div className="bg-white rounded-[24px] p-5 border border-slate-100 shadow-xl shadow-slate-200/50 relative overflow-hidden group">
+                  <div className="flex items-center gap-3 mb-4 relative z-10">
+                    <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600 shadow-sm ring-1 ring-violet-100">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-base tracking-tight">กลยุทธ์การลงทุน</h3>
+                      <p className="text-xs text-slate-400 font-medium">ผลตอบแทนและความเสี่ยง</p>
                     </div>
                   </div>
 
-                  {/* --------- ส่วนประกันชีวิต (Multiple Plans) --------- */}
-                  <div className="mt-2 space-y-2 border-t border-slate-200 pt-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-[11px] font-semibold text-slate-700">ประกันชีวิต</Label>
-                      <Button variant="outline" size="sm" onClick={addInsurancePlan} className="h-6 text-[10px] px-2">
-                        + เพิ่มแผน
-                      </Button>
+                  <div className={`relative z-10 space-y-6 ${showResult ? "space-y-4" : "space-y-6"}`}>
+                    {/* Expected Return Hero */}
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-slate-500">ผลตอบแทนที่คาดหวัง (% ต่อปี)</Label>
+                        {returnMode === 'avg' ? (
+                          <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-1 border border-slate-100">
+                            <button onClick={changeBy("expectedReturn", -0.5)} className="w-6 h-6 flex items-center justify-center rounded bg-white shadow-sm text-slate-500 hover:text-blue-500 text-xs font-bold transition-all">-</button>
+                            <div className="flex items-center justify-center min-w-[3rem]">
+                              <Input
+                                className="w-8 h-6 bg-transparent border-none p-0 text-right text-xs font-bold focus:ring-0 text-slate-700"
+                                value={form.expectedReturn}
+                                onChange={handleChange("expectedReturn")}
+                              />
+                              <span className="text-xs font-bold text-slate-700 ml-0.5">%</span>
+                            </div>
+                            <button onClick={changeBy("expectedReturn", 0.5)} className="w-6 h-6 flex items-center justify-center rounded bg-white shadow-sm text-slate-500 hover:text-blue-500 text-xs font-bold transition-all">+</button>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm bg-slate-100 text-slate-500">Custom</span>
+                        )}
+                      </div>
+
+                      <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                        <button onClick={() => setReturnMode("avg")} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${returnMode === "avg" ? "bg-white text-slate-800 shadow-sm ring-1 ring-black/5" : "text-slate-400 hover:text-slate-600"}`}>เฉลี่ยรวม</button>
+                        <button onClick={() => setReturnMode("custom")} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${returnMode === "custom" ? "bg-blue-500 text-white shadow-md shadow-blue-200" : "text-slate-400 hover:text-slate-600"}`}>จัดพอร์ตลงทุนเอง</button>
+                      </div>
+
+                      {returnMode === "custom" && (
+                        <div className="bg-slate-50/50 rounded-2xl border border-slate-200/60 p-3 animate-in fade-in slide-in-from-top-2">
+                          <div className="flex justify-between items-center mb-2 px-1">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">Assets</span>
+                            <button onClick={addAllocation} className="text-[10px] font-bold text-violet-600 hover:underline">+ Add New</button>
+                          </div>
+                          <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-1">
+                            {allocations.map((a) => (
+                              <div key={a.id} className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-100 shadow-sm group/row">
+                                <input className="flex-1 text-xs font-bold bg-transparent border-none p-0 focus:ring-0 text-slate-700 placeholder:text-slate-300" placeholder="Asset Name" value={a.name} onChange={updateAllocation(a.id, "name")} />
+                                <div className="w-12">
+                                  <input className="w-full text-xs font-bold bg-slate-50 rounded-lg border-none text-center text-slate-600 focus:ring-1 focus:ring-violet-200" placeholder="%" value={a.weight} onChange={updateAllocation(a.id, "weight")} />
+                                </div>
+                                <div className="w-12">
+                                  <input className="w-full text-xs font-bold bg-emerald-50 rounded-lg border-none text-center text-emerald-600 focus:ring-1 focus:ring-emerald-200" placeholder="Ret%" value={a.expectedReturn} onChange={updateAllocation(a.id, "expectedReturn")} />
+                                </div>
+                                <button onClick={() => removeAllocation(a.id)} className="text-slate-300 hover:text-rose-500 opacity-0 group-hover/row:opacity-100 transition-opacity"><CloseIcon className="w-3.5 h-3.5" /></button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="space-y-3">
-                      {form.insurancePlans.map((plan, index) => (
-                        <div key={plan.id} className={`rounded-xl border p-3 space-y-3 relative transition-all duration-200 ${plan.active ? "bg-gradient-to-b from-card to-primary/5 border-primary/20 shadow-sm ring-1 ring-primary/10" : "bg-secondary/50 border-border opacity-75 grayscale-[0.5]"}`}>
-                          {/* Header */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => updateInsurancePlan(index, "expanded", !plan.expanded)}
-                                className="text-slate-400 hover:text-slate-600 transition-colors"
-                              >
-                                {plan.expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                              </button>
-                              <input
-                                type="text"
-                                value={plan.planName}
-                                onChange={(e) => updateInsurancePlan(index, "planName", e.target.value)}
-                                className="border-none bg-transparent p-0 text-sm font-bold text-slate-800 focus:ring-0 w-32"
-                              />
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1">
-                                <input
-                                  type="checkbox"
-                                  className="h-3 w-3 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                  checked={plan.active}
-                                  onChange={(e) => updateInsurancePlan(index, "active", e.target.checked)}
-                                />
-                                <span className="text-[10px] text-slate-500">ใช้งาน</span>
-                              </div>
+                    {/* Inflation */}
+                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">อัตราเงินเฟ้อ (% ต่อปี)</Label>
+                      <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-1 border border-slate-100">
+                        <button onClick={changeBy("inflation", -0.5)} className="w-6 h-6 flex items-center justify-center rounded bg-white shadow-sm text-slate-500 hover:text-rose-500 text-xs font-bold">-</button>
+                        <div className="flex items-center justify-center min-w-[3rem]">
+                          <Input
+                            className="w-8 h-6 bg-transparent border-none p-0 text-right text-xs font-bold focus:ring-0 text-slate-700"
+                            value={form.inflation}
+                            onChange={handleChange("inflation")}
+                          />
+                          <span className="text-xs font-bold text-slate-700 ml-0.5">%</span>
+                        </div>
+                        <button onClick={changeBy("inflation", 0.5)} className="w-6 h-6 flex items-center justify-center rounded bg-white shadow-sm text-slate-500 hover:text-rose-500 text-xs font-bold">+</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                              <button
-                                type="button"
-                                onClick={() => removeInsurancePlan(plan.id)}
-                                className="text-slate-400 hover:text-red-500 transition-colors"
-                              >
-                                <CloseIcon className="w-4 h-4" />
-                              </button>
+
+                {/* Insurance Plans Card */}
+                <div className="bg-white rounded-[24px] p-5 border border-slate-100 shadow-xl shadow-slate-200/50 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none group-hover:bg-amber-100/50 transition-colors"></div>
+
+                  <div className="flex items-center justify-between mb-4 relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm ring-1 ring-blue-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-800 text-base">ประกันชีวิต</h3>
+                        <p className="text-xs text-slate-400">วางแผนความคุ้มครอง</p>
+                      </div>
+                    </div>
+
+                    <Button variant="outline" size="sm" onClick={addInsurancePlan} className="h-9 rounded-xl bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100 font-bold text-xs gap-1.5 shadow-sm">
+                      + เพิ่มประกัน
+                    </Button>
+                  </div>
+
+                  <div className={`space-y-3 ${showResult ? "grid grid-cols-1 gap-3 space-y-0" : ""}`}>
+                    {form.insurancePlans.map((plan, index) => (
+                      <div key={plan.id} className={`rounded-[20px] border transition-all duration-300 overflow-hidden group/card ${plan.active ? "bg-white border-blue-100 shadow-md ring-1 ring-blue-50/50" : "bg-slate-50 border-slate-200 opacity-60 hover:opacity-100"}`}>
+                        {/* Header Row */}
+                        <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-50/80 transition-colors" onClick={() => updateInsurancePlan(index, "expanded", !plan.expanded)}>
+                          <div className="flex items-center gap-4 overflow-hidden">
+                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${plan.active ? "bg-blue-100 text-blue-600" : "bg-slate-200 text-slate-400"}`}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-bold text-slate-800 truncate mb-0.5">{plan.planName || "แผนประกันใหม่"}</div>
+                              <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+                                <span className="bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200">{plan.type}</span>
+                                <span>• คุ้มครองถึง {plan.coverageAge || "?"}</span>
+                              </div>
                             </div>
                           </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-xs font-bold text-slate-700 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">฿{formatNumber(plan.sumAssured)}</div>
+                            <div className={`transition-transform duration-300 ${plan.expanded ? "rotate-180" : ""}`}>
+                              <ChevronDown className="w-5 h-5 text-slate-400" />
+                            </div>
+                          </div>
+                        </div>
 
-                          {plan.expanded && (
-                            <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-200 border-t border-slate-100 pt-2">
+                        {/* Expanded Content */}
+                        {plan.expanded && (
+                          <div className="p-3 border-t border-slate-100 bg-white space-y-3 animate-in slide-in-from-top-2 duration-200">
+                            <div className="grid grid-cols-2 gap-3">
                               <div className="space-y-1">
-                                <Label className="text-[11px] text-slate-600">ประเภทประกัน</Label>
-                                <select
-                                  className="h-9 w-full rounded-lg border-transparent bg-secondary/50 px-3 text-xs font-medium text-foreground focus:bg-background focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                  value={plan.type}
-                                  onChange={(e) => updateInsurancePlan(index, "type", e.target.value)}
-                                >
+                                <Label className="text-[10px] text-slate-500">ชื่อแผน</Label>
+                                <Input className="h-8 text-xs font-bold border-slate-200 bg-slate-50 focus:bg-white transition-all" value={plan.planName} onChange={(e) => updateInsurancePlan(index, "planName", e.target.value)} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-[10px] text-slate-500">ประเภท</Label>
+                                <select className="h-8 w-full rounded-md border-slate-200 bg-slate-50 text-xs font-bold text-slate-700" value={plan.type} onChange={(e) => updateInsurancePlan(index, "type", e.target.value)}>
                                   <option value="ตลอดชีพ">ตลอดชีพ (Whole Life)</option>
                                   <option value="สะสมทรัพย์">สะสมทรัพย์ (Endowment)</option>
                                   <option value="บำนาญ">บำนาญ (Annuity)</option>
@@ -2647,455 +2910,573 @@ export default function HomePage() {
                                   <option value="Unit Linked">Unit Linked</option>
                                 </select>
                               </div>
+                            </div>
 
+                            <div className="grid grid-cols-2 gap-3">
                               <div className="space-y-1">
-                                <Label className="text-[11px] text-slate-600">คุ้มครองถึงอายุ (ปี)</Label>
-                                <Input
-                                  className="h-8 text-xs"
-                                  type="text"
-                                  value={plan.coverageAge}
-                                  onChange={(e) => updateInsurancePlan(index, "coverageAge", e.target.value)}
-                                />
+                                <Label className="text-[10px] text-slate-500">คุ้มครองถึงอายุ (ปี)</Label>
+                                <Input className="h-8 text-xs font-bold border-slate-200" value={plan.coverageAge} onChange={(e) => updateInsurancePlan(index, "coverageAge", e.target.value)} />
                               </div>
-
                               <div className="space-y-1">
-                                <Label className="text-[11px] text-slate-600">ทุนประกัน (บาท)</Label>
-                                <Input
-                                  className="h-8 text-xs"
-                                  type="text"
-                                  value={plan.sumAssured}
-                                  onChange={(e) => updateInsurancePlan(index, "sumAssured", e.target.value)}
-                                  onBlur={(e) => updateInsurancePlan(index, "sumAssured", formatInputDisplay(e.target.value))}
-                                />
+                                <Label className="text-[10px] text-slate-500">ทุนประกัน (บาท)</Label>
+                                <Input className="h-8 text-xs font-bold border-slate-200" value={plan.sumAssured} onChange={(e) => updateInsurancePlan(index, "sumAssured", e.target.value)} onBlur={(e) => updateInsurancePlan(index, "sumAssured", formatInputDisplay(e.target.value))} />
                               </div>
+                            </div>
 
-                              {/* Specific Fields based on Type */}
-                              {plan.type === "สะสมทรัพย์" && (
-                                <>
-                                  <div className="space-y-1">
-                                    <Label className="text-[11px] font-bold text-slate-500">เงินครบสัญญา (บาท)</Label>
-                                    <Input
-                                      className="h-9 text-xs font-medium bg-slate-50/50 border-input/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg transition-all"
-                                      value={plan.maturityAmount}
-                                      onChange={(e) => updateInsurancePlan(index, "maturityAmount", e.target.value)}
-                                      onBlur={(e) => updateInsurancePlan(index, "maturityAmount", formatInputDisplay(e.target.value))}
-                                    />
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <div className="space-y-1">
-                                      <Label className="text-[11px] font-bold text-slate-500">เงินคืนระหว่างสัญญา</Label>
-                                      <Input
-                                        className="h-9 text-xs font-medium bg-slate-50/50 border-input/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg transition-all"
-                                        value={plan.cashBackAmount}
-                                        onChange={(e) => updateInsurancePlan(index, "cashBackAmount", e.target.value)}
-                                        onBlur={(e) => updateInsurancePlan(index, "cashBackAmount", formatInputDisplay(e.target.value))}
-                                      />
-                                    </div>
-                                    <div className="space-y-1">
-                                      <Label className="text-[11px] font-bold text-slate-500">คืนทุกๆ (ปี)</Label>
-                                      <Input
-                                        className="h-9 text-xs font-medium bg-slate-50/50 border-input/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg transition-all"
-                                        value={plan.cashBackFrequency}
-                                        onChange={(e) => updateInsurancePlan(index, "cashBackFrequency", e.target.value)}
-                                      />
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-
-                              {plan.type === "บำนาญ" && (
-                                <>
-                                  <div className="space-y-1">
-                                    <Label className="text-[11px] font-bold text-slate-500">ความคุ้มครองก่อนรับบำนาญ</Label>
-                                    <Input
-                                      className="h-9 text-xs font-medium bg-slate-50/50 border-input/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg transition-all"
-                                      value={plan.deathBenefitPrePension}
-                                      onChange={(e) => updateInsurancePlan(index, "deathBenefitPrePension", e.target.value)}
-                                      onBlur={(e) => updateInsurancePlan(index, "deathBenefitPrePension", formatInputDisplay(e.target.value))}
-                                    />
-                                  </div>
-                                  <div className="flex items-center gap-2 py-1">
-                                    <input
-                                      type="checkbox"
-                                      id={`chkUnequalPension-${plan.id}`}
-                                      className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                                      checked={plan.unequalPension}
-                                      onChange={(e) => updateInsurancePlan(index, "unequalPension", e.target.checked)}
-                                    />
-                                    <Label htmlFor={`chkUnequalPension-${plan.id}`} className="text-[11px] font-medium text-slate-700">เงินบำนาญไม่เท่ากันทุกปี</Label>
-                                  </div>
-
-                                  {!plan.unequalPension ? (
-                                    <>
-                                      <div className="space-y-1">
-                                        <Label className="text-[11px] font-bold text-slate-500">รับบำนาญตั้งแต่อายุ - ถึงอายุ</Label>
-                                        <div className="flex gap-2">
-                                          <Input
-                                            className="h-9 text-xs font-medium bg-slate-50/50 border-input/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg transition-all"
-                                            value={plan.pensionStartAge}
-                                            onChange={(e) => updateInsurancePlan(index, "pensionStartAge", e.target.value)}
-                                          />
-                                          <span className="self-center text-slate-400">-</span>
-                                          <Input
-                                            className="h-9 text-xs font-medium bg-slate-50/50 border-input/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg transition-all"
-                                            value={plan.pensionEndAge}
-                                            onChange={(e) => updateInsurancePlan(index, "pensionEndAge", e.target.value)}
-                                          />
-                                        </div>
-                                      </div>
-                                      <div className="space-y-1">
-                                        <Label className="text-[11px] font-bold text-slate-500">เงินบำนาญต่อปี (% ของทุน หรือ ระบุเงิน)</Label>
-                                        <div className="flex gap-2">
-                                          <div className="relative flex-1">
-                                            <Input
-                                              className="h-9 text-xs pr-6 font-medium bg-slate-50/50 border-input/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg transition-all"
-                                              placeholder="%"
-                                              value={plan.pensionPercent}
-                                              onChange={(e) => updateInsurancePlan(index, "pensionPercent", e.target.value)}
-                                            />
-                                            <span className="absolute right-2 top-2.5 text-[10px] text-slate-400">%</span>
-                                          </div>
-                                          <div className="relative flex-[2]">
-                                            <Input
-                                              className="h-9 text-xs font-medium bg-slate-50/50 border-input/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg transition-all"
-                                              placeholder="บาท"
-                                              value={plan.pensionAmount}
-                                              onChange={(e) => updateInsurancePlan(index, "pensionAmount", e.target.value)}
-                                              onBlur={(e) => updateInsurancePlan(index, "pensionAmount", formatInputDisplay(e.target.value))}
-                                            />
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <div className="space-y-3 rounded-lg bg-slate-50/50 p-3 border border-slate-100 mt-2">
-                                      {/* Re-using checkbox for visual consistency if needed, but the outer one controls toggle. Content inside: */}
-                                      <div className="space-y-3">
-                                        {(plan.pensionTiers || []).map((tier, tIndex) => (
-                                          <div key={tIndex} className="p-3 bg-white border border-slate-200 rounded-xl space-y-3 relative shadow-sm">
-                                            <div className="space-y-1">
-                                              <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ช่วงอายุ</Label>
-                                              <div className="flex items-center gap-2">
-                                                <input
-                                                  className="w-full h-8 text-center text-xs font-bold rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-                                                  value={tier.startAge}
-                                                  onChange={(e) => updateInsurancePlanTier(index, tIndex, "startAge", e.target.value)}
-                                                />
-                                                <span className="text-slate-400">-</span>
-                                                <input
-                                                  className="w-full h-8 text-center text-xs font-bold rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-                                                  value={tier.endAge}
-                                                  onChange={(e) => updateInsurancePlanTier(index, tIndex, "endAge", e.target.value)}
-                                                />
-                                              </div>
-                                            </div>
-
-                                            <div className="space-y-1">
-                                              <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">เงินบำนาญ (ปีละ)</Label>
-                                              <div className="flex items-center gap-2">
-                                                <input
-                                                  className="flex-1 h-9 rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-bold shadow-sm focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-                                                  value={tier.amount}
-                                                  onChange={(e) => updateInsurancePlanTier(index, tIndex, "amount", e.target.value)}
-                                                  onBlur={(e) => updateInsurancePlanTier(index, tIndex, "amount", formatInputDisplay(e.target.value))}
-                                                />
-                                                <button onClick={() => changeInsurancePlanTierAmount(index, tIndex, -1000)} className="h-9 w-9 rounded-full border border-slate-200 bg-white text-slate-400 hover:text-slate-600 hover:bg-slate-50 flex items-center justify-center shadow-sm transition-all hover:scale-105 active:scale-95">
-                                                  -
-                                                </button>
-                                                <button onClick={() => changeInsurancePlanTierAmount(index, tIndex, 1000)} className="h-9 w-9 rounded-full border border-slate-200 bg-white text-slate-400 hover:text-slate-600 hover:bg-slate-50 flex items-center justify-center shadow-sm transition-all hover:scale-105 active:scale-95">
-                                                  +
-                                                </button>
-                                              </div>
-                                            </div>
-
-                                            <button
-                                              onClick={() => removeInsurancePlanTier(index, tIndex)}
-                                              className="absolute top-2 right-2 p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all"
-                                            >
-                                              <CloseIcon className="w-3 h-3" />
-                                            </button>
-                                          </div>
-                                        ))}
-
-                                        <button
-                                          onClick={() => addInsurancePlanTier(index)}
-                                          className="w-full py-2 bg-blue-50 text-blue-600 text-xs rounded-lg hover:bg-blue-100 transition-colors font-bold flex items-center justify-center gap-1 border border-blue-100 border-dashed"
-                                        >
-                                          + เพิ่มช่วงบำนาญ
-                                        </button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </>
-                              )}
-
-                              {/* Surrender Option */}
-                              {plan.type !== "ชั่วระยะเวลา" && (
-                                <div className="space-y-2 pt-2 border-t border-slate-100">
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="checkbox"
-                                      id={`chkSurrender-${plan.id}`}
-                                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                      checked={plan.useSurrender}
-                                      onChange={(e) => updateInsurancePlan(index, "useSurrender", e.target.checked)}
-                                    />
-                                    <Label htmlFor={`chkSurrender-${plan.id}`} className="text-[11px] text-slate-700">เวนคืนประกัน</Label>
-                                  </div>
-                                  {plan.useSurrender && (
-                                    <div className="pl-6 space-y-3">
-                                      <div className="space-y-1">
-                                        <Label className="text-[11px] text-slate-700 font-semibold">รูปแบบมูลค่าเวนคืน</Label>
-                                        <div className="flex items-center gap-4">
-                                          <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer">
-                                            <input
-                                              type="radio"
-                                              className="h-3 w-3 text-blue-600 focus:ring-blue-500"
-                                              checked={plan.surrenderMode !== "table"}
-                                              onChange={() => updateInsurancePlan(index, "surrenderMode", "single")}
-                                            />
-                                            กรอกค่าเดียว
-                                          </label>
-                                          <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer">
-                                            <input
-                                              type="radio"
-                                              className="h-3 w-3 text-blue-600 focus:ring-blue-500"
-                                              checked={plan.surrenderMode === "table"}
-                                              onChange={() => updateInsurancePlan(index, "surrenderMode", "table")}
-                                            />
-                                            กรอกตารางเวนคืน
-                                          </label>
-                                        </div>
-                                      </div>
-
-                                      <div className="space-y-1">
-                                        <Label className="text-[10px] text-slate-500">อายุที่เวนคืน</Label>
-                                        <div className="flex items-center gap-2">
-                                          <Input
-                                            className="h-8 text-xs font-medium"
-                                            value={plan.surrenderAge}
-                                            onChange={(e) => updateInsurancePlan(index, "surrenderAge", e.target.value)}
-                                          />
-                                          <div className="flex gap-1">
-                                            <RoundStepButton onClick={() => updateInsurancePlan(index, "surrenderAge", String(Number(plan.surrenderAge) - 1))}>-</RoundStepButton>
-                                            <RoundStepButton onClick={() => updateInsurancePlan(index, "surrenderAge", String(Number(plan.surrenderAge) + 1))}>+</RoundStepButton>
-                                          </div>
-                                        </div>
-                                      </div>
-
-                                      {plan.surrenderMode === "table" ? (
-                                        <div>
-                                          <Button
-                                            type="button"
-                                            className="w-full text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
-                                            onClick={() => {
-                                              setForm(prev => ({ ...prev, selectedPlanId: plan.id }));
-                                              setShowInsuranceTable(true);
-                                            }}
-                                          >
-                                            กรอกตารางเวนคืน
-                                          </Button>
-                                        </div>
-                                      ) : (
-                                        <div className="space-y-1">
-                                          <Label className="text-[10px] text-slate-500">มูลค่าที่เวนคืน</Label>
-                                          <div className="flex items-center gap-2">
-                                            <Input
-                                              className="h-8 text-xs font-medium"
-                                              value={plan.surrenderValue}
-                                              onChange={(e) => updateInsurancePlan(index, "surrenderValue", e.target.value)}
-                                              onBlur={(e) => updateInsurancePlan(index, "surrenderValue", formatInputDisplay(e.target.value))}
-                                            />
-                                            <div className="flex gap-1">
-                                              <RoundStepButton onClick={() => {
-                                                const v = Number(String(plan.surrenderValue).replace(/,/g, "")) || 0;
-                                                updateInsurancePlan(index, "surrenderValue", formatInputDisplay(v - 1000));
-                                              }}>-</RoundStepButton>
-                                              <RoundStepButton onClick={() => {
-                                                const v = Number(String(plan.surrenderValue).replace(/,/g, "")) || 0;
-                                                updateInsurancePlan(index, "surrenderValue", formatInputDisplay(v + 1000));
-                                              }}>+</RoundStepButton>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
+                            {/* Cash Back / Maturity (Endowment) */}
+                            {plan.type === "สะสมทรัพย์" && (
+                              <div className="space-y-3 bg-indigo-50/50 p-3 rounded-xl border border-indigo-100/50">
+                                <div className="space-y-1">
+                                  <Label className="text-[10px] text-indigo-500 font-bold">เงินครบสัญญา (Maturity)</Label>
+                                  <Input className="h-8 text-xs font-bold border-indigo-200 focus:ring-indigo-200" value={plan.maturityAmount} onChange={(e) => updateInsurancePlan(index, "maturityAmount", e.target.value)} onBlur={(e) => updateInsurancePlan(index, "maturityAmount", formatInputDisplay(e.target.value))} />
                                 </div>
-                              )}
-                              {/* Footer Actions */}
-                              <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 px-2 text-[10px] text-rose-500 hover:text-rose-600 hover:bg-rose-50"
-                                  onClick={() => removeInsurancePlan(plan.id)}
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div className="space-y-1">
+                                    <Label className="text-[10px] text-indigo-500">เงินคืนระหว่างสัญญา</Label>
+                                    <Input className="h-8 text-xs border-indigo-200" value={plan.cashBackAmount} onChange={(e) => updateInsurancePlan(index, "cashBackAmount", e.target.value)} onBlur={(e) => updateInsurancePlan(index, "cashBackAmount", formatInputDisplay(e.target.value))} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[10px] text-indigo-500">ทุกๆ (ปี)</Label>
+                                    <Input className="h-8 text-xs border-indigo-200" value={plan.cashBackFrequency} onChange={(e) => updateInsurancePlan(index, "cashBackFrequency", e.target.value)} />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Pension Logic */}
+                            {plan.type === "บำนาญ" && (
+                              <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-100/50 space-y-3">
+                                <div className="space-y-1">
+                                  <Label className="text-[9px] text-amber-700">ความคุ้มครองก่อนรับบำนาญ (Death Benefit)</Label>
+                                  <Input className="h-8 text-xs font-bold border-amber-200" value={plan.deathBenefitPrePension} onChange={(e) => updateInsurancePlan(index, "deathBenefitPrePension", e.target.value)} />
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <input type="checkbox" checked={plan.unequalPension} onChange={(e) => updateInsurancePlan(index, "unequalPension", e.target.checked)} className="rounded text-amber-600 focus:ring-amber-500" />
+                                  <span className="text-[10px] font-bold text-amber-900">เงินบำนาญปรับเพิ่ม (Unequal Pension)</span>
+                                </div>
+                                {!plan.unequalPension ? (
+                                  <div className="space-y-3">
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div className="space-y-1">
+                                        <Label className="text-[9px] text-amber-700">เริ่มอายุ</Label>
+                                        <Input className="h-7 text-xs bg-white" value={plan.pensionStartAge} onChange={(e) => updateInsurancePlan(index, "pensionStartAge", e.target.value)} />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <Label className="text-[9px] text-amber-700">สิ้นสุดอายุ</Label>
+                                        <Input className="h-7 text-xs bg-white" value={plan.pensionEndAge} onChange={(e) => updateInsurancePlan(index, "pensionEndAge", e.target.value)} />
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <div className="space-y-1 flex-1">
+                                        <Label className="text-[9px] text-amber-700">% ทุน</Label>
+                                        <Input className="h-8 text-xs bg-white" value={plan.pensionPercent} onChange={(e) => updateInsurancePlan(index, "pensionPercent", e.target.value)} />
+                                      </div>
+                                      <div className="space-y-1 flex-[2]">
+                                        <Label className="text-[9px] text-amber-700">จำนวนเงิน (บาท/ปี)</Label>
+                                        <Input className="h-8 text-xs font-bold bg-white" value={plan.pensionAmount} onChange={(e) => updateInsurancePlan(index, "pensionAmount", e.target.value)} onBlur={(e) => updateInsurancePlan(index, "pensionAmount", formatInputDisplay(e.target.value))} />
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-2">
+                                    {(plan.pensionTiers || []).map((tier, tIndex) => (
+                                      <div key={tIndex} className="bg-white p-2 rounded-lg border border-amber-200 relative">
+                                        <div className="flex gap-2 mb-1">
+                                          <input className="w-16 h-6 text-center text-[10px] border border-slate-200 rounded" value={tier.startAge} onChange={(e) => updateInsurancePlanTier(index, tIndex, "startAge", e.target.value)} />
+                                          <span className="text-[10px] self-center">-</span>
+                                          <input className="w-16 h-6 text-center text-[10px] border border-slate-200 rounded" value={tier.endAge} onChange={(e) => updateInsurancePlanTier(index, tIndex, "endAge", e.target.value)} />
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <input className="flex-1 h-7 text-xs px-2 border border-slate-200 rounded font-bold" value={tier.amount} onChange={(e) => updateInsurancePlanTier(index, tIndex, "amount", e.target.value)} />
+                                        </div>
+                                        <button onClick={() => removeInsurancePlanTier(index, tIndex)} className="absolute top-1 right-1 text-slate-300 hover:text-rose-500"><CloseIcon className="w-3 h-3" /></button>
+                                      </div>
+                                    ))}
+                                    <Button variant="ghost" size="sm" className="w-full text-[10px] text-amber-700 h-7 bg-amber-100/50 hover:bg-amber-100" onClick={() => addInsurancePlanTier(index)}>+ เพิ่มช่วงบำนาญ (Tier)</Button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Surrender Option */}
+                            {plan.type !== "ชั่วระยะเวลา" && (
+                              <div className="space-y-2 pt-2 border-t border-slate-100">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                    checked={plan.useSurrender}
+                                    onChange={(e) => updateInsurancePlan(index, "useSurrender", e.target.checked)}
+                                  />
+                                  <Label className="text-[11px] text-slate-700">คำนวณมูลค่าเวนคืน (Surrender Value)</Label>
+                                </div>
+                                {plan.useSurrender && (
+                                  <div className="pl-6 space-y-3">
+                                    <div className="flex items-center gap-4">
+                                      <label className="flex items-center gap-1.5 text-[10px] text-slate-600 cursor-pointer">
+                                        <input type="radio" checked={plan.surrenderMode !== "table"} onChange={() => updateInsurancePlan(index, "surrenderMode", "single")} className="text-blue-600" /> ระบุค่าเดียว
+                                      </label>
+                                      <label className="flex items-center gap-1.5 text-[10px] text-slate-600 cursor-pointer">
+                                        <input type="radio" checked={plan.surrenderMode === "table"} onChange={() => updateInsurancePlan(index, "surrenderMode", "table")} className="text-blue-600" /> ระบุตาราง
+                                      </label>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <Label className="text-[10px] text-slate-500">เวนคืนตอนอายุ</Label>
+                                      <div className="flex items-center gap-2">
+                                        <Input className="h-7 text-xs w-20" value={plan.surrenderAge} onChange={(e) => updateInsurancePlan(index, "surrenderAge", e.target.value)} />
+                                      </div>
+                                    </div>
+
+                                    {plan.surrenderMode === "table" ? (
+                                      <Button type="button" className="w-full text-[10px] h-7 bg-slate-800 text-white" onClick={() => { setForm(prev => ({ ...prev, selectedPlanId: plan.id })); setShowInsuranceTable(true); }}>แก้ไขตารางเวนคืน</Button>
+                                    ) : (
+                                      <div className="space-y-1">
+                                        <Label className="text-[10px] text-slate-500">มูลค่าเวนคืน</Label>
+                                        <Input className="h-8 text-xs" value={plan.surrenderValue} onChange={(e) => updateInsurancePlan(index, "surrenderValue", e.target.value)} onBlur={(e) => updateInsurancePlan(index, "surrenderValue", formatInputDisplay(e.target.value))} />
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Actions & Table Toggle */}
+                            <div className="flex justify-between items-center pt-4 border-t border-slate-100 mt-4">
+                              <div className="flex items-center gap-2">
+                                <button onClick={() => removeInsurancePlan(plan.id)} className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold hover:bg-rose-100 transition-colors">
+                                  ลบ (Delete)
+                                </button>
+                                <button onClick={() => updateInsurancePlan(index, "expanded", false)} className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold hover:bg-slate-200 transition-colors">
+                                  ย่อ (Collapse)
+                                </button>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => updateInsurancePlan(index, "showTable", !plan.showTable)}
+                                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-2 ${plan.showTable ? "bg-slate-800 text-white" : "bg-amber-100 text-amber-700 hover:bg-amber-200"}`}
                                 >
-                                  ลบแผนนี้
-                                </Button>
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    className="h-7 text-[10px] bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100"
-                                    onClick={() => updateInsurancePlan(index, "expanded", false)}
-                                  >
-                                    ย่อ
-                                  </Button>
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    className="h-7 text-[10px] bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100"
-                                    onClick={() => {
-                                      setForm(prev => ({ ...prev, selectedPlanId: plan.id }));
-                                      setShowInsuranceTable(true);
-                                    }}
-                                  >
-                                    ดูตาราง
-                                  </Button>
+                                  {plan.showTable ? "ปิดตาราง" : "ดูตารางผลประโยชน์"}
+                                </button>
+
+                                <div className="flex items-center gap-1.5 bg-slate-100 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors border border-slate-200" onClick={() => updateInsurancePlan(index, "active", !plan.active)}>
+                                  <div className={`w-2.5 h-2.5 rounded-full ${plan.active ? "bg-emerald-500" : "bg-slate-300"}`} />
+                                  <span className="text-[10px] font-bold text-slate-600">{plan.active ? "ใช้งาน" : "ปิด"}</span>
                                 </div>
                               </div>
                             </div>
-                          )}
+
+                            {/* Inline Benefit Table */}
+                            {plan.showTable && (
+                              <div className="mt-4 bg-slate-50/50 rounded-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                                <div className="flex items-center justify-between px-4 py-3 bg-slate-100/50 border-b border-slate-200">
+                                  <h4 className="text-xs font-bold text-slate-700">ตารางผลประโยชน์ (Cash Flow & Protection)</h4>
+                                  <span className="text-[10px] text-slate-400">แสดงถึงอายุ 100 ปี</span>
+                                </div>
+                                <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+                                  <table className="w-full text-left border-collapse">
+                                    <thead className="bg-white sticky top-0 shadow-sm z-10 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                      <tr>
+                                        <th className="px-4 py-2 border-b border-slate-100 w-16">อายุ</th>
+                                        {plan.surrenderMode === "table" && (
+                                          <th className="px-4 py-2 border-b border-slate-100 text-right text-blue-600 w-24">เวนคืน</th>
+                                        )}
+                                        <th className="px-4 py-2 border-b border-slate-100 text-right">รับเงิน</th>
+                                        <th className="px-4 py-2 border-b border-slate-100 text-right">ทุนประกัน</th>
+                                        <th className="px-4 py-2 border-b border-slate-100 pl-6">สถานะ</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="text-xs divide-y divide-slate-100 bg-white">
+                                      {Array.from({ length: 100 - Number(String(form.currentAge).replace(/,/g, "")) + 1 }, (_, i) => Number(String(form.currentAge).replace(/,/g, "")) + i).map(age => {
+                                        const currentAge = Number(String(form.currentAge).replace(/,/g, ""));
+                                        const sumAssured = Number(String(plan.sumAssured).replace(/,/g, ""));
+                                        const coverageAge = Number(plan.coverageAge);
+                                        const surrenderAge = Number(plan.surrenderAge);
+                                        const useSurrender = plan.useSurrender && plan.type !== "ชั่วระยะเวลา";
+                                        const planIsSurrenderYear = useSurrender && age === surrenderAge;
+                                        const planIsAfterSurrender = useSurrender && age > surrenderAge;
+                                        const planIsWithinCoverage = age <= coverageAge;
+
+                                        // Calculate Accumulated Pension for Annuity
+                                        let accumulatedPension = 0;
+                                        let initialDB = sumAssured;
+                                        let isDepleted = false;
+
+                                        if (plan.type === "บำนาญ") {
+                                          const dbPre = Number(String(plan.deathBenefitPrePension).replace(/,/g, ""));
+                                          if (dbPre > 0) initialDB = dbPre;
+
+                                          let startAge = Number(plan.pensionStartAge);
+                                          if (plan.unequalPension && plan.pensionTiers?.length > 0) {
+                                            const minTierStart = Math.min(...plan.pensionTiers.map(t => Number(t.startAge)));
+                                            startAge = minTierStart;
+                                          }
+
+                                          if (age >= startAge) {
+                                            for (let pastAge = startAge; pastAge < age; pastAge++) {
+                                              let pastAmount = 0;
+                                              if (plan.unequalPension && plan.pensionTiers) {
+                                                const tier = plan.pensionTiers.find(t => pastAge >= Number(t.startAge) && pastAge <= Number(t.endAge));
+                                                pastAmount = tier ? Number(String(tier.amount).replace(/,/g, "")) : 0;
+                                              } else {
+                                                if (pastAge >= Number(plan.pensionStartAge) && pastAge <= (Number(plan.pensionEndAge) || 100)) {
+                                                  let pAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
+                                                  if (Number(plan.pensionPercent) > 0) pAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
+                                                  pastAmount = pAmt;
+                                                }
+                                              }
+                                              accumulatedPension += pastAmount;
+                                            }
+                                          }
+                                          if (accumulatedPension >= initialDB) isDepleted = true;
+                                        }
+
+                                        // Cash Inflow Calculation
+                                        let flow = 0;
+                                        let isPension = false;
+
+                                        if (planIsSurrenderYear) {
+                                          let sv = Number(String(plan.surrenderValue).replace(/,/g, ""));
+                                          if (plan.surrenderMode === "table" && plan.surrenderTableData) {
+                                            const row = plan.surrenderTableData.find(d => d.age === age);
+                                            if (row) sv = Number(String(row.amount).replace(/,/g, ""));
+                                          }
+                                          flow += sv;
+                                        } else if (!planIsAfterSurrender && planIsWithinCoverage) {
+                                          // Endowment
+                                          if (plan.type === "สะสมทรัพย์") {
+                                            const maturity = Number(String(plan.maturityAmount).replace(/,/g, ""));
+                                            const cashBack = Number(String(plan.cashBackAmount).replace(/,/g, ""));
+                                            const freq = Number(plan.cashBackFrequency) || 1;
+                                            const policyYear = age - currentAge;
+
+                                            if (age === coverageAge) flow += maturity;
+                                            if (policyYear > 0 && policyYear % freq === 0) flow += cashBack;
+                                          }
+                                          // Annuity
+                                          if (plan.type === "บำนาญ") {
+                                            if (!isDepleted) {
+                                              if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
+                                                for (const tier of plan.pensionTiers) {
+                                                  if (age >= Number(tier.startAge) && age <= Number(tier.endAge)) {
+                                                    flow += Number(String(tier.amount).replace(/,/g, ""));
+                                                    isPension = true;
+                                                  }
+                                                }
+                                              } else {
+                                                let pensionAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
+                                                if (Number(plan.pensionPercent) > 0) pensionAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
+                                                if (age >= Number(plan.pensionStartAge) && age <= (Number(plan.pensionEndAge) || 100)) {
+                                                  flow += pensionAmt;
+                                                  isPension = true;
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+
+                                        // Death Benefit Calculation
+                                        let currentDB = 0;
+                                        if (!planIsAfterSurrender && planIsWithinCoverage) {
+                                          currentDB = sumAssured;
+                                          if (plan.type === "บำนาญ") {
+                                            const dbPre = Number(String(plan.deathBenefitPrePension).replace(/,/g, ""));
+                                            if (dbPre > 0) currentDB = dbPre;
+                                            currentDB = Math.max(0, currentDB - accumulatedPension);
+                                          }
+                                        }
+
+                                        // Display Logic
+                                        let deathBenefitDisplay = formatNumber(currentDB);
+                                        let cashInflowDisplay = flow > 0 ? `+${formatNumber(flow)}` : "-";
+                                        let rowClass = "hover:bg-slate-50";
+                                        let statusText = "";
+                                        const lifeExpectancy = Number(String(form.lifeExpectancy).replace(/,/g, ""));
+
+                                        if (age === lifeExpectancy) {
+                                          statusText = `เสียชีวิต (อายุขัย) รับ ${deathBenefitDisplay}`;
+                                          rowClass = "bg-red-100 text-red-800 font-bold border-l-4 border-red-500";
+                                        } else if (age > lifeExpectancy) {
+                                          statusText = "เสียชีวิตแล้ว";
+                                          deathBenefitDisplay = "-";
+                                          cashInflowDisplay = "-";
+                                          rowClass = "bg-slate-50 text-slate-300";
+                                        } else if (planIsSurrenderYear) {
+                                          statusText = "เวนคืน";
+                                          rowClass = "bg-emerald-100 text-emerald-800 font-bold";
+                                        } else if (!planIsAfterSurrender && planIsWithinCoverage) {
+                                          statusText = "คุ้มครอง";
+                                          rowClass = "bg-emerald-50 text-emerald-700";
+                                          if (flow > 0) {
+                                            statusText = isPension ? "รับบำนาญ" : "รับเงินคืน";
+                                            rowClass = "bg-emerald-100 text-emerald-800 font-bold";
+                                          }
+                                        } else {
+                                          statusText = "สิ้นสุด";
+                                          deathBenefitDisplay = "-";
+                                          rowClass = "text-slate-400";
+                                        }
+
+                                        // Surrender Table Editable Value
+                                        const svTableVal = plan.surrenderTableData?.find(d => d.age === age)?.amount || "";
+
+                                        return (
+                                          <tr key={age} className={rowClass}>
+                                            <td className="px-4 py-2 border-b border-slate-50 text-slate-500 font-mono">{age}</td>
+                                            {plan.surrenderMode === "table" && (
+                                              <td className="px-4 py-1 border-b border-slate-50 text-right">
+                                                <input
+                                                  className="w-full text-right bg-blue-50/50 border-b border-blue-200 focus:outline-none focus:border-blue-500 text-xs py-1 px-1 text-blue-700"
+                                                  placeholder="-"
+                                                  value={svTableVal}
+                                                  onChange={(e) => updateSurrenderTable(index, age, e.target.value)}
+                                                  onBlur={(e) => updateSurrenderTable(index, age, formatInputDisplay(e.target.value))}
+                                                />
+                                              </td>
+                                            )}
+                                            <td className={`px-4 py-2 border-b border-slate-50 text-right font-medium ${flow > 0 ? "text-emerald-600" : "text-slate-400"}`}>{cashInflowDisplay}</td>
+                                            <td className="px-4 py-2 border-b border-slate-50 text-right text-slate-700">{deathBenefitDisplay}</td>
+                                            <td className="px-4 py-2 border-b border-slate-50 pl-6 text-[10px] text-slate-400">{statusText}</td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {form.insurancePlans.length === 0 && (
+                      <div className="text-center py-10 bg-slate-50/50 rounded-[20px] border-2 border-dashed border-slate-200 select-none group hover:bg-slate-50 hover:border-blue-200 transition-colors cursor-pointer" onClick={addInsurancePlan}>
+                        <div className="w-12 h-12 rounded-full bg-slate-100 mx-auto mb-3 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
                         </div>
-                      ))}
-                    </div>
+                        <p className="text-xs text-slate-500 font-bold">ยังไม่มีกรมธรรม์</p>
+                        <p className="text-[10px] text-slate-400 mt-1">เพิ่มแผนประกันเพื่อบริหารความเสี่ยง</p>
+                      </div>
+                    )}
                   </div>
-                  {/* ------------------------------------------- */}
+                </div>
 
 
-                </CollapsibleSection>
+
               </div>
             )}
 
-            {/* 3. RETIREMENT GOAL SECTION */}
+            {/* 3. RETIREMENT GOAL SECTION (Redesigned) */}
             {inputStep === 3 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
-                <CollapsibleSection
-                  title="เป้าหมายเกษียณ"
-                  defaultOpen={true}
-                  icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
-                  iconColorClass="bg-amber-50 text-amber-600"
-                >
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-slate-600">เงินก้อนตอนเกษียณ (เช่น กบข., บำเหน็จ)</Label>
-                    <div className="flex items-center gap-2">
-                      <Input className="h-9 bg-secondary/50 border-transparent focus:bg-background focus:ring-2 focus:ring-primary/20 text-xs font-medium text-foreground rounded-lg transition-all" type="text" value={form.retireFundOther} onChange={handleChange("retireFundOther")} onFocus={handleNumericFocus("retireFundOther")} onBlur={handleNumericBlur("retireFundOther")} />
-                      <div className="flex gap-1"><SmallStepButton onClick={changeBy("retireFundOther", -50000)}>-</SmallStepButton><SmallStepButton onClick={changeBy("retireFundOther", 50000)}>+</SmallStepButton></div>
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+
+                {/* 3.1 Retirement Lifestyle Card */}
+                <div className="bg-white rounded-[24px] p-5 border border-slate-100 shadow-xl shadow-slate-200/50 relative overflow-hidden group">
+                  <div className="flex items-center gap-3 mb-4 relative z-10">
+                    <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600 shadow-sm ring-1 ring-orange-100">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><path d="M12 1v2" /><path d="M12 21v2" /><path d="M4.22 4.22l1.42 1.42" /><path d="M18.36 18.36l1.42 1.42" /><path d="M1 12h2" /><path d="M21 12h2" /><path d="M4.22 19.78l1.42-1.42" /><path d="M18.36 5.64l1.42-1.42" /></svg>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-base tracking-tight">เกษียณ</h3>
+                      <p className="text-xs text-slate-400 font-medium">เป้าหมายค่าใช้จ่าย</p>
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-slate-600">เงินเดือนหลังเกษียณ (ต่อเดือน)</Label>
-                    <div className="flex items-center gap-2">
-                      <Input className="h-9 bg-secondary/50 border-transparent focus:bg-background focus:ring-2 focus:ring-primary/20 text-xs font-medium text-foreground rounded-lg transition-all" type="text" value={form.retireMonthlyIncome} onChange={handleChange("retireMonthlyIncome")} onFocus={handleNumericFocus("retireMonthlyIncome")} onBlur={handleNumericBlur("retireMonthlyIncome")} />
-                      <div className="flex gap-1"><SmallStepButton onClick={changeBy("retireMonthlyIncome", -500)}>-</SmallStepButton><SmallStepButton onClick={changeBy("retireMonthlyIncome", 500)}>+</SmallStepButton></div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-[11px] text-slate-600">ผลตอบแทนเฉลี่ยหลังเกษียณ (% ต่อปี)</Label>
-                      <span className="rounded-full bg-indigo-50 px-2 py-[1px] text-[10px] text-indigo-600">Premium Plan</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input className="h-9 bg-secondary/50 border-transparent focus:bg-background focus:ring-2 focus:ring-primary/20 text-xs font-medium text-foreground rounded-lg transition-all" type="text" value={form.retireReturnAfter} onChange={handleChange("retireReturnAfter")} onFocus={handleNumericFocus("retireReturnAfter")} onBlur={handleNumericBlur("retireReturnAfter")} />
-                      <div className="flex gap-1"><SmallStepButton onClick={changeBy("retireReturnAfter", -0.1)}>-</SmallStepButton><SmallStepButton onClick={changeBy("retireReturnAfter", 0.1)}>+</SmallStepButton></div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-slate-600">ค่าใช้จ่ายรายเดือนหลังเกษียณ (ต่อเดือน ไม่คิดเงินเฟ้อ)</Label>
-                    <div className="flex items-center gap-2">
-                      <Input className="h-9 bg-secondary/50 border-transparent focus:bg-background focus:ring-2 focus:ring-primary/20 text-xs font-medium text-foreground rounded-lg transition-all" type="text" value={form.retireExtraExpense} onChange={handleChange("retireExtraExpense")} onFocus={handleNumericFocus("retireExtraExpense")} onBlur={handleNumericBlur("retireExtraExpense")} />
-                      <div className="flex gap-1"><SmallStepButton onClick={changeBy("retireExtraExpense", -500)}>-</SmallStepButton><SmallStepButton onClick={changeBy("retireExtraExpense", 500)}>+</SmallStepButton></div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-slate-600">แนวโน้มการใช้จ่าย</Label>
-                    <div className="flex flex-col gap-1">
-                      <label className="flex items-center gap-2 text-[11px]">
-                        <input type="radio" name="retireSpendMode" value="flat" checked={retireSpendMode === "flat"} onChange={() => setRetireSpendMode("flat")} className="h-3 w-3" />
-                        <span>ปรับเปอร์เซ็นต์การใช้จ่ายต่อปี</span>
-                      </label>
-                      <label className="flex items-center gap-2 text-[11px]">
-                        <input type="radio" name="retireSpendMode" value="step5" checked={retireSpendMode === "step5"} onChange={() => setRetireSpendMode("step5")} className="h-3 w-3" />
-                        <span>ปรับตามอายุทุกปีที่ 5 <span className="rounded-full bg-indigo-50 px-2 py-[1px] text-[10px] text-indigo-600">Premium Plan</span></span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-[11px] text-slate-600">แนวโน้มการใช้จ่าย % ต่อปี (เมื่อคิดว่าใช้จ่ายลดลง)</Label>
-                      <span className="rounded-full bg-indigo-50 px-2 py-[1px] text-[10px] text-indigo-600">Premium Plan</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input className="h-9 bg-secondary/50 border-transparent focus:bg-background focus:ring-2 focus:ring-primary/20 text-xs font-medium text-foreground rounded-lg transition-all" type="text" value={form.retireSpendTrendPercent} onChange={handleChange("retireSpendTrendPercent")} onFocus={handleNumericFocus("retireSpendTrendPercent")} onBlur={handleNumericBlur("retireSpendTrendPercent")} />
-                      <div className="flex gap-1">
-                        <SmallStepButton onClick={changeBy("retireSpendTrendPercent", -0.5)}>-</SmallStepButton>
-                        <SmallStepButton onClick={changeBy("retireSpendTrendPercent", 0.5)}>+</SmallStepButton>
+                  <div className={`relative z-10 grid gap-3 ${showResult ? "grid-cols-1" : "grid-cols-2"}`}>
+                    {/* Monthly Income */}
+                    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:border-orange-300 hover:shadow-md transition-all duration-300 group/item">
+                      <div className="flex justify-between items-start mb-2">
+                        <Label className="text-xs font-bold text-orange-500 pl-1">รายรับหลังเกษียณ</Label>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-[11px] text-slate-600">รายจ่ายพิเศษประจำปีช่วงเกษียณ</Label>
-                      <Button type="button" variant="outline" className="h-7 px-3 text-[11px]">จัดการ</Button>
-                    </div>
-                    <div className="rounded-md bg-slate-50 px-3 py-2 text-[11px] text-slate-500">ไม่มีรายจ่ายพิเศษ (ใช้ค่า {formatNumber(form.retireSpecialAnnual || "0")} บาท/ปี)</div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-slate-600">บวกเงินก้อนพิเศษ (มรดก)</Label>
-                    <div className="flex items-center gap-2">
-                      <Input className="h-8 text-xs" type="text" value={form.legacyFund} onChange={handleChange("legacyFund")} onFocus={handleNumericFocus("legacyFund")} onBlur={handleNumericBlur("legacyFund")} />
-                      <div className="flex gap-1">
-                        <SmallStepButton onClick={changeBy("legacyFund", -5000)}>-</SmallStepButton>
-                        <SmallStepButton onClick={changeBy("legacyFund", 5000)}>+</SmallStepButton>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-slate-600">Note</Label>
-                    <textarea className="min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-300" value={form.retireNote} onChange={(e) => setForm((prev) => ({ ...prev, retireNote: e.target.value }))} placeholder="เขียนโน้ตเพิ่มเติม..." />
-                  </div>
-
-                </CollapsibleSection>
-
-                <div className="space-y-4 pt-2">
-                  <div className="flex justify-end pt-2">
-                    <Button type="button" variant="ghost" className="h-8 px-4 text-xs text-slate-400 hover:text-slate-600 hover:bg-slate-100" onClick={resetRetirement}>รีเซ็ตข้อมูลทั้งหมด</Button>
-                  </div>
-
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-bl-full -mr-10 -mt-10 z-0 pointer-events-none"></div>
-
-                    <div className="flex items-center justify-between relative z-10">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
+                      <div className="flex items-center gap-2 mt-2">
+                        <button onClick={changeBy("retireMonthlyIncome", -1000)} className="w-9 h-9 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:text-orange-600 hover:bg-orange-50 flex items-center justify-center transition-all active:scale-95 text-lg font-medium">-</button>
+                        <div className="flex-1 flex items-center justify-center gap-0.5">
+                          <span className="text-sm font-bold text-slate-300">฿</span>
+                          <Input
+                            className="h-10 pl-1 text-3xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 w-full text-center"
+                            value={form.retireMonthlyIncome}
+                            onChange={handleChange("retireMonthlyIncome")}
+                            onFocus={handleNumericFocus("retireMonthlyIncome")}
+                            onBlur={handleNumericBlur("retireMonthlyIncome")}
+                          />
                         </div>
-                        <Label className="text-sm font-bold text-slate-700">บันทึกแผนของคุณ</Label>
+                        <button onClick={changeBy("retireMonthlyIncome", 1000)} className="w-9 h-9 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:text-orange-600 hover:bg-orange-50 flex items-center justify-center transition-all active:scale-95 text-lg font-medium">+</button>
                       </div>
-                      {saveMessage && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">{saveMessage}</span>}
+                      <div className="text-[10px] text-slate-400 mt-2 font-medium">ต่อเดือน</div>
                     </div>
 
-                    <div className="space-y-1 relative z-10">
-                      <Label className="text-[11px] font-semibold text-slate-500">ชื่อแผน (Profile Name)</Label>
-                      <Input className="h-10 text-sm bg-slate-50/50 focus:bg-white transition-all" value={form.planName} onChange={handleChange("planName")} placeholder="ตั้งชื่อแผนของคุณ..." />
+                    {/* Other Funds */}
+                    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:border-orange-300 hover:shadow-md transition-all duration-300 group/item">
+                      <div className="flex justify-between items-start mb-2">
+                        <Label className="text-xs font-bold text-slate-600 pl-1">เงินก้อน (กบข./Others)</Label>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <button onClick={changeBy("retireFundOther", -10000)} className="w-9 h-9 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-all active:scale-95 text-lg font-medium">-</button>
+                        <div className="flex-1 flex items-center justify-center gap-0.5">
+                          <span className="text-sm font-bold text-slate-300">฿</span>
+                          <Input
+                            className="h-10 pl-1 text-3xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 w-full text-center"
+                            value={form.retireFundOther}
+                            onChange={handleChange("retireFundOther")}
+                            onFocus={handleNumericFocus("retireFundOther")}
+                            onBlur={handleNumericBlur("retireFundOther")}
+                          />
+                        </div>
+                        <button onClick={changeBy("retireFundOther", 10000)} className="w-9 h-9 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-all active:scale-95 text-lg font-medium">+</button>
+                      </div>
+                      <div className="text-[10px] text-slate-400 mt-2 font-medium">ณ วันเกษียณ</div>
                     </div>
 
-                    <Button className="w-full h-10 text-sm font-bold bg-slate-800 hover:bg-slate-900 text-white relative z-10" type="button" onClick={handleSavePlan}>
-                      {planButtonLabel}
-                    </Button>
+                    {/* Additional Expenses */}
+                    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm col-span-1">
+                      <Label className="text-xs font-bold text-slate-500 pl-1 mb-2 block">รายจ่ายหลังเกษียณ</Label>
+                      <div className="flex items-center gap-2 mt-2">
+                        <button onClick={changeBy("retireExtraExpense", -1000)} className="w-8 h-8 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all text-lg font-medium active:scale-95">-</button>
+                        <div className="flex-1 flex items-center justify-center gap-0.5">
+                          <span className="text-sm font-bold text-slate-300">฿</span>
+                          <Input
+                            className="h-8 pl-1 text-xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-700 leading-none w-full text-center"
+                            value={form.retireExtraExpense}
+                            onChange={handleChange("retireExtraExpense")}
+                            onFocus={handleNumericFocus("retireExtraExpense")}
+                            onBlur={handleNumericBlur("retireExtraExpense")}
+                          />
+                        </div>
+                        <button onClick={changeBy("retireExtraExpense", 1000)} className="w-8 h-8 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all text-lg font-medium active:scale-95">+</button>
+                      </div>
+                      <div className="text-xs text-slate-400 mt-2 font-medium">ต่อเดือน</div>
+                    </div>
 
-                    <div className="flex items-center gap-1.5 justify-center pt-1 text-[10px] text-slate-400 relative z-10">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                      <span>ข้อมูลถูกเก็บรักษาอย่างปลอดภัยในเบราว์เซอร์ของคุณ</span>
+                    {/* Special Annual */}
+                    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:border-indigo-300 transition-all group/ex2 col-span-1">
+                      <Label className="text-xs font-bold text-slate-500 pl-1 mb-2 block">รายจ่ายพิเศษ/ปี</Label>
+                      <div className="flex items-center gap-2 mt-2">
+                        <button onClick={changeBy("retireSpecialAnnual", -1000)} className="w-8 h-8 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all text-lg font-medium active:scale-95">-</button>
+                        <div className="flex-1 flex items-center justify-center gap-0.5">
+                          <span className="text-sm font-bold text-slate-300">฿</span>
+                          <Input
+                            className="h-8 pl-1 text-xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-700 leading-none w-full text-center"
+                            value={form.retireSpecialAnnual}
+                            onChange={handleChange("retireSpecialAnnual")}
+                            onFocus={handleNumericFocus("retireSpecialAnnual")}
+                            onBlur={handleNumericBlur("retireSpecialAnnual")}
+                          />
+                        </div>
+                        <button onClick={changeBy("retireSpecialAnnual", 1000)} className="w-8 h-8 shrink-0 rounded-xl bg-slate-50 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all text-lg font-medium active:scale-95">+</button>
+                      </div>
+                      <div className="text-xs text-slate-400 mt-2 font-medium">เที่ยว/รักษาพยาบาล</div>
+                    </div>
+                  </div>
+
+                  {/* Assumption Toggle (Expanded) */}
+                  <div className="mt-8 pt-6 border-t border-slate-100 space-y-6">
+                    {/* Return Rate */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-xs font-bold text-slate-400">ผลตอบแทนหลังเกษียณ (% ต่อปี)</Label>
+                        <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg border border-orange-100">{form.retireReturnAfter}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0" max="10" step="0.5"
+                        value={form.retireReturnAfter}
+                        onChange={handleChange("retireReturnAfter")}
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-orange-400 hover:accent-orange-500 transition-all"
+                      />
+                    </div>
+
+                    {/* Spending Trend */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-xs font-bold text-slate-400">แนวโน้มการใช้จ่าย</Label>
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                          <input type="radio" id="modeFlat" checked={retireSpendMode === "flat"} onChange={() => setRetireSpendMode("flat")} className="w-4 h-4 text-indigo-600 focus:ring-indigo-500" />
+                          <label htmlFor="modeFlat" className="text-xs text-slate-600">ปรับเพิ่มตามเงินเฟ้อต่อปี (Premium Plan)</label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input type="radio" id="modeStep" checked={retireSpendMode === "step5"} onChange={() => setRetireSpendMode("step5")} className="w-4 h-4 text-indigo-600 focus:ring-indigo-500" />
+                          <label htmlFor="modeStep" className="text-xs text-slate-600">ปรับตามอายุทุกปีที่ 5</label>
+                        </div>
+
+                        <div className="mt-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-[10px] text-slate-500 font-bold">แนวโน้มการใช้จ่าย % ต่อปี (ติดลบคือค่าใช้จ่ายลดลง)</Label>
+                          </div>
+                          <div className="flex items-center">
+                            <Input
+                              className="w-8 h-6 bg-transparent border-none p-0 text-right text-xs font-bold focus:ring-0 text-slate-700"
+                              value={form.retireSpendTrendPercent}
+                              onChange={handleChange("retireSpendTrendPercent")}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-[24px] p-5 border border-slate-100 shadow-lg shadow-slate-100/50 space-y-6 relative overflow-hidden group hover:shadow-xl transition-all duration-300">
+                  <div className="space-y-4">
+                    <Label className="text-xs font-bold text-slate-500 pl-1">มรดก (Legacy Fund)</Label>
+                    <div className="relative flex items-center gap-3">
+                      <button onClick={changeBy("legacyFund", -100000)} className="h-12 w-12 shrink-0 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 font-medium flex items-center justify-center transition-all text-xl active:scale-95">-</button>
+                      <div className="relative flex-1">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold text-lg">฿</span>
+                        <Input
+                          className="h-8 pl-1 text-xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-700 leading-none w-full text-center"
+                          value={form.legacyFund} onChange={handleChange("legacyFund")} onFocus={handleNumericFocus("legacyFund")} onBlur={handleNumericBlur("legacyFund")} />
+                      </div>
+                      <button onClick={changeBy("legacyFund", 100000)} className="h-12 w-12 shrink-0 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 font-medium flex items-center justify-center transition-all text-xl active:scale-95">+</button>
+                    </div>
+                    <input
+                      type="range"
+                      min="0" max="50000000" step="100000"
+                      value={Number(String(form.legacyFund).replace(/,/g, ""))}
+                      onChange={(e) => setForm(prev => ({ ...prev, legacyFund: formatInputDisplay(e.target.value) }))}
+                      className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-400 hover:accent-slate-600 transition-all opacity-60 hover:opacity-100"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Note</Label>
+                    <textarea className="w-full h-20 rounded-xl bg-slate-50 border-transparent p-4 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-slate-200 resize-none transition-all outline-none" placeholder="เขียนโน้ตเพิ่มเติม..." value={form.retireNote} onChange={(e) => setForm((prev) => ({ ...prev, retireNote: e.target.value }))} />
+                  </div>
+                </div>
+
+                {/* 3.4 Action Area */}
+                <div className="pb-8">
+                  <div className="bg-slate-900 rounded-[32px] p-6 text-white shadow-2xl shadow-slate-200 overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none group-hover:bg-indigo-500/30 transition-all duration-500"></div>
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-[60px] -ml-16 -mb-16 pointer-events-none"></div>
+
+                    <div className="relative z-10 space-y-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-bold text-xl tracking-tight">บันทึกแผน</h3>
+                          <div className="flex items-center gap-2 mt-1 px-2 py-1 bg-slate-800 rounded-lg w-fit">
+                            <span className="text-xs text-slate-400">โปรไฟล์: default</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
+                          </div>
+                        </div>
+                        <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 shadow-lg">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Input className="h-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:bg-white/10 focus:ring-0 rounded-2xl transition-all" value={form.planName} onChange={handleChange("planName")} placeholder="ชื่อแผน..." />
+                      </div>
+
+                      <div className="flex gap-3 pt-2">
+                        <Button variant="outline" className="flex-1 h-10 border-white/10 bg-transparent text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-all" onClick={resetRetirement}>รีเซ็ต</Button>
+                        <Button className="flex-[2] h-10 bg-white text-slate-900 hover:bg-indigo-50 font-bold rounded-xl transition-all shadow-lg shadow-white/10" onClick={handleSavePlan}>
+                          บันทึกแผน (0/1)
+                        </Button>
+                      </div>
+                      {saveMessage && <div className="text-center text-xs text-emerald-400 font-bold animate-in fade-in bg-emerald-500/10 py-2 rounded-lg border border-emerald-500/20">{saveMessage}</div>}
                     </div>
                   </div>
                 </div>
@@ -3104,15 +3485,14 @@ export default function HomePage() {
           </div>
 
           {/* Wizard Footer */}
-          {/* Wizard Footer */}
-          <div className="p-4 border-t border-border bg-white/80 backdrop-blur-sm flex justify-between shrink-0 sticky bottom-0 w-full z-30">
-            {/* Back Button (Only show if step > 1) */}
+          <div className="p-6 border-t border-slate-100 bg-white flex justify-between shrink-0 sticky bottom-0 w-full z-30">
+            {/* Back Button */}
             <div>
               {inputStep > 1 && (
                 <Button
                   variant="outline"
                   onClick={() => setInputStep(prev => Math.max(1, prev - 1))}
-                  className="w-24 rounded-full border-slate-300 hover:bg-slate-50"
+                  className="w-28 h-10 rounded-2xl border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-bold transition-all"
                   tabIndex={-1}
                 >
                   ย้อนกลับ
@@ -3123,16 +3503,16 @@ export default function HomePage() {
             {inputStep < 3 ? (
               <Button
                 onClick={() => setInputStep(prev => Math.min(3, prev + 1))}
-                className="w-24 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200"
+                className="w-28 h-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 font-bold transition-all"
               >
                 ถัดไป
               </Button>
             ) : (
               <Button
                 onClick={() => setShowResult(true)}
-                className="w-36 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-200 transition-all hover:scale-105 active:scale-95 ring-2 ring-white"
+                className="w-40 h-10 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95 font-bold"
               >
-                <span className="mr-2 font-bold">คำนวณแผน</span>
+                <span className="mr-2">คำนวณแผน</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
               </Button>
             )}
@@ -3223,886 +3603,650 @@ export default function HomePage() {
                     </div>
                   </div>
                 )}
+              </div>
 
-                <div className="mb-2 break-inside-avoid">
-                  <h2 className="text-xl font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4 uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-2 h-8 bg-indigo-600 rounded-full"></span>
-                    สรุปผลการวางแผน
-                  </h2>
+
+
+              {/* Header for Results Section */}
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 break-inside-avoid px-1">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-800 tracking-tight">สรุปผลลัพธ์ทางการเงิน</h2>
+                  <p className="text-slate-500 text-sm font-medium mt-1">วางแผนการรับมือเกษียณด้วยเครื่องมือแบบเห็นภาพ</p>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                  <span>ข้อมูลล่าสุด: {new Date().toLocaleDateString('th-TH')}</span>
                 </div>
               </div>
 
-              <Card className="shadow-xl border-border/50 bg-card ring-1 ring-black/5 print:hidden overflow-hidden backdrop-blur-sm">
-                <CardContent className="space-y-8 p-8">
-                  {/* Family Summary Overview (if multiple members) */}
-                  {familyMembers.length > 1 && (
-                    <div className="rounded-2xl bg-gradient-to-r from-slate-50 to-white/50 border border-slate-200 p-5 mb-8">
-                      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-slate-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-bold text-slate-800">ภาพรวมครอบครัว ({familyMembers.length} คน)</h3>
-                            <p className="text-xs text-slate-500">สถานะการเงินรวมของสมาชิกทั้งหมด</p>
-                          </div>
-                        </div>
+              {/* 1. HERO SUMMARY CARD ("Your Future Overview") - REFINED PREMIUM */}
+              {/* 1. HERO SUMMARY CARD (Green Banner Style) */}
+              <div className={`rounded-[32px] p-8 lg:p-12 relative overflow-hidden font-sans mb-10 break-inside-avoid shadow-2xl transition-all duration-500 ${result.status === 'enough' ? 'bg-gradient-to-br from-[#025035] to-[#047556] text-white shadow-emerald-900/30' : 'bg-gradient-to-br from-[#7f1d1d] to-[#991b1b] text-white shadow-red-900/30'}`}>
+                {/* Clean Background - Discrete decoration */}
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none mix-blend-overlay"></div>
 
-                        <div className="flex items-center gap-6">
-                          <div className="text-right">
-                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">เป้าหมายรวม</p>
-                            <p className="text-lg font-bold text-slate-800">฿{formatNumber(getFamilySummary().totalTarget)}</p>
-                          </div>
-                          <div className="h-8 w-px bg-slate-200"></div>
-                          <div className="text-right">
-                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">คาดการณ์รวม</p>
-                            <p className="text-lg font-bold text-blue-600">฿{formatNumber(getFamilySummary().totalProjected)}</p>
-                          </div>
-                          <div className="h-8 w-px bg-slate-200"></div>
-                          <div className="text-right">
-                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">สถานะรวม</p>
-                            <p className={`text-lg font-bold ${getFamilySummary().totalGap >= -1 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                              {getFamilySummary().totalGap >= -1 ? "เพียงพอ" : "ขาด " + formatNumber(Math.abs(getFamilySummary().totalGap))}
-                            </p>
-                          </div>
-                        </div>
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
+                  <div className="flex-1 space-y-6">
+                    <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide ${result.status === 'enough' ? 'bg-white/20 text-white backdrop-blur-sm' : 'bg-white/20 text-white backdrop-blur-sm'}`}>
+                      <span className={`w-2.5 h-2.5 rounded-full ${result.status === 'enough' ? 'bg-[#34D399]' : 'bg-red-400'}`}></span>
+                      {result.status === 'enough' ? 'สถานะ : เป้าหมายสำเร็จ' : 'สถานะ : ต้องปรับปรุง'}
+                    </span>
 
-                        <Button variant="outline" size="sm" onClick={() => setShowFamilySummaryModal(true)}>ดูรายละเอียด</Button>
-                      </div>
-                    </div>
-                  )}
-                  {/* --- TOP SUMMARY SECTION --- */}
-                  <div className="bg-white rounded-[32px] p-8 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden mb-8 group">
-                    {/* Decorative Background */}
-                    <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-to-br from-blue-50/50 to-indigo-50/50 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
-
-                    <div className="relative z-10 flex flex-col xl:flex-row items-center gap-10">
-                      {/* Avatar/Illustration */}
-                      <div className="shrink-0 relative">
-                        <div className="w-40 h-40 rounded-full bg-white p-2 shadow-xl shadow-slate-200/50 ring-4 ring-white relative z-10">
-                          <div className="w-full h-full rounded-full overflow-hidden bg-slate-50 relative">
-                            <Image src={heroImageSrc} alt="User Avatar" fill className="object-cover" />
-                          </div>
-                          <div className={`absolute bottom-2 right-2 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center ${result.status === 'enough' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
-                            {result.status === 'enough' ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-white"><polyline points="20 6 9 17 4 12" /></svg>
-                            ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-white"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                            )}
-                          </div>
-                        </div>
-                        {/* Decorative Rings */}
-                        <div className="absolute inset-0 rounded-full border border-blue-100 scale-125 opacity-50 animate-pulse"></div>
-                        <div className="absolute inset-0 rounded-full border border-indigo-50 scale-150 opacity-30"></div>
-                      </div>
-
-                      {/* Text Content */}
-                      <div className="text-center xl:text-left space-y-4 max-w-2xl">
-                        <div>
-                          <h2 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">ภาพรวมอนาคตของคุณ</h2>
-                          <p className="text-slate-500 leading-relaxed text-lg">
-                            จากการคำนวณข้อมูลปัจจุบัน คุณจะมีเงินใช้จ่ายหลังเกษียณประมาณ <span className="text-slate-900 font-bold bg-slate-100 px-2 py-0.5 rounded-lg">฿{formatNumber(result.projectedFund)}</span> ซึ่ง
-                            {result.status === 'enough' ? (
-                              <span className="text-emerald-600 font-bold mx-1"> เพียงพอ </span>
-                            ) : (
-                              <span className="text-rose-500 font-bold mx-1"> ไม่เพียงพอ </span>
-                            )}
-                            ต่อความต้องการที่ <span className="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-lg mx-1">฿{formatNumber(result.targetFund)}</span>
-                          </p>
-                        </div>
-                      </div>
+                    <div className="space-y-3">
+                      <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-tight">
+                        {result.status === 'enough' ? 'แผนการเงินมั่นคง' : 'แผนการเงินยังมีความเสี่ยง'}
+                      </h1>
+                      <h2 className="text-xl lg:text-2xl font-bold text-white/90">
+                        {result.status === 'enough' ? 'พร้อมเกษียณอย่างสบาย' : 'ควรเริ่มวางแผนเพิ่มเติมทันที'}
+                      </h2>
                     </div>
 
-                    {/* 4 Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-10 relative z-10">
+                    <p className="text-white/80 text-base font-medium max-w-xl leading-relaxed">
+                      {result.status === 'enough'
+                        ? 'ยินดีด้วย! สินทรัพย์ของคุณเพียงพอสำหรับใช้จ่ายตามไลฟ์สไตล์ที่หวังไว้ตลอดช่วงเกษียณ'
+                        : `จากการคำนวณ คุณยังมีส่วนต่างที่ต้องออมเพิ่มอีกประมาณ ฿${formatNumber(Math.abs(result.gap))} เพื่อให้บรรลุเป้าหมาย`}
+                    </p>
+                  </div>
 
-                      {/* Card 1: Projected Fund */}
-                      <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all group/card relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover/card:scale-110"></div>
-                        <div className="relative z-10">
-                          <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3">
-                            <TargetIcon className="w-5 h-5" />
-                          </div>
-                          <div className="flex justify-between items-start mb-1">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">เงินออมที่มีตอนเกษียณ</p>
-                            <button onClick={() => setShowProjectedModal(true)} className="text-slate-300 hover:text-blue-600 transition-colors" title="ดูที่มาการคำนวณ">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                            </button>
-                          </div>
-                          <h3 className="text-2xl font-bold text-slate-900 mb-1">฿{formatNumber(result.projectedFund)}</h3>
-                          <div className="flex items-center gap-1.5">
-                            <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">+4.5% ต่อปี</span>
-                            <span className="text-[10px] text-slate-400">ผลตอบแทน</span>
-                          </div>
-                        </div>
+                  <div className="shrink-0 bg-white/10 backdrop-blur-sm rounded-[24px] p-8 min-w-[340px]">
+                    <div className="space-y-8">
+                      <div>
+                        <p className="text-[11px] font-bold text-white/70 uppercase tracking-widest mb-2">เงินออมที่คาดว่าจะมี (PROJECTED)</p>
+                        <p className="text-5xl font-black tracking-tighter text-white drop-shadow-sm">฿{formatNumber(result.projectedFund)}</p>
                       </div>
-
-                      {/* Card 2: Target Fund */}
-                      <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all group/card relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-teal-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover/card:scale-110"></div>
-                        <div className="relative z-10">
-                          <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center mb-3">
-                            <span className="font-serif font-bold text-lg">$</span>
-                          </div>
-                          <div className="flex justify-between items-start mb-1">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">เงินที่ต้องมี (เป้าหมาย)</p>
-                            <button onClick={() => setShowTargetModal(true)} className="text-slate-300 hover:text-teal-600 transition-colors" title="ดูที่มาการคำนวณ">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                            </button>
-                          </div>
-                          <h3 className="text-2xl font-bold text-slate-900 mb-1">฿{formatNumber(result.targetFund)}</h3>
-                          <div className="flex items-center gap-1.5">
-                            <span className="bg-teal-100 text-teal-700 text-[10px] font-bold px-2 py-0.5 rounded-full">ใช้จ่าย {result.yearsInRetirement} ปี</span>
-                            <span className="text-[10px] text-slate-400">หลังเกษียณ</span>
-                          </div>
-                        </div>
+                      <div className="pt-6 border-t border-white/10 opacity-90">
+                        <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-1">เป้าหมายที่ต้องมี (TARGET)</p>
+                        <p className={`text-2xl lg:text-3xl font-bold tracking-tight ${result.status === 'enough' ? 'text-white/90' : 'text-rose-200'}`}>฿{formatNumber(result.targetFund)}</p>
                       </div>
-
-                      {/* Card 3: Monthly Expense */}
-                      <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all group/card relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover/card:scale-110"></div>
-                        <div className="relative z-10">
-                          <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mb-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
-                          </div>
-                          <div className="flex justify-between items-start mb-1">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">ค่าใช้จ่าย/เดือน (อนาคต)</p>
-                            <button onClick={() => setShowExpenseModal(true)} className="text-slate-300 hover:text-purple-600 transition-colors" title="ดูที่มาการคำนวณ">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                            </button>
-                          </div>
-                          <h3 className="text-2xl font-bold text-slate-900 mb-1">฿{formatNumber(result.fvExpenseMonthly)}</h3>
-                          <div className="flex items-center gap-1.5">
-                            <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full">รวมเงินเฟ้อแล้ว</span>
-                            <span className="text-[10px] text-slate-400">ปรับค่าครองชีพ</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Card 4: Status */}
-                      <div className={`rounded-2xl border p-5 shadow-sm hover:shadow-md transition-all group/card relative overflow-hidden ${result.status === 'enough' ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover/card:scale-110"></div>
-                        <div className="relative z-10">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${result.status === 'enough' ? 'bg-emerald-200/50 text-emerald-700' : 'bg-rose-200/50 text-rose-700'}`}>
-                            {result.status === 'enough' ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
-                            ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6" /><polyline points="17 18 23 18 23 12" /></svg>
-                            )}
-                          </div>
-                          <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${result.status === 'enough' ? 'text-emerald-600/70' : 'text-rose-600/70'}`}>สถานะแผน</p>
-                          <h3 className={`text-2xl font-black mb-1 ${result.status === 'enough' ? 'text-emerald-700' : 'text-rose-700'}`}>
-                            {result.status === 'enough' ? 'เพียงพอ' : 'ต้องปรับปรุง'}
-                          </h3>
-                          <div className="flex items-center gap-1.5">
-                            <p className={`text-[10px] font-medium leading-tight ${result.status === 'enough' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                              {result.status === 'enough' ? 'ยินดีด้วย! แผนของคุณยอดเยี่ยม' : `ขาดอีก ฿${formatNumber(Math.abs(result.gap))}`}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              {/* Graph card */}
-              <Card className="shadow-xl border border-border/50 bg-card print:shadow-none print:border-none print:w-full max-w-full break-inside-avoid rounded-3xl">
-                <CardHeader className="flex flex-row items-center justify-between pb-4 print:hidden border-b border-border/40">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-6 bg-primary rounded-full shadow-[0_0_10px_rgba(41,112,255,0.5)]"></div>
-                    <CardTitle className="text-lg font-bold text-foreground tracking-tight">กราฟการเงินออมสะสม</CardTitle>
+              {/* 2. KEY METRICS GRID (Clean White Style) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-10 break-inside-avoid px-2">
+
+                {/* Card 1: Projected Savings */}
+                <div className="bg-white rounded-[24px] p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 hover:shadow-xl">
+                  <div className="flex flex-col h-full justify-between relative z-10">
+                    <div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                        </div>
+                        <button onClick={() => setShowProjectedModal(true)} className="text-slate-300 hover:text-emerald-500 bg-white hover:bg-emerald-50 p-2 rounded-xl transition-all">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+                        </button>
+                      </div>
+                      <p className="text-sm font-bold text-slate-500 mb-1">เงินออม (Projected)</p>
+                      <h4 className="text-3xl font-black text-slate-800 tracking-tighter">฿{formatNumber(result.projectedFund)}</h4>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-50">
+                      <p className="text-[11px] font-bold text-emerald-600 bg-emerald-50 inline-block px-2 py-1 rounded-lg">
+                        Wealth Projection
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" className="h-8 px-3 text-[10px] border-border text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg" onClick={handleSavePlan}>
-                      บันทึกข้อมูล
-                    </Button>
-                    <Button variant="outline" className="h-8 px-3 text-[10px] border-border text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg flex items-center gap-1" onClick={handleExportCSV}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
-                      CSV
-                    </Button>
-                    <Button variant="outline" className="h-8 px-3 text-[10px] border-border text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg" onClick={handlePrint}>
-                      Print
-                    </Button>
+                </div>
+
+                {/* Card 2: Target Fund */}
+                <div className="bg-white rounded-[24px] p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 hover:shadow-xl">
+                  <div className="flex flex-col h-full justify-between relative z-10">
+                    <div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+                        </div>
+                        <button onClick={() => setShowTargetModal(true)} className="text-slate-300 hover:text-blue-500 bg-white hover:bg-blue-50 p-2 rounded-xl transition-all">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+                        </button>
+                      </div>
+                      <p className="text-sm font-bold text-slate-500 mb-1">เป้าหมาย (Target)</p>
+                      <h4 className="text-3xl font-black text-slate-800 tracking-tighter">฿{formatNumber(result.targetFund)}</h4>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                      <p className="text-[11px] font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-lg">Goal</p>
+                      <span className="text-[10px] text-slate-400 font-bold">~฿{formatNumber(result.monthlyNeeded)}/เดือน</span>
+                    </div>
                   </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="min-h-[500px] print:min-h-0 print:h-[350px] rounded-2xl border border-border/50 bg-secondary/10 px-4 py-6">
-                    <div className="h-[450px] print:h-[320px]">
-                      <Line
-                        data={projectionChart.data}
-                        options={{
-                          ...projectionChart.options,
-                          scales: {
-                            x: {
-                              ...projectionChart.options.scales?.x,
-                              grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                              ticks: { color: '#64748b' }
-                            },
-                            y: {
-                              ...projectionChart.options.scales?.y,
-                              grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                              ticks: { color: '#64748b' }
-                            }
+                </div>
+
+                {/* Card 3: Monthly Expense */}
+                <div className="bg-white rounded-[24px] p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 hover:shadow-xl">
+                  <div className="flex flex-col h-full justify-between relative z-10">
+                    <div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                        </div>
+                        <button onClick={() => setShowExpenseModal(true)} className="text-slate-300 hover:text-purple-500 bg-white hover:bg-purple-50 p-2 rounded-xl transition-all">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+                        </button>
+                      </div>
+                      <p className="text-sm font-bold text-slate-500 mb-1">ใช้จ่าย (FV Expense)</p>
+                      <h4 className="text-3xl font-black text-slate-800 tracking-tighter">฿{formatNumber(result.fvExpenseMonthly)}</h4>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                      <p className="text-[11px] font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded-lg">Monthly</p>
+                      <span className="text-[10px] text-slate-400 font-bold">Total: {(result.totalLifetimeExpense / 1000000).toFixed(1)}M</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 4: Status (Clean White Version) */}
+                <div className="bg-white rounded-[24px] p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 hover:shadow-xl">
+                  <div className="flex flex-col h-full justify-between relative z-10">
+                    <div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                          {result.status === 'enough' ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg> :
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                          }
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-slate-500 mb-1">สถานะ (Status)</p>
+                      <h4 className={`text-3xl font-black tracking-tighter ${result.status === 'enough' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        {result.status === 'enough' ? "Freedom" : "Gap Alert"}
+                      </h4>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-50">
+                      <p className={`text-[11px] font-bold inline-block px-2 py-1 rounded-lg ${result.status === 'enough' ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50'}`}>
+                        {result.status === 'enough' ? "Goal Achieved" : `Shortfall -${formatNumber(Math.abs(result.gap))}`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* 3. MAIN DASHBOARD GRID (New Layout: Chart flowing into Widgets) */}
+              <div className="flex flex-col gap-8 mb-8 break-inside-avoid">
+
+                {/* 3.1 Main Chart Area (Full Width "Long Strip") */}
+                <div className="w-full bg-white rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-slate-100 relative overflow-hidden group">
+                  {/* Decorative Background for Chart */}
+                  <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-blue-50/50 via-transparent to-transparent opacity-60 pointer-events-none -mr-20 -mt-20 rounded-full blur-3xl"></div>
+
+                  <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6">
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <div className="w-1.5 h-8 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
+                        <h3 className="text-2xl font-black text-slate-800 tracking-tight">เปรียบเทียบการเติบโตของทรัพย์สิน vs เป้าหมายที่ต้องมีในแต่ละปี</h3>
+                      </div>
+                      <p className="text-sm text-slate-500 font-medium pl-4.5">Wealth Projection & Goal Analysis</p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 bg-slate-50/80 backdrop-blur-sm p-1.5 rounded-2xl border border-slate-100">
+                      <button className="px-4 py-2 text-xs font-bold text-slate-600 bg-white hover:bg-white hover:text-blue-600 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5" onClick={handleSavePlan}>
+                        บันทึกแผน
+                      </button>
+                      <button className="px-4 py-2 text-xs font-bold text-slate-600 bg-white hover:bg-white hover:text-blue-600 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5" onClick={handleExportCSV}>
+                        CSV
+                      </button>
+                      <button className="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-lg shadow-slate-900/20 transition-all hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2" onClick={handlePrint}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
+                        Print Report
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="w-full relative h-[500px] bg-gradient-to-b from-white to-slate-50/50 rounded-2xl border border-slate-100 p-4">
+                    <Line
+                      data={projectionChart.data}
+                      options={{
+                        ...projectionChart.options,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 20, bottom: 10, left: 10, right: 10 } },
+                        scales: {
+                          x: {
+                            ...projectionChart.options.scales?.x,
+                            grid: { display: false },
+                            ticks: { color: '#64748b', font: { size: 11, family: 'var(--font-sans)', weight: 'bold' } }
                           },
-                          plugins: {
-                            ...projectionChart.options.plugins,
-                            legend: {
-                              labels: { color: '#475569' }
+                          y: {
+                            ...projectionChart.options.scales?.y,
+                            border: { display: false },
+                            grid: { color: '#f1f5f9', tickLength: 0 },
+                            ticks: {
+                              color: '#94a3b8',
+                              font: { size: 11, family: 'var(--font-sans)' },
+                              callback: (value) => {
+                                const val = value as number;
+                                if (val >= 1000000) return (val / 1000000).toFixed(0) + "M";
+                                if (val >= 1000) return (val / 1000).toFixed(0) + "k";
+                                return val;
+                              },
+                              padding: 10
                             }
                           }
-                        }}
-                        plugins={[{
-                          id: 'financialFreedomLabel',
-                          afterDraw: (chart) => {
-                            const ctx = chart.ctx;
-                            const datasetIndex = chart.data.datasets.findIndex((d: any) => d.label === 'อิสรภาพทางการเงิน');
-                            if (datasetIndex === -1) return;
-
-                            const meta = chart.getDatasetMeta(datasetIndex);
-                            if (!meta.data || meta.data.length === 0) return;
-
-                            // Draw label at roughly 15% of the width (early in the chart)
-                            const indexToDraw = Math.min(Math.floor(meta.data.length * 0.15), meta.data.length - 1);
-                            const point = meta.data[indexToDraw];
-
-                            if (point) {
-                              ctx.save();
-                              ctx.font = "bold 16px 'Inter', sans-serif";
-                              ctx.fillStyle = "#2563eb"; // Blue-600
-                              ctx.textAlign = "left";
-                              ctx.textBaseline = "bottom";
-                              ctx.fillText("อิสรภาพทางการเงิน", point.x, point.y - 8);
-                              ctx.restore();
-                            }
-                          }
-                        }]}
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between text-xs text-slate-600 print:hidden">
-                    <div className="flex gap-4">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="chkSumAssured"
-                          className="h-5 w-5 rounded border-slate-300 text-orange-500 focus:ring-orange-500 accent-orange-500"
-                          checked={showSumAssured}
-                          onChange={(e) => setShowSumAssured(e.target.checked)}
-                        />
-                        <label htmlFor="chkSumAssured" className="select-none text-base text-slate-600">แสดงทุนประกัน</label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="chkActualSavings"
-                          className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-600 accent-blue-600"
-                          checked={showActualSavings}
-                          onChange={(e) => setShowActualSavings(e.target.checked)}
-                        />
-                        <label htmlFor="chkActualSavings" className="select-none text-base text-slate-600">แสดงเงินที่เก็บได้จริง</label>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="h-4 w-4 bg-emerald-100 border border-emerald-200 block"></span>
-                      <span className="text-base text-slate-600">Monte Carlo Simulation P5-P95</span>
-                    </div>
+                        },
+                        plugins: {
+                          ...projectionChart.options.plugins,
+                          legend: { display: false }
+                        }
+                      }}
+                    />
                   </div>
 
-                </CardContent>
-              </Card>
+                  {/* Custom Legend Bar */}
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 pt-6 border-t border-slate-50">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50/50 border border-emerald-100/50">
+                      <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm animate-pulse"></span>
+                      <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">เงินออมของคุณ</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50/50 border border-blue-100/50">
+                      <div className="w-8 h-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"></div>
+                      <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">เป้าหมาย (Goal)</span>
+                    </div>
 
-              {/* Portfolio & Monte Carlo */}
-              <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 print:hidden">
-                <Card className="shadow-lg border border-border/50 bg-card rounded-3xl">
-                  <CardHeader className="pb-4 border-b border-border/40"><CardTitle className="text-base font-bold text-foreground">คำแนะนำการจัดพอร์ต (แบบคร่าวๆ)</CardTitle></CardHeader>
-                  <CardContent className="space-y-6 pt-6">
-                    <p className="text-xs text-muted-foreground">ตามกฎง่ายๆ: equity% ≈ 100 - อายุ</p>
+                    <div className="w-px h-6 bg-slate-200 hidden sm:block"></div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer select-none group/toggle">
+                        <div className={`relative w-10 h-6 rounded-full transition-colors duration-300 ${showSumAssured ? "bg-orange-500 shadow-orange-200 shadow-md" : "bg-slate-200"}`}>
+                          <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 shadow-sm ${showSumAssured ? "translate-x-4" : "translate-x-0"}`}></div>
+                        </div>
+                        <input type="checkbox" className="hidden" checked={showSumAssured} onChange={(e) => setShowSumAssured(e.target.checked)} />
+                        <span className="text-[10px] font-bold text-slate-500 group-hover/toggle:text-slate-800 transition-colors">แสดงทุนประกัน</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer select-none group/toggle">
+                        <div className={`relative w-10 h-6 rounded-full transition-colors duration-300 ${showActualSavings ? "bg-teal-500 shadow-teal-200 shadow-md" : "bg-slate-200"}`}>
+                          <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 shadow-sm ${showActualSavings ? "translate-x-4" : "translate-x-0"}`}></div>
+                        </div>
+                        <input type="checkbox" className="hidden" checked={showActualSavings} onChange={(e) => setShowActualSavings(e.target.checked)} />
+                        <span className="text-[10px] font-bold text-slate-500 group-hover/toggle:text-slate-800 transition-colors">แสดงเงินออมจริง</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3.2 Side Column Widgets (Asset Allocation & Monte Carlo) - NOW BELOW */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                  {/* Asset Allocation Widget (Cleaner & Visual) */}
+                  <div className="bg-white rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.08)] transition-all duration-500">
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-indigo-100 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" /></svg>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-800 text-lg tracking-tight">สัดส่วนการลงทุน</h3>
+                        <p className="text-xs text-slate-400 font-medium">แนะนำตามช่วงอายุ (Age-based Rule)</p>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 flex flex-col justify-center gap-8 px-2">
                       {/* Equity */}
-                      <div className="rounded-2xl bg-secondary/30 p-4 flex flex-col items-center justify-center space-y-2 border border-border/50 hover:bg-secondary/50 transition-colors">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">หุ้น</span>
-                        <span className="text-3xl font-black text-foreground">{100 - inputs.currentAge}%</span>
+                      <div>
+                        <div className="flex justify-between items-end mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                            <span className="text-sm font-bold text-slate-700">หุ้น / กองทุนรวม</span>
+                          </div>
+                          <span className="text-2xl font-black text-indigo-600 tracking-tight">{(100 - inputs.currentAge)}%</span>
+                        </div>
+                        <div className="w-full h-3 bg-indigo-50 rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-500 rounded-full shadow-lg shadow-indigo-200" style={{ width: `${100 - inputs.currentAge}%` }}></div>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1.5 font-medium pl-4">สินทรัพย์เสี่ยงเพื่อสร้างผลตอบแทนระยะยาว</p>
                       </div>
 
-                      {/* Bond */}
-                      <div className="rounded-2xl bg-secondary/30 p-4 flex flex-col items-center justify-center space-y-2 border border-border/50 hover:bg-secondary/50 transition-colors">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">ตราสารหนี้</span>
-                        <span className="text-3xl font-black text-foreground">{Math.floor((inputs.currentAge) * 0.8)}%</span>
+                      {/* Fixed Income */}
+                      <div>
+                        <div className="flex justify-between items-end mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                            <span className="text-sm font-bold text-slate-700">ตราสารหนี้</span>
+                          </div>
+                          <span className="text-xl font-black text-emerald-600 tracking-tight">{Math.floor((inputs.currentAge) * 0.8)}%</span>
+                        </div>
+                        <div className="w-full h-3 bg-emerald-50 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full shadow-lg shadow-emerald-200" style={{ width: `${Math.floor((inputs.currentAge) * 0.8)}%` }}></div>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1.5 font-medium pl-4">สินทรัพย์มั่นคง ความผันผวนต่ำ</p>
                       </div>
 
                       {/* Cash */}
-                      <div className="rounded-2xl bg-secondary/30 p-4 flex flex-col items-center justify-center space-y-2 border border-border/50 hover:bg-secondary/50 transition-colors">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">เงินสด/ทอง</span>
-                        <span className="text-3xl font-black text-foreground">{inputs.currentAge - Math.floor((inputs.currentAge) * 0.8)}%</span>
+                      <div>
+                        <div className="flex justify-between items-end mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                            <span className="text-sm font-bold text-slate-700">เงินสด / สภาพคล่อง</span>
+                          </div>
+                          <span className="text-xl font-black text-slate-500 tracking-tight">{inputs.currentAge - Math.floor((inputs.currentAge) * 0.8)}%</span>
+                        </div>
+                        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-slate-400 rounded-full shadow-lg shadow-slate-200" style={{ width: `${inputs.currentAge - Math.floor((inputs.currentAge) * 0.8)}%` }}></div>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1.5 font-medium pl-4">เผื่อฉุกเฉินและรอจังหวะลงทุน</p>
                       </div>
                     </div>
+                  </div>
 
-                    <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
-                      หมายเหตุ: เป็นคำแนะนำทั่วไปเท่านั้น ควรปรึกษาที่ปรึกษาทางการเงินสำหรับคำแนะนำเฉพาะบุคคล
-                    </p>
-                  </CardContent>
-                </Card>
+                  {/* Monte Carlo Widget (Dark Theme Clean) */}
+                  <div className="bg-slate-900 rounded-[32px] p-8 shadow-[0_25px_60px_-15px_rgba(15,23,42,0.4)] text-white relative overflow-hidden group min-h-[360px] flex flex-col justify-between border border-slate-800">
+                    <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-600/20 rounded-full blur-[100px] -mr-20 -mt-20 pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-emerald-600/10 rounded-full blur-[80px] -ml-10 -mb-10 pointer-events-none"></div>
 
-                <Card className="shadow-lg border border-border/50 bg-card rounded-3xl">
-                  <CardHeader className="pb-4 border-b border-border/40"><CardTitle className="text-base font-bold text-foreground">Monte Carlo Simulation</CardTitle></CardHeader>
-                  <CardContent className="space-y-4 pt-6">
-                    <p className="text-xs font-medium text-destructive">การจำลอง 5 ครั้ง ที่ความผันผวน 6%</p>
-
-                    <div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="text-2xl font-black text-foreground">ความน่าจะเป็นเงินพอ: <span className="text-primary">{formatNumber2(mcResult.probability * 100, 0)}%</span></div>
-                        <button onClick={() => setShowMonteCarloDetails(true)} className="text-muted-foreground hover:text-foreground transition-colors">
-                          <InfoIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-                      <div className="text-xs text-muted-foreground mb-4">มัธยฐานผลลัพธ์: <span className="font-bold text-foreground">฿{formatNumber(mcResult.p50)}</span></div>
-
-                      <div className="flex gap-2 mt-4">
-                        <span className="inline-flex items-center rounded-lg bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary ring-1 ring-inset ring-primary/20">
-                          Premium Plan
-                        </span>
-                        <span className="inline-flex items-center rounded-lg bg-chart-4/10 px-3 py-1 text-[10px] font-bold text-chart-4 ring-1 ring-inset ring-chart-4/20">
-                          Pro Plan
-                        </span>
-                      </div>
-
-                      <p className="text-[10px] text-muted-foreground/60 leading-relaxed mt-4">
-                        ลดความคลาดเคลื่อนมากขึ้นด้วยจำลองกว่า 1,000 ครั้ง
-                        <br />
-                        ปรับความผันผวนผลตอบแทนตอบแทนได้
-                      </p>
-
-
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Family Summary Overview Card (Shows ONLY if more than 1 member) */}
-              {familyMembers.length > 1 && (
-                <div className="mt-4">
-                  <Card className="shadow-lg border-0 bg-white ring-1 ring-slate-200/50 break-inside-avoid print:shadow-none print:border print:ring-0">
-                    <CardHeader className="pb-4 border-b border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-indigo-600 rounded-xl shadow-md shadow-indigo-200 text-white">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                    <div className="relative z-10 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner shadow-white/5">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-300"><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" /></svg>
                         </div>
                         <div>
-                          <CardTitle className="text-lg text-slate-800">สรุปแผนครอบครัว (Family Plan Summary)</CardTitle>
-                          <div className="text-xs text-slate-500 mt-0.5">ภาพรวมสถานะการเงินของสมาชิกทั้งหมด {familyMembers.length} คน</div>
+                          <h3 className="font-bold text-white text-lg tracking-tight">Monte Carlo</h3>
+                          <p className="text-xs text-blue-300 font-medium opacity-80">ความน่าจะเป็น 1,000 รูปแบบ</p>
                         </div>
                       </div>
-                    </CardHeader>
+                      <button onClick={() => setShowMonteCarloDetails(true)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all text-blue-200 hover:text-white border border-white/5 hover:border-white/20">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg>
+                      </button>
+                    </div>
 
-                    <CardContent className="pt-6 space-y-8">
+                    <div className="relative z-10 flex flex-col items-center justify-center my-6">
+                      <div className="relative w-40 h-40">
+                        <svg className="w-full h-full transform -rotate-90">
+                          <circle cx="50%" cy="50%" r="45%" stroke="#1e293b" strokeWidth="12" fill="none" className="opacity-50" />
+                          <circle cx="50%" cy="50%" r="45%" stroke={mcResult.probability > 0.8 ? "#10b981" : mcResult.probability > 0.5 ? "#f59e0b" : "#f43f5e"} strokeWidth="12" fill="none" strokeDasharray="283" strokeDashoffset={283 - (283 * mcResult.probability)} strokeLinecap="round" className="transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(16,185,129,0.5)]" />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-5xl font-black text-white tracking-tighter drop-shadow-lg">{Math.round(mcResult.probability * 100)}%</span>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Success Rate</span>
+                        </div>
+                      </div>
+                    </div>
 
-                      {/* 1. Wealth Overview Section */}
+                    <div className="relative z-10 bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center justify-between backdrop-blur-sm hover:bg-white/10 transition-colors cursor-help" title="กรณีที่ตลาดลงทุนให้ผลตอบแทนแย่ที่สุดในกลุ่ม 5% แรก">
                       <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                            <div className="w-1.5 h-4 bg-indigo-600 rounded-full"></div>
-                            ความมั่งคั่งรวม (Total Wealth)
-                          </h4>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowFamilySummaryModal(true)}
-                            className="h-8 text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-3"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
-                            ดูรายงานเต็ม
-                          </Button>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Worst Case (P5)</p>
+                        <p className="text-xs text-slate-500">กรณีตลาดแย่ที่สุด</p>
+                      </div>
+                      <div className={`text-right ${mcResult.p5 > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                        <span className="text-2xl font-black tracking-tight">{mcResult.p5 > 0 ? "+" : ""}฿{formatNumber(mcResult.p5)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+
+
+                {/* 4. FAMILY FAMILY ECOSYSTEM (Detailed View on Page) */}
+                {familyMembers.length > 1 && (
+                  <div className="bg-white rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-100 mb-12 break-inside-avoid relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+
+                    {/* Header */}
+                    <div className="flex items-center gap-5 mb-10 pb-6 border-b border-slate-100">
+                      <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white shadow-xl shadow-indigo-500/20 ring-4 ring-indigo-50">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-black text-slate-900 tracking-tight">สรุปแผนครอบครัว</h3>
+                        <div className="flex items-center gap-3 mt-1.5">
+                          <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-lg text-[11px] font-bold uppercase tracking-wide border border-indigo-100">Family Overview</span>
+                          <p className="text-sm text-slate-500 font-medium">รายงานสุขภาพการเงินรวม ({familyMembers.length} ท่าน)</p>
                         </div>
+                      </div>
+                    </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {/* Projected */}
-                          <div className="relative rounded-2xl border border-indigo-50 bg-indigo-50/30 p-5 shadow-sm transition-all hover:shadow-md hover:border-indigo-100 group/tooltip">
-                            <div className="absolute inset-0 overflow-hidden rounded-2xl">
-                              <div className="absolute top-0 right-0 p-4 opacity-[0.05]">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
-                              </div>
-                            </div>
+                    {/* 1. Executive Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                      {/* Status Card */}
+                      <div className={`col-span-1 md:col-span-1 rounded-[24px] p-6 border shadow-sm relative overflow-hidden group hover:shadow-md transition-all ${getFamilySummary().totalGap >= 0 ? "bg-white border-emerald-100" : "bg-white border-rose-100"}`}>
+                        <div className={`absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 bg-gradient-to-br opacity-10 ${getFamilySummary().totalGap >= 0 ? "from-emerald-400 to-teal-500" : "from-rose-400 to-red-500"}`}></div>
 
-                            <div className="flex items-center gap-1.5 mb-2 relative z-10">
-                              <div className="text-xs font-bold text-indigo-900/70 uppercase tracking-wide">เงินที่จะมี (Projected)</div>
-                              <div className="cursor-help text-indigo-300 hover:text-indigo-500 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                              </div>
-
-                              {/* Simplified Tooltip (Above) */}
-                              <div className="hidden group-hover/tooltip:block absolute bottom-full left-0 mb-2 z-[100] w-64 p-4 bg-white/95 backdrop-blur-sm text-slate-700 text-xs shadow-xl border border-indigo-100 rounded-xl animate-in fade-in zoom-in-95 duration-200 select-none">
-                                <p className="leading-relaxed">เงินออมรวมที่คาดว่าจะมีตอนเกษียณ (จากเงินต้นและดอกเบี้ย)</p>
-                                <div className="absolute -bottom-1.5 left-3 w-3 h-3 bg-white border-b border-r border-indigo-100 rotate-45"></div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-baseline gap-1 relative z-10">
-                              <span className="text-2xl font-bold text-indigo-600">฿</span>
-                              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">{formatNumber(getFamilySummary().totalProjected)}</span>
-                            </div>
+                        <div className="relative z-10 flex flex-col h-full justify-between items-center text-center">
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-sm ${getFamilySummary().totalGap >= 0 ? "bg-emerald-50 text-emerald-600 ring-4 ring-emerald-50/50" : "bg-rose-50 text-rose-600 ring-4 ring-rose-50/50"}`}>
+                            {getFamilySummary().totalGap >= 0
+                              ? <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                              : <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                            }
                           </div>
-
-                          {/* Target */}
-                          <div className="relative rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:border-slate-200 group/tooltip">
-                            <div className="absolute inset-0 overflow-hidden rounded-2xl">
-                              <div className="absolute top-0 right-0 p-4 opacity-[0.03]">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" /></svg>
-                              </div>
+                          <div>
+                            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">สถานะภาพรวม</div>
+                            <div className={`text-xl font-black tracking-tight ${getFamilySummary().totalGap >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                              {getFamilySummary().totalGap >= 0 ? "Wealthy ✨" : "Deficit ⚠️"}
                             </div>
-
-                            <div className="flex items-center gap-1.5 mb-2 relative z-10">
-                              <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">เงินที่ต้องใช้ (Target)</div>
-                              <div className="cursor-help text-slate-300 hover:text-slate-500 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                              </div>
-
-                              {/* Simplified Tooltip (Above) */}
-                              <div className="hidden group-hover/tooltip:block absolute bottom-full left-0 mb-2 z-[100] w-64 p-4 bg-white/95 backdrop-blur-sm text-slate-700 text-xs shadow-xl border border-slate-200 rounded-xl animate-in fade-in zoom-in-95 duration-200 select-none">
-                                <p className="leading-relaxed">ยอดรวมที่ทุกคนต้องมีเพื่อให้พอใช้จ่ายตามแผนของตัวเอง</p>
-                                <div className="absolute -bottom-1.5 left-3 w-3 h-3 bg-white border-b border-r border-slate-200 rotate-45"></div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-baseline gap-1 relative z-10">
-                              <span className="text-2xl font-bold text-slate-400">฿</span>
-                              <span className="text-3xl font-extrabold text-slate-700 tracking-tight">{formatNumber(getFamilySummary().totalTarget)}</span>
-                            </div>
-                          </div>
-
-                          {/* Gap Analysis */}
-                          <div className={`relative rounded-2xl border p-5 shadow-sm flex flex-col justify-center transition-all hover:shadow-md ${getFamilySummary().totalGap < 0 ? "bg-rose-50/50 border-rose-100" : "bg-emerald-50/50 border-emerald-100"}`}>
-                            <div className="flex items-center justify-between mb-2">
-                              <div className={`text-xs font-bold uppercase tracking-wide ${getFamilySummary().totalGap < 0 ? "text-rose-700" : "text-emerald-700"}`}>
-                                {getFamilySummary().totalGap < 0 ? "ขาดอีก (Shortfall)" : "เพียงพอ (Surplus)"}
-                              </div>
-                              <div className={`p-1 rounded-full ${getFamilySummary().totalGap < 0 ? "bg-white text-rose-600 shadow-sm" : "bg-white text-emerald-600 shadow-sm"}`}>
-                                {getFamilySummary().totalGap < 0
-                                  ? <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16 16v4" /><path d="M20 16v4" /><path d="M8 20H3" /><path d="M8 16v4" /><path d="M4 16v4" /><path d="M12 4v16" /></svg>
-                                  : <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-                                }
-                              </div>
-                            </div>
-                            <div className="flex items-baseline gap-1">
-                              <span className={`text-2xl font-bold ${getFamilySummary().totalGap < 0 ? "text-rose-500" : "text-emerald-500"}`}>{getFamilySummary().totalGap < 0 ? "-" : "+"}</span>
-                              <span className={`text-3xl font-extrabold tracking-tight ${getFamilySummary().totalGap < 0 ? "text-rose-700" : "text-emerald-700"}`}>{formatNumber(Math.abs(getFamilySummary().totalGap))}</span>
+                            <div className={`text-xs mt-1 font-semibold ${getFamilySummary().totalGap >= 0 ? "text-emerald-600/70" : "text-rose-600/70"}`}>
+                              {getFamilySummary().totalGap >= 0 ? "เงินเพียงพอตลอดชีพ" : "เงินไม่พอใช้หลังเกษียณ"}
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* 2. Cash Flow & Action Plan */}
-                        <div className="space-y-4">
-                          <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2 whitespace-nowrap">
-                            <div className="w-1.5 h-4 bg-amber-500 rounded-full"></div>
-                            สถานะกระแสเงินสด (Cash Flow)
-                            <div className="group/cf relative">
-                              <span className="cursor-help text-slate-300 hover:text-amber-500 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                              </span>
-                              <div className="hidden group-hover/cf:block absolute bottom-full left-0 mb-2 z-[100] w-72 p-4 bg-white/95 backdrop-blur-sm text-slate-700 text-xs font-normal rounded-xl shadow-xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200 select-none whitespace-normal">
-                                <div className="font-bold text-amber-700 mb-2 border-b border-amber-50 pb-1">การวิเคราะห์กระแสเงินสด (Cash Flow Analysis)</div>
-                                <p className="mb-2 leading-relaxed">เปรียบเทียบ <span className="text-emerald-600 font-bold">สิ่งที่ทำได้จริง</span> (เงินออมปัจจุบัน) กับ <span className="text-indigo-600 font-bold">สิ่งที่ควรทำ</span> (เงินออมที่แนะนำ) เพื่อให้บรรลุเป้าหมาย</p>
-                                <ul className="list-disc pl-4 space-y-1 mb-2 text-slate-600">
-                                  <li>ถ้า <span className="text-emerald-600 font-bold">มากกว่า 100%</span> = ออมเกินเป้า (ดีมาก)</li>
-                                  <li>ถ้า <span className="text-amber-600 font-bold">น้อยกว่า 100%</span> = ควรออมเพิ่ม</li>
-                                </ul>
-                                <div className="absolute -bottom-1.5 left-3 w-3 h-3 bg-white border-b border-r border-slate-200 rotate-45"></div>
-                              </div>
+                      {/* Wealth Stats */}
+                      <div className="col-span-1 md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        {/* Card 1 */}
+                        <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-bl-[80px] -mr-4 -mt-4 transition-all group-hover:scale-110"></div>
+                          <div className="relative z-10">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> เป้าหมายต้องมี
                             </div>
-                          </h4>
-
-                          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
-                            <div className="space-y-6">
-                              <div>
-                                <div className="flex justify-between items-end mb-2">
-                                  <span className="text-xs text-slate-500 font-medium">ออมได้จริง (Actual)</span>
-                                  <span className="text-lg font-bold text-slate-800">฿{formatNumber(getFamilySummary().totalMonthlySavingsCurrent)}<span className="text-xs font-normal text-slate-400">/เดือน</span></span>
-                                </div>
-                                <div className="flex justify-between items-end mb-2">
-                                  <span className="text-xs text-slate-500 font-medium">ควรจะออม (Recommended)</span>
-                                  <span className="text-lg font-bold text-indigo-600">฿{formatNumber2(getFamilySummary().totalMonthlyNeeded, 0)}<span className="text-xs font-normal text-slate-400">/เดือน</span></span>
-                                </div>
-                                <div className="text-[10px] text-slate-400 mt-1">
-                                  *คิดจากผลรวมเงินออมรายเดือนของทุกคน เทียบกับ ยอดที่ต้องออมรวมเพื่อให้ทุกคนบรรลุเป้าหมาย
-                                </div>
-                              </div>
-
-                              {/* Progress Bar */}
-                              <div>
-                                <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                                  <div
-                                    className={`h-full rounded-full transition-all duration-1000 ease-out ${getFamilySummary().totalMonthlySavingsCurrent >= getFamilySummary().totalMonthlyNeeded ? "bg-gradient-to-r from-emerald-500 to-emerald-400" : "bg-gradient-to-r from-amber-500 to-amber-400"}`}
-                                    style={{ width: `${Math.min(100, (getFamilySummary().totalMonthlySavingsCurrent / (getFamilySummary().totalMonthlyNeeded || 1)) * 100)}%` }}
-                                  ></div>
-                                </div>
-                                <div className="flex justify-between mt-2 text-[10px]">
-                                  <span className="text-slate-400">0%</span>
-                                  <span className={getFamilySummary().totalMonthlySavingsCurrent >= getFamilySummary().totalMonthlyNeeded ? "text-emerald-600 font-bold" : "text-amber-600 font-bold"}>
-                                    {((getFamilySummary().totalMonthlySavingsCurrent / (getFamilySummary().totalMonthlyNeeded || 1)) * 100).toFixed(0)}% ของเป้าหมาย
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className={`p-4 rounded-xl border ${getFamilySummary().totalMonthlySavingsCurrent >= getFamilySummary().totalMonthlyNeeded ? "bg-emerald-50 border-emerald-100" : "bg-amber-50 border-amber-100"}`}>
-                                {getFamilySummary().totalMonthlySavingsCurrent >= getFamilySummary().totalMonthlyNeeded ? (
-                                  <div className="flex gap-3">
-                                    <div className="text-emerald-600 mt-0.5"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg></div>
-                                    <div>
-                                      <div className="text-xs font-bold text-emerald-800">Excellent!</div>
-                                      <div className="text-[11px] text-emerald-700/80 leading-relaxed mt-1">การออมรวมของครอบครัวอยู่ในเกณฑ์ที่ดีเยี่ยม สามารถบรรลุเป้าหมายได้ตามแผน</div>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="flex gap-3">
-                                    <div className="text-amber-600 mt-0.5"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div>
-                                    <div>
-                                      <div className="text-xs font-bold text-amber-800">Action Required</div>
-                                      <div className="text-[11px] text-amber-700/80 leading-relaxed mt-1">ควรพิจารณาออมเพิ่มอีก <span className="font-bold border-b border-amber-300">฿{formatNumber2(getFamilySummary().totalMonthlyNeeded - getFamilySummary().totalMonthlySavingsCurrent, 0)}</span> ต่อเดือน เพื่อปิดช่องว่างทางการเงิน</div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
+                            <div className="text-3xl font-black text-slate-800 tracking-tighter">฿{formatNumber(getFamilySummary().totalTarget)}</div>
+                            <div className="mt-4 flex items-center gap-2">
+                              <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">Target Fund</span>
                             </div>
                           </div>
                         </div>
 
-                        {/* 3. Detailed Breakdown Analysis (Vertical Card List) */}
-                        <div className="space-y-4">
-                          <h4 className="text-sm font-bold text-slate-700 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div className="w-1.5 h-4 bg-indigo-600 rounded-full"></div>
-                              รายละเอียดรายคน ({familyMembers.length})
+                        {/* Card 2 */}
+                        <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50/50 rounded-bl-[80px] -mr-4 -mt-4 transition-all group-hover:scale-110"></div>
+                          <div className="relative z-10">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> คาดการณ์จะได้
                             </div>
-                            <span className="text-[10px] text-slate-400 font-normal">เรียงตามแผน</span>
-                          </h4>
+                            <div className="text-3xl font-black text-indigo-600 tracking-tighter">฿{formatNumber(getFamilySummary().totalProjected)}</div>
+                            <div className="mt-4 flex items-center gap-2">
+                              <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg">Projected</span>
+                            </div>
+                          </div>
+                        </div>
 
-                          <div className="space-y-3 max-h-[450px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
-                            {familyMembers.map((m) => {
+                        {/* Card 3 */}
+                        <div className={`p-6 rounded-[24px] border shadow-sm relative overflow-hidden group hover:shadow-md transition-all ${getFamilySummary().totalGap >= 0 ? "bg-gradient-to-br from-emerald-500 to-teal-600 border-emerald-400 text-white shadow-emerald-200" : "bg-gradient-to-br from-rose-500 to-red-600 border-rose-400 text-white shadow-rose-200"}`}>
+                          <div className="relative z-10">
+                            <div className="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-2 flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-white"></span> ส่วนต่าง (GAP)
+                            </div>
+                            <div className="text-3xl font-black text-white tracking-tighter">
+                              {getFamilySummary().totalGap >= 0 ? "+" : "-"}{formatNumber(Math.abs(getFamilySummary().totalGap))}
+                            </div>
+                            <div className="mt-4 flex items-center gap-2">
+                              <span className="text-[10px] font-bold bg-white/20 text-white px-2 py-1 rounded-lg backdrop-blur-sm border border-white/10">
+                                {getFamilySummary().totalGap >= 0 ? "Surplus Amount" : "Shortfall Amount"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Analysis & Insight Section */}
+                    <div className="bg-slate-50/50 rounded-[32px] p-8 border border-slate-200 mb-10 relative overflow-hidden">
+                      <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h20" /><path d="M2 12h20" /><path d="M2 12h20" /><circle cx="12" cy="12" r="10" /><path d="M12 2v20" /><path d="M12 2v20" /></svg>
+                          </div>
+                          <h4 className="text-lg font-bold text-slate-800">บทวิเคราะห์และคำแนะนำ (AI Insight)</h4>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                          {/* Left: Text Analysis */}
+                          <div className="space-y-6">
+                            <div className="bg-white p-6 rounded-2xl border border-amber-100 shadow-sm">
+                              <div className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                Executive Summary
+                              </div>
+                              <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                                จากการประเมินแผนการเกษียณของสมาชิกในครอบครัวทั้ง {familyMembers.length} ท่าน พบว่า
+                                {getFamilySummary().totalGap >= 0
+                                  ? " ภาพรวมสถานะทางการเงินมีความแข็งแกร่งมาก (Strong Financial Health) สามารถบรรลุเป้าหมายเกษียณได้ทุกคน โดยมีส่วนเกินทุนสำรองที่เพียงพอ แนะนำให้พิจารณาการลงทุนเพื่อเพิ่มความมั่งคั่ง (Wealth Accumulation) หรือส่งต่อมรดก"
+                                  : " ภาพรวมยังมีความเสี่ยงที่จะเงินไม่พอใช้หลังเกษียณ (Potential Shortfall) โดยเฉพาะในช่วงปลายของแผน จำเป็นต้องปรับปรุงโครงสร้างการออมหรือลดค่าใช้จ่ายเป้าหมายลง เพื่อปิดช่องว่างทางการเงินนี้"}
+                              </p>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="text-sm font-bold text-slate-700 ml-1">ข้อแนะนำ (Action Plan)</div>
+                              <ul className="space-y-3">
+                                {getFamilySummary().totalMonthlySavingsCurrent < getFamilySummary().totalMonthlyNeeded && (
+                                  <li className="flex gap-4 p-4 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+                                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                                    </div>
+                                    <div>
+                                      <div className="font-bold text-slate-800 text-sm mb-0.5">เพิ่มการออมด่วน</div>
+                                      <div className="text-xs text-slate-500">
+                                        ควรพิจารณาออมเพิ่มรวมกันอีก <span className="font-bold text-amber-600">฿{formatNumber2(getFamilySummary().totalMonthlyNeeded - getFamilySummary().totalMonthlySavingsCurrent, 0)}</span> ต่อเดือน
+                                      </div>
+                                    </div>
+                                  </li>
+                                )}
+                                <li className="flex gap-4 p-4 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+                                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-slate-800 text-sm mb-0.5">ปรับพอร์ตการลงทุน</div>
+                                    <div className="text-xs text-slate-500">
+                                      ตรวจสอบว่า Expected Return สอดคล้องกับความเสี่ยงที่รับได้หรือไม่ การเพิ่มผลตอบแทนเพียง 1% มีผลมหาศาล
+                                    </div>
+                                  </div>
+                                </li>
+                                <li className="flex gap-4 p-4 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+                                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-slate-800 text-sm mb-0.5">จัดการความคุ้มครอง</div>
+                                    <div className="text-xs text-slate-500">
+                                      ตรวจสอบสิทธิประโยชน์ทางภาษีและการประกันสุขภาพ ลดภาระค่าใช้จ่ายแฝงตามช่วงวัย
+                                    </div>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+
+                          {/* Right: Savings Performance */}
+                          <div className="bg-white rounded-[24px] p-8 border border-slate-200/60 flex flex-col justify-center relative overflow-hidden shadow-sm">
+                            <div className="text-center mb-8 relative z-10">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-100">Performance Score</span>
+                              <div className="text-6xl font-black text-slate-800 mt-6 mb-2 tracking-tighter">
+                                {((getFamilySummary().totalMonthlySavingsCurrent / (getFamilySummary().totalMonthlyNeeded || 1)) * 100).toFixed(0)}<span className="text-3xl text-slate-400 ml-1">%</span>
+                              </div>
+                              <div className="text-xs text-slate-500 font-medium">คะแนนประสิทธิภาพแผนการออม</div>
+                            </div>
+
+                            <div className="space-y-6 relative z-10 px-4">
+                              <div>
+                                <div className="flex justify-between text-xs font-bold text-slate-700 mb-2">
+                                  <span>ออมจริง (Actual)</span>
+                                  <span className="font-mono">฿{formatNumber(getFamilySummary().totalMonthlySavingsCurrent)}</span>
+                                </div>
+                                <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                                  <div className="h-full bg-slate-800 rounded-full shadow-[0_0_10px_rgba(30,41,59,0.5)]" style={{ width: `${Math.min(100, (getFamilySummary().totalMonthlySavingsCurrent / (getFamilySummary().totalMonthlyNeeded || 1)) * 100)}%` }}></div>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="flex justify-between text-xs font-bold text-indigo-600 mb-2">
+                                  <span>เป้าหมาย (Needed)</span>
+                                  <span className="font-mono">฿{formatNumber2(getFamilySummary().totalMonthlyNeeded, 0)}</span>
+                                </div>
+                                <div className="h-3 w-full bg-indigo-50 rounded-full overflow-hidden relative shadow-inner">
+                                  <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-indigo-500 z-10"></div>
+                                  <div className="h-full bg-indigo-500/20 w-full animate-pulse"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Detailed Member Breakdown Table */}
+                    <div className="space-y-5">
+                      <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2 pl-2">
+                        <span className="text-blue-500 bg-blue-50 p-1.5 rounded-lg border border-blue-100">👥</span>
+                        รายละเอียดรายบุคคล (Member Breakdown)
+                      </h4>
+
+                      <div className="rounded-[24px] border border-slate-200 overflow-hidden shadow-lg shadow-slate-200/20 bg-white">
+                        <table className="w-full text-sm text-left border-collapse">
+                          <thead className="bg-[#f8fafc] border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                            <tr>
+                              <th className="py-5 px-6 w-[25%] font-bold text-slate-600">สมาชิก (Member)</th>
+                              <th className="py-5 px-6 text-right w-[10%]">รอเกษียณ (ปี)</th>
+                              <th className="py-5 px-6 text-right w-[20%]">เป้าหมาย (Target)</th>
+                              <th className="py-5 px-6 text-left w-[25%] pl-8">ความก้าวหน้า (Progress)</th>
+                              <th className="py-5 px-6 text-right w-[20%]">สถานะ (Status)</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {familyMembers.map((m, idx) => {
+                              // Re-calculate for each member
                               const isCurrent = String(m.id) === String(currentMemberId);
-                              const mInputs = buildRetirementInputs({
+                              const inputs = buildRetirementInputs({
                                 form: isCurrent ? form : m.form,
                                 gender: isCurrent ? gender : m.gender,
                                 savingMode: isCurrent ? savingMode : m.savingMode,
                                 returnMode: isCurrent ? returnMode : m.returnMode,
                                 allocations: isCurrent ? allocations : m.allocations
                               });
-                              const mRes = calculateRetirement(mInputs);
-                              const isGood = mRes.status === "enough";
-                              const progress = Math.min(100, (mRes.projectedFund / (mRes.targetFund || 1)) * 100);
+                              const res = calculateRetirement(inputs);
+                              const progress = Math.min(100, (res.projectedFund / (res.targetFund || 1)) * 100);
+                              const yearsLeft = Number(m.form.retireAge) - Number(m.form.currentAge);
 
-                              // Translation map
+                              // Relation translation
                               const relationMap: Record<string, string> = {
                                 self: "ตนเอง", spouse: "คู่สมรส", child: "บุตร", father: "บิดา", mother: "มารดา", relative: "ญาติ"
                               };
-                              const relationLabel = relationMap[m.relation || "self"] || m.relation;
 
                               return (
-                                <div key={m.id} className="group relative bg-white border border-slate-200 rounded-xl p-4 hover:border-indigo-300 transition-all hover:shadow-md">
-                                  <div className="flex items-start justify-between mb-3">
-                                    <div className="flex items-center gap-3">
-                                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ring-2 ring-white ${isGood ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"}`}>
+                                <tr key={m.id} className="hover:bg-indigo-50/20 transition-colors group">
+                                  <td className="py-6 px-6">
+                                    <div className="flex items-center gap-4">
+                                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-base font-bold shadow-sm ring-4 ring-white transition-transform group-hover:scale-110
+                                            ${res.status === "enough" ? "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700" : "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700"}`}>
                                         {m.name.charAt(0)}
                                       </div>
                                       <div>
-                                        <div className="font-bold text-slate-700 text-sm group-hover:text-indigo-700 transition-colors">{m.name}</div>
-                                        <div className="text-[10px] text-slate-400">{relationLabel} • อายุ {m.form.currentAge} ปี</div>
+                                        <div className="font-bold text-slate-800 text-base">{m.name}</div>
+                                        <div className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-md inline-block mt-1">{relationMap[m.relation] || m.relation}</div>
                                       </div>
                                     </div>
-                                    {isGood ? (
-                                      <div className="flex items-center gap-1 bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md border border-emerald-100">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-                                        <span className="text-[10px] font-bold">พอใช้</span>
-                                      </div>
+                                  </td>
+                                  <td className="py-6 px-6 text-right">
+                                    <span className="font-bold text-slate-700 text-base">{yearsLeft}</span>
+                                    <span className="text-xs text-slate-400 ml-1">ปี</span>
+                                  </td>
+                                  <td className="py-6 px-6 text-right">
+                                    <div className="font-bold text-slate-800 text-base">฿{formatNumber2(res.targetFund / 1000000, 1)}M</div>
+                                    <div className="text-[10px] text-slate-400">เป้าหมายรวม</div>
+                                  </td>
+                                  <td className="py-6 px-6 pl-8">
+                                    <div className="w-full bg-slate-100 rounded-full h-2.5 mb-2 overflow-hidden shadow-inner">
+                                      <div className={`h-2.5 rounded-full ${res.status === "enough" ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${progress}%` }}></div>
+                                    </div>
+                                    <div className="text-[10px] font-bold text-slate-500 text-right">{progress.toFixed(0)}% Completed</div>
+                                  </td>
+                                  <td className="py-6 px-6 text-right">
+                                    {res.status === "enough" ? (
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        เพียงพอ
+                                      </span>
                                     ) : (
-                                      <div className="flex items-center gap-1 bg-rose-50 text-rose-600 px-2 py-1 rounded-md border border-rose-100">
-                                        <span className="text-[10px] font-bold">ขาด ฿{formatNumber2(Math.abs(mRes.gap), 0)}</span>
-                                      </div>
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100 shadow-sm">
+                                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                                        ขาดอีก {formatNumber2(Math.abs(res.gap) / 1000000, 1)}M
+                                      </span>
                                     )}
-                                  </div>
-
-                                  {/* Progress */}
-                                  <div className="space-y-1 mb-3">
-                                    <div className="flex justify-between text-[10px]">
-                                      <span className="text-slate-500">ความคืบหน้า</span>
-                                      <span className={isGood ? "text-emerald-600 font-bold" : "text-rose-600 font-bold"}>{progress.toFixed(0)}%</span>
-                                    </div>
-                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                      <div className={`h-full rounded-full transition-all ${isGood ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${progress}%` }}></div>
-                                    </div>
-                                  </div>
-
-                                  {/* Stats Grid */}
-                                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50">
-                                    <div>
-                                      <div className="text-[9px] text-slate-400 uppercase tracking-wide">Target</div>
-                                      <div className="text-xs font-semibold text-slate-700">฿{formatNumber(mRes.targetFund)}</div>
-                                    </div>
-                                    <div className="text-right">
-                                      <div className="text-[9px] text-slate-400 uppercase tracking-wide">Projected</div>
-                                      <div className="text-xs font-bold text-indigo-600">฿{formatNumber(mRes.projectedFund)}</div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-
-              {/* insurance table modal */}
-              {
-                showInsuranceTable && (
-                  <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-                    <div className="max-h-[80vh] w-[90vw] max-w-3xl overflow-hidden rounded-lg bg-white shadow-lg">
-                      <div className="flex items-center justify-between border-b px-4 py-3">
-                        <h3 className="font-bold text-slate-800 text-sm">โปรดตรวจสอบรายละเอียดของแผนประกัน และความถูกต้อง</h3>
-                        <Button variant="ghost" className="h-7 w-7 p-0 text-slate-500" type="button" onClick={() => setShowInsuranceTable(false)}>✕</Button>
-                      </div>
-                      <div className="max-h-[60vh] overflow-auto px-4 pb-4">
-                        <table className="w-full border-collapse text-xs">
-                          <thead>
-                            <tr className="bg-slate-100">
-                              <th className="border border-slate-200 px-2 py-2 text-left w-[10%]">อายุ</th>
-                              {form.selectedPlanId && form.insurancePlans.find(p => p.id === form.selectedPlanId)?.surrenderMode === "table" && (
-                                <th className="border border-slate-200 px-2 py-2 text-right w-[20%] text-blue-600">เวนคืน (บาท)</th>
-                              )}
-                              <th className="border border-slate-200 px-2 py-2 text-right w-[25%]">กระแสเงินสดไหลเข้า</th>
-                              <th className="border border-slate-200 px-2 py-2 text-right w-[25%]">ผลประโยชน์เมื่อเสียชีวิต</th>
-                              <th className="border border-slate-200 px-2 py-2 pl-4 text-left w-[20%]">สถานะ</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {Array.from({ length: 100 - Number(form.currentAge) + 1 }, (_, i) => Number(form.currentAge) + i).map(age => {
-                              let totalCashInflow = 0;
-                              let totalDeathBenefit = 0;
-                              let statusText = "";
-                              let isSurrenderYear = false;
-                              let isAfterSurrenderAll = true; // If all plans are surrendered/ended
-                              let hasActiveCoverage = false;
-                              let isPensionYear = false;
-
-                              // Strict Isolation: ONLY use selectedPlanId if present.
-                              const targetPlans = form.selectedPlanId
-                                ? form.insurancePlans.filter(p => p.id === form.selectedPlanId)
-                                : form.insurancePlans.filter(p => p.active);
-
-                              targetPlans.forEach(plan => {
-                                const sumAssured = Number(String(plan.sumAssured).replace(/,/g, ""));
-                                const coverageAge = Number(plan.coverageAge);
-                                const surrenderAge = Number(plan.surrenderAge);
-                                const useSurrender = plan.useSurrender && plan.type !== "ชั่วระยะเวลา";
-                                const planIsSurrenderYear = useSurrender && age === surrenderAge;
-                                const planIsAfterSurrender = useSurrender && age > surrenderAge;
-                                const planIsWithinCoverage = age <= coverageAge;
-
-                                if (!planIsAfterSurrender && planIsWithinCoverage) {
-                                  isAfterSurrenderAll = false;
-                                  hasActiveCoverage = true;
-                                }
-
-                                // Pre-calculate Accumulated Pension for Annuity to check for depletion
-                                let accumulatedPension = 0;
-                                let initialDB = sumAssured;
-                                let isDepleted = false;
-
-                                if (plan.type === "บำนาญ") {
-                                  const dbPre = Number(String(plan.deathBenefitPrePension).replace(/,/g, ""));
-                                  if (dbPre > 0) initialDB = dbPre;
-
-                                  let startAge = Number(plan.pensionStartAge);
-                                  if (plan.unequalPension && plan.pensionTiers?.length > 0) {
-                                    const minTierStart = Math.min(...plan.pensionTiers.map(t => Number(t.startAge)));
-                                    startAge = minTierStart;
-                                  }
-
-                                  if (age >= startAge) {
-                                    for (let pastAge = startAge; pastAge < age; pastAge++) {
-                                      let pastAmount = 0;
-                                      if (plan.unequalPension && plan.pensionTiers) {
-                                        const tier = plan.pensionTiers.find(t => pastAge >= Number(t.startAge) && pastAge <= Number(t.endAge));
-                                        pastAmount = tier ? Number(String(tier.amount).replace(/,/g, "")) : 0;
-                                      } else {
-                                        if (pastAge >= Number(plan.pensionStartAge) && pastAge <= (Number(plan.pensionEndAge) || 100)) {
-                                          let pAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
-                                          if (Number(plan.pensionPercent) > 0) pAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
-                                          pastAmount = pAmt;
-                                        }
-                                      }
-                                      accumulatedPension += pastAmount;
-                                    }
-                                  }
-
-                                  // Check if depleted (Past Pension >= Initial DB)
-                                  if (accumulatedPension >= initialDB) {
-                                    isDepleted = true;
-                                  }
-                                }
-
-                                // Cash Inflow Calculation
-                                let flow = 0;
-                                let isPension = false;
-
-                                if (planIsSurrenderYear) {
-                                  let sv = Number(String(plan.surrenderValue).replace(/,/g, ""));
-                                  if (plan.surrenderMode === "table" && plan.surrenderTableData) {
-                                    const row = plan.surrenderTableData.find(d => d.age === age);
-                                    if (row) sv = Number(String(row.amount).replace(/,/g, ""));
-                                  }
-                                  flow += sv;
-                                  isSurrenderYear = true;
-                                } else if (!planIsAfterSurrender && planIsWithinCoverage) {
-                                  // Endowment
-                                  if (plan.type === "สะสมทรัพย์") {
-                                    const maturity = Number(String(plan.maturityAmount).replace(/,/g, ""));
-                                    const cashBack = Number(String(plan.cashBackAmount).replace(/,/g, ""));
-                                    const freq = Number(plan.cashBackFrequency) || 1;
-                                    const policyYear = age - Number(form.currentAge);
-
-                                    if (age === coverageAge) flow += maturity;
-                                    if (policyYear > 0 && policyYear % freq === 0) flow += cashBack;
-                                  }
-                                  // Annuity
-                                  if (plan.type === "บำนาญ") {
-                                    // If depleted, NO FLOW
-                                    if (!isDepleted) {
-                                      if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
-                                        for (const tier of plan.pensionTiers) {
-                                          if (age >= Number(tier.startAge) && age <= Number(tier.endAge)) {
-                                            flow += Number(String(tier.amount).replace(/,/g, ""));
-                                            isPension = true;
-                                          }
-                                        }
-                                      } else {
-                                        let pensionAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
-                                        if (Number(plan.pensionPercent) > 0) {
-                                          pensionAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
-                                        }
-                                        if (age >= Number(plan.pensionStartAge) && age <= (Number(plan.pensionEndAge) || 100)) {
-                                          flow += pensionAmt;
-                                          isPension = true;
-                                        }
-                                      }
-                                    }
-                                  }
-                                }
-
-                                totalCashInflow += flow;
-                                if (isPension) isPensionYear = true;
-
-                                // Death Benefit Calculation
-                                let currentDB = 0; // Start with 0 for this plan
-
-                                if (!planIsAfterSurrender && planIsWithinCoverage) {
-                                  currentDB = sumAssured; // Base DB
-
-                                  // Annuity Logic: Reduced by accumulated pension
-                                  if (plan.type === "บำนาญ") {
-                                    const dbPre = Number(String(plan.deathBenefitPrePension).replace(/,/g, ""));
-                                    if (dbPre > 0) currentDB = dbPre;
-
-                                    // Calculate accumulated pension
-                                    let accumulatedPension = 0;
-                                    let startAge = Number(plan.pensionStartAge);
-                                    if (plan.unequalPension && plan.pensionTiers?.length > 0) {
-                                      const minTierStart = Math.min(...plan.pensionTiers.map(t => Number(t.startAge)));
-                                      startAge = minTierStart;
-                                    }
-
-                                    if (age >= startAge) {
-                                      for (let pastAge = startAge; pastAge < age; pastAge++) {
-                                        let pastAmount = 0;
-                                        if (plan.unequalPension && plan.pensionTiers) {
-                                          const tier = plan.pensionTiers.find(t => pastAge >= Number(t.startAge) && pastAge <= Number(t.endAge));
-                                          pastAmount = tier ? Number(String(tier.amount).replace(/,/g, "")) : 0;
-                                        } else {
-                                          if (pastAge >= Number(plan.pensionStartAge) && pastAge <= (Number(plan.pensionEndAge) || 100)) {
-                                            let pAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
-                                            if (Number(plan.pensionPercent) > 0) pAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
-                                            pastAmount = pAmt;
-                                          }
-                                        }
-                                        accumulatedPension += pastAmount;
-                                      }
-                                      // Reduce DB
-                                      currentDB = Math.max(0, currentDB - accumulatedPension);
-                                    }
-                                  }
-                                }
-
-                                totalDeathBenefit += currentDB;
-                              });
-
-                              let deathBenefitDisplay = formatNumber(totalDeathBenefit);
-                              let cashInflowDisplay = totalCashInflow > 0 ? `+${formatNumber(totalCashInflow)}` : "-";
-                              let rowClass = "hover:bg-slate-50";
-
-                              if (isSurrenderYear) {
-                                statusText = "มีการเวนคืน";
-                                rowClass = "bg-green-50 hover:bg-green-100";
-                              } else if (hasActiveCoverage) {
-                                statusText = "คุ้มครอง";
-                                if (totalCashInflow > 0) {
-                                  statusText = "รับเงินคืน/บำนาญ | คุ้มครอง";
-                                  // Highlight row if receiving money
-                                  rowClass = "bg-emerald-50 hover:bg-emerald-100";
-                                }
-                              } else {
-                                statusText = "สิ้นสุดความคุ้มครอง";
-                                deathBenefitDisplay = "-";
-                                rowClass = "text-slate-400";
-                              }
-
-                              const lifeExpectancy = Number(String(form.lifeExpectancy).replace(/,/g, ""));
-                              if (age === lifeExpectancy) {
-                                statusText = `เสียชีวิตที่อายุ ${age} → ได้รับเงินประกัน ${deathBenefitDisplay}`;
-                                rowClass = "bg-red-50 hover:bg-red-100 font-bold";
-                              } else if (age > lifeExpectancy) {
-                                statusText = "เสียชีวิตแล้ว";
-                                deathBenefitDisplay = "-";
-                                cashInflowDisplay = "-";
-                                rowClass = "text-slate-300";
-                              }
-
-                              const editingThisPlan = form.selectedPlanId === targetPlans[0]?.id && targetPlans[0]?.surrenderMode === "table";
-                              const pIndex = form.insurancePlans.findIndex(p => p.id === targetPlans[0]?.id);
-
-                              const svTableVal = editingThisPlan && pIndex >= 0
-                                ? (form.insurancePlans[pIndex].surrenderTableData?.find(d => d.age === age)?.amount || "")
-                                : "";
-
-                              return (
-                                <tr key={age} className={rowClass}>
-                                  <td className="border border-slate-200 px-2 py-1">{age}</td>
-                                  {editingThisPlan && (
-                                    <td className="border border-slate-200 px-2 py-0.5 text-right">
-                                      <input
-                                        className="w-full text-right bg-blue-50/50 border-b border-blue-200 focus:outline-none focus:border-blue-500 text-xs py-1 px-1 text-blue-700"
-                                        placeholder="-"
-                                        value={svTableVal}
-                                        onChange={(e) => updateSurrenderTable(pIndex, age, e.target.value)}
-                                        onBlur={(e) => updateSurrenderTable(pIndex, age, formatInputDisplay(e.target.value))}
-                                      />
-                                    </td>
-                                  )}
-                                  <td className={`border border-slate-200 px-2 py-1 text-right ${totalCashInflow > 0 ? 'text-emerald-600 font-bold' : ''}`}>
-                                    {cashInflowDisplay}
-                                  </td>
-                                  <td className="border border-slate-200 px-2 py-1 text-right">
-                                    {deathBenefitDisplay}
-                                  </td>
-                                  <td className="border border-slate-200 px-2 py-1 pl-4 text-slate-500">
-                                    {statusText}
                                   </td>
                                 </tr>
                               );
@@ -4112,570 +4256,272 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                )
-              }
+                )}
 
 
 
 
+                {/* ----- INSURANCE TABLE MODAL (Premium) ----- */}
+                {
+                  showInsuranceTable && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-3xl p-4 transition-all duration-500 animate-in fade-in">
+                      <div className="w-full max-w-4xl rounded-[32px] bg-[#F8FAFC] shadow-2xl relative max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-white/20 flex flex-col font-sans">
 
-              {/* ----- MODAL 1: PROJECTED SAVINGS (คำนวณเงินออม) ----- */}
-              {
-                showProjectedModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 transition-all duration-300">
-                    <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-white/20">
-                      <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
-                        <h3 className="text-base font-bold text-slate-900 tracking-tight">คำนวณเงินออม</h3>
-                        <button onClick={() => setShowProjectedModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
-                          <CloseIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      <div className="max-h-[80vh] overflow-y-auto custom-scrollbar">
-                        {/* TABS */}
-                        <div className="flex gap-1 p-1 bg-slate-100/50 rounded-2xl mx-6 mt-4 mb-2">
-                          <button className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${projectedModalTab === 'details' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setProjectedModalTab('details')}>รายละเอียด</button>
-                          <button className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${projectedModalTab === 'formula' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setProjectedModalTab('formula')}>สูตรคำนวณ</button>
-                        </div>
-
-                        <div className="p-6">
-                          {projectedModalTab === "details" && (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                              <div className="space-y-4">
-                                {["เริ่มต้นจากเงินสะสมที่มีอยู่ในปัจจุบัน", "คำนวณผลตอบแทนจากเงินสะสมทั้งหมดของปีนั้น (ผลตอบแทนเฉลี่ยต่อปี)", "เพิ่มเงินออมประจำปีเข้าไปในยอดสะสม", "หากมีเงินเพิ่มเติมจากแหล่งอื่น เช่น เงินคืนประกัน ก็จะนำมาบวกกับยอดสะสมของปีนั้นด้วย", "ทำซ้ำขั้นตอน 2–4 สำหรับทุกปีจนถึงปีเกษียณ → จะได้ยอดสะสมสุดท้าย"].map((step, idx) => (
-                                  <div key={idx} className="flex gap-4 text-xs text-slate-600">
-                                    <div className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 font-bold text-[10px] shadow-sm">
-                                      {idx + 1}
-                                    </div>
-                                    <div className="pt-1 leading-relaxed">{step}</div>
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="rounded-2xl bg-amber-50/50 p-4 border border-amber-100/50 flex gap-3 items-start mt-4">
-                                <span className="text-amber-500 text-lg">💡</span>
-                                <div className="text-xs text-slate-700 pt-1">
-                                  <span className="font-bold text-slate-900 block mb-1">สรุปคอนเซปต์</span>
-                                  (เงินต้น + ดอกเบี้ย) + เงินออมใหม่ + เงินพิเศษ<br />คำนวณทบต้นไปเรื่อยๆ จนถึงปีเกษียณ
-                                </div>
-                              </div>
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-20">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-50">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" /><path d="M8 18h.01" /><path d="M12 18h.01" /><path d="M16 18h.01" /></svg>
                             </div>
-                          )}
-
-                          {projectedModalTab === "formula" && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                              <div className="space-y-3">
-                                <div className="text-sm font-bold text-slate-900">สูตรมูลค่าเงินในอนาคต (Future Value)</div>
-                                <p className="text-xs text-slate-500 leading-relaxed">
-                                  คำนวณโดยนำเงิน 2 ก้อนมารวมกัน คือ "เงินก้อนแรกที่โตขึ้น" และ "เงินที่ออมเพิ่มทุกปีพร้อมดอกเบี้ย"
-                                </p>
-
-                                <div className="rounded-2xl bg-slate-900 p-4 overflow-x-auto shadow-inner">
-                                  <div className="font-mono text-xs text-emerald-400 whitespace-nowrap">
-                                    FV = [P₀ × (1 + r)ⁿ] + [P × ((1 + r)ⁿ - 1) / r] + CashFlows
-                                  </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3 text-xs text-slate-500 mt-2">
-                                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100"><span className="font-bold text-slate-900">FV</span> = มูลค่าเงินในอนาคต</div>
-                                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100"><span className="font-bold text-slate-900">P₀</span> = เงินเริ่มต้นที่มีอยู่</div>
-                                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100"><span className="font-bold text-slate-900">P</span> = เงินที่ออมเพิ่มต่อปี</div>
-                                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100"><span className="font-bold text-slate-900">r</span> = ผลตอบแทนต่อปี</div>
-                                  <div className="col-span-2 bg-slate-50 p-2 rounded-lg border border-slate-100"><span className="font-bold text-slate-900">n</span> = จำนวนปีที่ออม</div>
-                                </div>
-                              </div>
-
-                              <div className="space-y-3 pt-4 border-t border-slate-100">
-                                <div className="text-xs font-bold text-slate-900">ตัวอย่างการคำนวณจริง (อีก {result.yearsToRetire} ปีเกษียณ):</div>
-                                <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-3">
-                                  <div>
-                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">ส่วนที่ 1: เงินก้อนแรกโต</div>
-                                    <div className="font-mono text-xs text-slate-600 break-all">
-                                      = {formatNumber(form.currentSavings)} × (1 + {Number(form.expectedReturn) / 100})^{result.yearsToRetire}
-                                    </div>
-                                    <div className="font-mono text-sm font-bold text-indigo-600 mt-1">
-                                      = ฿ {formatNumber(result.fvLumpSum)}
-                                    </div>
-                                  </div>
-                                  <div className="border-t border-slate-200 pt-3">
-                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">ส่วนที่ 2: เงินออมเพิ่มรายปีโต</div>
-                                    <div className="font-mono text-xs text-slate-600 break-all">
-                                      = ({formatNumber(form.monthlySaving)} × 12) × ((1 + {Number(form.expectedReturn) / 100})^{result.yearsToRetire} - 1) / {Number(form.expectedReturn) / 100}
-                                    </div>
-                                    <div className="font-mono text-sm font-bold text-indigo-600 mt-1">
-                                      = ฿ {formatNumber(result.fvAnnuity)}
-                                    </div>
-                                  </div>
-                                  {result.insuranceCashInflow > 0 && (
-                                    <div className="border-t border-slate-200 pt-3">
-                                      <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">ส่วนพิเศษ: เงินจากประกัน</div>
-                                      <div className="font-mono text-sm font-bold text-emerald-600 mt-1">
-                                        + ฿ {formatNumber(result.insuranceCashInflow)}
-                                      </div>
-                                    </div>
-                                  )}
-                                  <div className="border-t border-slate-200 pt-3 bg-white -mx-4 -mb-4 p-4 rounded-b-2xl">
-                                    <div className="flex justify-between items-end">
-                                      <div className="text-xs font-bold text-slate-900">รวมเงินออมทั้งหมด (FV)</div>
-                                      <div className="font-mono text-lg font-black text-emerald-600">
-                                        ฿ {formatNumber(result.projectedFund)}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              }
-
-              {/* ----- MODAL 2: TARGET FUND (เงินที่ต้องการ) ----- */}
-              {
-                showTargetModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 transition-all duration-300">
-                    <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-white/20">
-                      <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
-                        <h3 className="text-base font-bold text-slate-900 tracking-tight">เงินที่ต้องการก่อนเกษียณ</h3>
-                        <button onClick={() => setShowTargetModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
-                          <CloseIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      <div className="max-h-[80vh] overflow-y-auto custom-scrollbar">
-                        <div className="flex gap-1 p-1 bg-slate-100/50 rounded-2xl mx-6 mt-4 mb-2">
-                          <button className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${targetModalTab === 'details' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setTargetModalTab('details')}>รายละเอียด</button>
-                          <button className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${targetModalTab === 'formula' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setTargetModalTab('formula')}>สูตรคำนวณ</button>
-                        </div>
-
-                        <div className="p-6">
-                          {targetModalTab === "details" && (
-                            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                              <p className="text-xs text-slate-600 leading-relaxed bg-blue-50/50 p-4 rounded-2xl border border-blue-50">
-                                <span className="font-bold text-blue-700">Concept:</span> เป็นจำนวนเงินทั้งหมดที่ต้องเตรียมก่อนเกษียณ เพื่อให้ครอบคลุมค่าใช้จ่ายในช่วงเกษียณ จนถึงเงินมรดกที่ต้องมี
-                              </p>
-                              <div className="space-y-3">
-                                <div className="text-xs font-bold text-slate-900">ขั้นตอนการคิดแบบง่ายๆ:</div>
-                                <ol className="list-decimal pl-5 text-xs text-slate-600 space-y-2 marker:font-bold marker:text-blue-500">
-                                  <li>รวมค่าใช้จ่ายรายปีทั้งหมด (ปรับเงินเฟ้อแล้ว) ตั้งแต่เกษียณจนถึงอายุขัย</li>
-                                  <li>หักลบด้วย รายได้หลังเกษียณ (เช่น บำนาญประกันสังคม)</li>
-                                  <li>หักลบด้วย ผลตอบแทนการลงทุนหลังเกษียณ (ถ้ามี)</li>
-                                  <li>ผลลัพธ์ที่เหลือ คือ "เงินก้อน" ที่เราต้องเตรียมไว้</li>
-                                </ol>
-                                <div className="text-xs text-slate-500 mt-4 border-t pt-3 font-medium text-center">
-                                  (ค่าใช้จ่ายสุทธิช่วงเกษียณ + เงินมรดก) = เป้าหมาย
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {targetModalTab === "formula" && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                              <div className="space-y-3">
-                                <div className="text-sm font-bold text-slate-900">สูตรคำนวณเงินออมต่อปีที่ต้องเก็บ (PMT)</div>
-                                <p className="text-xs text-slate-500 leading-relaxed">
-                                  หากเราต้องการรู้ว่า "จะต้องเก็บเงินเท่าไหร่" ในแต่ละปี เพื่อให้ไปถึงเป้าหมาย เราจะใช้สูตรนี้:
-                                </p>
-
-                                <div className="rounded-2xl bg-slate-900 p-4 overflow-x-auto shadow-inner">
-                                  <div className="font-mono text-xs text-blue-400 whitespace-nowrap">
-                                    P = (Target - Current * (1+r)^n) / ( ((1+r)^n - 1) / r )
-                                  </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3 text-xs text-slate-500 mt-2">
-                                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100"><span className="font-bold text-slate-900">P</span> = เงินออมต่อปี</div>
-                                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100"><span className="font-bold text-slate-900">Target</span> = เงินเป้าหมายเกษียณ</div>
-                                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100"><span className="font-bold text-slate-900">Current</span> = เงินต้นที่มีอยู่ตอนนี้</div>
-                                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-100"><span className="font-bold text-slate-900">r</span> = ผลตอบแทนต่อปี</div>
-                                </div>
-                              </div>
-
-                              <div className="space-y-3 pt-4 border-t border-slate-100">
-                                <div className="text-xs font-bold text-slate-900">ตัวอย่างการคำนวณจริง:</div>
-                                <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 overflow-x-auto">
-                                  <div className="font-mono text-[10px] text-slate-600 whitespace-pre-wrap leading-relaxed break-all">
-                                    P = ({formatNumber(result.targetFund)} - {formatNumber(form.currentSavings)} * (1 + {Number(form.expectedReturn) / 100})^{result.yearsToRetire})
-                                    <br /><span className="text-slate-400">÷</span> ( ((1 + {Number(form.expectedReturn) / 100})^{result.yearsToRetire} - 1) ÷ {Number(form.expectedReturn) / 100} )
-                                  </div>
-                                  <div className="mt-3 pt-3 border-t border-slate-200 space-y-2">
-                                    <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100">
-                                      <span className="text-[10px] text-slate-500">ออมต่อปี</span>
-                                      <span className="font-mono text-xs font-bold text-blue-600">฿ {formatNumber2(result.monthlyNeeded * 12, 2)}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center bg-blue-50 p-2 rounded-lg border border-blue-100">
-                                      <span className="text-[10px] text-blue-600 font-bold">ออมต่อเดือน</span>
-                                      <span className="font-mono text-sm font-black text-blue-700">฿ {formatNumber2(result.monthlyNeeded, 2)}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              }
-
-              {/* ----- MODAL 3: EXPENSE DETAILS (ค่าใช้จ่าย) ----- */}
-              {
-                showExpenseModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 transition-all duration-300">
-                    <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-white/20">
-                      <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
-                        <h3 className="text-base font-bold text-slate-900 tracking-tight">ค่าใช้จ่ายตอนเกษียณ</h3>
-                        <button onClick={() => setShowExpenseModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
-                          <CloseIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      <div className="max-h-[80vh] overflow-y-auto custom-scrollbar">
-                        <div className="flex gap-1 p-1 bg-slate-100/50 rounded-2xl mx-6 mt-4 mb-2">
-                          <button className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${expenseModalTab === 'details' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setExpenseModalTab('details')}>รายละเอียด</button>
-                          <button className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${expenseModalTab === 'formula' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setExpenseModalTab('formula')}>สูตรคำนวณ</button>
-                        </div>
-
-                        <div className="p-6">
-                          {expenseModalTab === "details" && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                              <div className="h-[220px] w-full rounded-2xl border border-slate-100 p-4 bg-white shadow-sm">
-                                {expenseChart ? <Line data={expenseChart.data} options={expenseChart.options} /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">ไม่มีข้อมูลกราฟ</div>}
-                              </div>
-                              <div className="space-y-3">
-                                <div className="text-xs font-bold text-slate-900 uppercase tracking-wider">ตารางค่าใช้จ่ายรายปี (จนถึงอายุขัย)</div>
-                                <div className="overflow-hidden rounded-xl border border-slate-200">
-                                  <table className="w-full text-xs text-left">
-                                    <thead className="bg-slate-50 text-slate-700 font-bold">
-                                      <tr><th className="p-3 border-b">อายุ</th><th className="p-3 border-b text-right">รายเดือน</th><th className="p-3 border-b text-right">รายปี</th></tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                      {result.expenseSchedule.slice(0, 5).map((row) => (
-                                        <tr key={row.age} className="hover:bg-slate-50 transition-colors">
-                                          <td className="p-3 text-slate-600 font-medium">{row.age}</td>
-                                          <td className="p-3 text-right font-medium text-purple-600">{formatNumber(row.monthly)}</td>
-                                          <td className="p-3 text-right text-slate-800">{formatNumber(row.yearly)}</td>
-                                        </tr>
-                                      ))}
-                                      {result.expenseSchedule.length > 5 && (
-                                        <tr><td colSpan={3} className="p-2 text-center text-[10px] text-slate-400 bg-slate-50/50">... ดูข้อมูลเพิ่มเติม {result.expenseSchedule.length - 5} ปี ...</td></tr>
-                                      )}
-                                    </tbody>
-                                    <tfoot className="bg-slate-900 text-white font-semibold">
-                                      <tr><td className="p-3">รวมทั้งหมด</td><td className="p-3 text-right">-</td><td className="p-3 text-right text-purple-200">{formatNumber(result.totalLifetimeExpense)}</td></tr>
-                                    </tfoot>
-                                  </table>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          {expenseModalTab === "formula" && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                              <div className="space-y-3">
-                                <div className="text-sm font-bold text-slate-900">การคิดค่าใช้จ่ายในอนาคต (Inflation Adjusted)</div>
-                                <div className="rounded-2xl bg-slate-900 p-4 text-xs text-purple-200 border border-slate-800 leading-relaxed font-mono shadow-inner">
-                                  Expense(n) = {formatNumber(form.retireExtraExpense)} × (1 + {Number(form.inflation) / 100}) ^ {result.yearsToRetire}
-                                </div>
-                                <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100 text-xs text-purple-900 leading-relaxed">
-                                  <span className="font-bold">หลักการ:</span> เราปรับค่าใช้จ่ายปัจจุบันให้เป็นค่าในอนาคตตามอัตราเงินเฟ้อ เพื่อให้รู้ว่าตอนเกษียณจริงต้องใช้เงิน "กี่บาท" ในค่าเงินตอนนั้น
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              }
-
-              {/* ----- MODAL 4: MONTE CARLO DETAILS ----- */}
-              {
-                showMonteCarloDetails && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 transition-all duration-300">
-                    <div className="w-full max-w-sm rounded-3xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-white/20">
-                      <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
-                        <h3 className="text-base font-bold text-slate-900 tracking-tight">กราฟจำลอง 5 ครั้ง</h3>
-                        <button onClick={() => setShowMonteCarloDetails(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
-                          <CloseIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-                      <div className="p-6">
-                        <p className="text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                          จำลองผลลัพธ์การลงทุน (Volatility 6%)
-                        </p>
-                        <div className="space-y-3">
-                          {mcResult.finalBalances.map((run, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-xs pb-2 border-b border-slate-50 last:border-0 last:pb-0">
-                              <span className="text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded text-[10px]">RUN #{idx + 1}</span>
-                              <div className="flex items-center gap-2">
-                                <span className={run.pass ? "text-emerald-700 font-bold font-mono" : "text-rose-700 font-bold font-mono"}>
-                                  ฿{formatNumber(run.balance)}
-                                </span>
-                                <span className={`w-2 h-2 rounded-full ${run.pass ? "bg-emerald-500" : "bg-rose-500"}`}></span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="mt-5 pt-4 border-t border-slate-100 flex justify-between items-center">
-                          <span className="text-xs font-bold text-slate-500">อัตราความสำเร็จ</span>
-                          <span className="text-lg font-black text-slate-900">{formatNumber2(mcResult.probability * 100, 0)}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              }
-
-
-
-              {/* Family Summary Modal - Enhanced Version */}
-              {
-                showFamilySummaryModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all duration-300">
-                    <div className="w-full max-w-5xl rounded-3xl bg-white shadow-2xl relative max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-white/20 flex flex-col">
-
-                      {/* Header */}
-                      <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 bg-white sticky top-0 z-10">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-slate-900 tracking-tight">สรุปแผนครอบครัว (Family Plan Summary)</h3>
-                            <p className="text-sm text-slate-500">รายงานวิเคราะห์สุขภาพทางการเงินของครอบครัว ({familyMembers.length} ท่าน)</p>
-                          </div>
-                        </div>
-                        <button
-                          className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
-                          onClick={() => setShowFamilySummaryModal(false)}
-                        >
-                          <CloseIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      {/* Scrollable Content */}
-                      <div className="overflow-y-auto p-8 custom-scrollbar bg-slate-50/50">
-
-                        {/* 1. Executive Summary Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                          {/* Status Card */}
-                          <div className={`col-span-1 md:col-span-1 rounded-2xl p-6 border shadow-sm flex flex-col justify-center items-center text-center ${getFamilySummary().totalGap >= 0 ? "bg-white border-emerald-100" : "bg-white border-amber-100"}`}>
-                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 ${getFamilySummary().totalGap >= 0 ? "bg-emerald-50 text-emerald-500" : "bg-amber-50 text-amber-500"}`}>
-                              {getFamilySummary().totalGap >= 0
-                                ? <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-                                : <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
-                              }
-                            </div>
-                            <div className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-1">สถานะภาพรวม</div>
-                            <div className={`text-xl font-black ${getFamilySummary().totalGap >= 0 ? "text-emerald-600" : "text-amber-600"}`}>
-                              {getFamilySummary().totalGap >= 0 ? "Mansion Grade" : "Needs Attention"}
-                            </div>
-                            <div className="text-xs text-slate-400 mt-2 font-medium">
-                              {getFamilySummary().totalGap >= 0 ? "แผนการเงินตระกูลมั่นคงเยี่ยม" : "ควรปรับแผนเพื่อปิดความเสี่ยง"}
+                            <div>
+                              <h3 className="text-xl font-black text-slate-900 tracking-tight">ตารางกระแสเงินสด (Cash Flow Table)</h3>
+                              <p className="text-sm text-slate-500 font-medium">รายละเอียดผลประโยชน์และความคุ้มครองรายปี</p>
                             </div>
                           </div>
-
-                          {/* Wealth Stats */}
-                          <div className="col-span-1 md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/5 rounded-full -mr-6 -mt-6"></div>
-                              <div className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">เป้าหมายรวม (Target)</div>
-                              <div className="text-2xl font-black text-slate-800 tracking-tight">฿{formatNumber(getFamilySummary().totalTarget)}</div>
-                              <div className="mt-2 text-[10px] text-slate-400">ทรัพย์สินที่ต้องมีเมื่อเกษียณ</div>
-                            </div>
-
-                            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 rounded-full -mr-6 -mt-6"></div>
-                              <div className="text-xs text-indigo-600 font-bold uppercase tracking-wide mb-2">คาดการณ์ (Projected)</div>
-                              <div className="text-2xl font-black text-indigo-600 tracking-tight">฿{formatNumber(getFamilySummary().totalProjected)}</div>
-                              <div className="mt-2 text-[10px] text-indigo-400">ทรัพย์สินที่จะมีตามแผนปัจจุบัน</div>
-                            </div>
-
-                            <div className={`p-5 rounded-2xl border shadow-sm relative overflow-hidden ${getFamilySummary().totalGap >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100"}`}>
-                              <div className="text-xs font-bold uppercase tracking-wide mb-2 flex items-center gap-2">
-                                Gap Analysis
-                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${getFamilySummary().totalGap >= 0 ? "bg-emerald-200 text-emerald-800" : "bg-rose-200 text-rose-800"}`}>
-                                  {getFamilySummary().totalGap >= 0 ? "SURPLUS" : "SHORTFALL"}
-                                </span>
-                              </div>
-                              <div className={`text-2xl font-black tracking-tight ${getFamilySummary().totalGap >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
-                                {getFamilySummary().totalGap >= 0 ? "+" : "-"}{formatNumber(Math.abs(getFamilySummary().totalGap))}
-                              </div>
-                              <div className={`mt-2 text-[10px] font-medium ${getFamilySummary().totalGap >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                                {getFamilySummary().totalGap >= 0 ? "มีเงินเหลือใช้เกินเป้าหมาย" : "ยังขาดเงินทุนอีกจำนวนหนึ่ง"}
-                              </div>
-                            </div>
-                          </div>
+                          <button
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50 transition-all shadow-sm"
+                            type="button"
+                            onClick={() => setShowInsuranceTable(false)}
+                          >
+                            <CloseIcon className="w-5 h-5" />
+                          </button>
                         </div>
 
-                        {/* 2. Analysis & Insight Section */}
-                        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-8">
-                          <h4 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <span className="text-amber-500">💡</span>
-                            บทวิเคราะห์และคำแนะนำ (Insight & Recommendation)
-                          </h4>
-
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                            {/* Left: Text Analysis */}
-                            <div className="space-y-6">
-                              <div>
-                                <div className="text-sm font-bold text-slate-700 mb-2">สรุปผลการประเมิน</div>
-                                <p className="text-sm text-slate-500 leading-relaxed">
-                                  จากการประเมินแผนการเกษียณของสมาชิกในครอบครัวทั้ง {familyMembers.length} ท่าน พบว่า
-                                  {getFamilySummary().totalGap >= 0
-                                    ? " ภาพรวมสถานะทางการเงินมีความแข็งแกร่งมาก (Strong Financial Health) สามารถบรรลุเป้าหมายเกษียณได้ทุกคน โดยมีส่วนเกินทุนสำรองที่เพียงพอ แนะนำให้พิจารณาการลงทุนเพื่อเพิ่มความมั่งคั่ง (Wealth Accumulation) หรือส่งต่อมรดก"
-                                    : " ภาพรวมยังมีความเสี่ยงที่จะเงินไม่พอใช้หลังเกษียณ (Potential Shortfall) โดยเฉพาะในช่วงปลายของแผน จำเป็นต้องปรับปรุงโครงสร้างการออมหรือลดค่าใช้จ่ายเป้าหมายลง เพื่อปิดช่องว่างทางการเงินนี้"}
-                                </p>
-                              </div>
-
-                              <div className="space-y-3">
-                                <div className="text-sm font-bold text-slate-700">ข้อแนะนำ (Action Plan)</div>
-                                <ul className="space-y-3">
-                                  {getFamilySummary().totalMonthlySavingsCurrent < getFamilySummary().totalMonthlyNeeded && (
-                                    <li className="flex gap-3 text-sm text-slate-600 bg-amber-50 p-3 rounded-xl border border-amber-100">
-                                      <div className="flex-shrink-0 text-amber-500 mt-0.5"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg></div>
-                                      <div>
-                                        <span className="font-bold text-amber-800">เพิ่มการออมด่วน:</span> ควรพิจารณาออมเพิ่มรวมกันอีก <span className="font-bold">฿{formatNumber2(getFamilySummary().totalMonthlyNeeded - getFamilySummary().totalMonthlySavingsCurrent, 0)}</span> ต่อเดือน
-                                      </div>
-                                    </li>
-                                  )}
-                                  <li className="flex gap-3 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <div className="flex-shrink-0 text-blue-500 mt-0.5"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg></div>
-                                    <div>
-                                      <span className="font-bold text-slate-800">ปรับพอร์ตการลงทุน:</span> ตรวจสอบว่าผลตอบแทนเฉลี่ย (Expected Return) สอดคล้องกับความเสี่ยงที่รับได้หรือไม่ การเพิ่มผลตอบแทนเพียง 1-2% สามารถลดเงินออมที่ต้องใช้ได้มหาศาล
-                                    </div>
-                                  </li>
-                                  <li className="flex gap-3 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <div className="flex-shrink-0 text-purple-500 mt-0.5"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg></div>
-                                    <div>
-                                      <span className="font-bold text-slate-800">จัดการความคุ้มครอง:</span> ตรวจสอบสิทธิประโยชน์ทางภาษีและการประกันสุขภาพ เพื่อลดภาระค่าใช้จ่ายแฝงหลังเกษียณ
-                                    </div>
-                                  </li>
-                                </ul>
-                              </div>
-                            </div>
-
-                            {/* Right: Savings Performance */}
-                            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col justify-center">
-                              <div className="text-center mb-6">
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Efficiency Score</span>
-                                <div className="text-4xl font-black text-slate-800 mt-2 mb-1">
-                                  {((getFamilySummary().totalMonthlySavingsCurrent / (getFamilySummary().totalMonthlyNeeded || 1)) * 100).toFixed(0)}<span className="text-2xl text-slate-400">%</span>
-                                </div>
-                                <div className="text-xs text-slate-500">ประสิทธิภาพการออมต่อเป้าหมาย</div>
-                              </div>
-
-                              <div className="space-y-4">
-                                <div>
-                                  <div className="flex justify-between text-xs font-semibold text-slate-600 mb-2">
-                                    <span>ออมจริง (Actual)</span>
-                                    <span>฿{formatNumber(getFamilySummary().totalMonthlySavingsCurrent)}</span>
-                                  </div>
-                                  <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                                    <div className="h-full bg-slate-800 rounded-full" style={{ width: `${Math.min(100, (getFamilySummary().totalMonthlySavingsCurrent / (getFamilySummary().totalMonthlyNeeded || 1)) * 100)}%` }}></div>
-                                  </div>
-                                </div>
-                                <div>
-                                  <div className="flex justify-between text-xs font-semibold text-indigo-600 mb-2">
-                                    <span>เป้าหมาย (Needed)</span>
-                                    <span>฿{formatNumber2(getFamilySummary().totalMonthlyNeeded, 0)}</span>
-                                  </div>
-                                  <div className="h-2 w-full bg-indigo-100 rounded-full overflow-hidden relative">
-                                    <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-indigo-500"></div>
-                                    <div className="h-full bg-indigo-500/20 w-full"></div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 3. Detailed Member Breakdown Table */}
-                        <div className="space-y-4">
-                          <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <span className="text-blue-500">👥</span>
-                            รายละเอียดรายบุคคล (Individual Breakdown)
-                          </h4>
-
-                          <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-white">
-                            <table className="w-full text-sm text-left">
-                              <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                        <div className="overflow-y-auto px-8 py-6 custom-scrollbar bg-slate-50/50 flex-1">
+                          <div className="rounded-[24px] border border-slate-200 overflow-hidden shadow-sm bg-white">
+                            <table className="w-full text-sm border-collapse">
+                              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px] backdrop-blur-sm sticky top-0 z-10">
                                 <tr>
-                                  <th className="py-4 px-6 w-[25%]">สมาชิก (Member)</th>
-                                  <th className="py-4 px-6 text-right w-[10%]">อายุเหลือเก็บ (Yrs)</th>
-                                  <th className="py-4 px-6 text-right w-[20%]">เป้าหมาย (Target)</th>
-                                  <th className="py-4 px-6 text-left w-[25%] pl-8">ความก้าวหน้า (Progress)</th>
-                                  <th className="py-4 px-6 text-right w-[20%]">สถานะ (Status)</th>
+                                  <th className="py-4 px-4 text-left w-[10%] font-bold text-slate-600">อายุ (Age)</th>
+                                  {form.selectedPlanId && form.insurancePlans.find(p => p.id === form.selectedPlanId)?.surrenderMode === "table" && (
+                                    <th className="py-4 px-4 text-right w-[20%] text-blue-600">เวนคืน (Surrender)</th>
+                                  )}
+                                  <th className="py-4 px-4 text-right w-[25%] font-bold text-slate-600">กระแสเงินสดรับ (Inflow)</th>
+                                  <th className="py-4 px-4 text-right w-[25%] font-bold text-slate-600">ทุนประกัน (Death Benefit)</th>
+                                  <th className="py-4 px-4 pl-8 text-left w-[20%] font-bold text-slate-600">สถานะ (Status)</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-50">
-                                {familyMembers.map((m, idx) => {
-                                  // Re-calculate for each member
-                                  const isCurrent = String(m.id) === String(currentMemberId);
-                                  const inputs = buildRetirementInputs({
-                                    form: isCurrent ? form : m.form,
-                                    gender: isCurrent ? gender : m.gender,
-                                    savingMode: isCurrent ? savingMode : m.savingMode,
-                                    returnMode: isCurrent ? returnMode : m.returnMode,
-                                    allocations: isCurrent ? allocations : m.allocations
-                                  });
-                                  const res = calculateRetirement(inputs);
-                                  const progress = Math.min(100, (res.projectedFund / (res.targetFund || 1)) * 100);
-                                  const yearsLeft = Number(m.form.retireAge) - Number(m.form.currentAge);
+                                {Array.from({ length: 100 - Number(form.currentAge) + 1 }, (_, i) => Number(form.currentAge) + i).map(age => {
+                                  let totalCashInflow = 0;
+                                  let totalDeathBenefit = 0;
+                                  let statusText = "";
+                                  let isSurrenderYear = false;
+                                  let isAfterSurrenderAll = true; // If all plans are surrendered/ended
+                                  let hasActiveCoverage = false;
+                                  let isPensionYear = false;
 
-                                  // Relation translation
-                                  const relationMap: Record<string, string> = {
-                                    self: "ตนเอง", spouse: "คู่สมรส", child: "บุตร", father: "บิดา", mother: "มารดา", relative: "ญาติ"
-                                  };
+                                  // Strict Isolation: ONLY use selectedPlanId if present.
+                                  const targetPlans = form.selectedPlanId
+                                    ? form.insurancePlans.filter(p => p.id === form.selectedPlanId)
+                                    : form.insurancePlans.filter(p => p.active);
+
+                                  targetPlans.forEach(plan => {
+                                    const sumAssured = Number(String(plan.sumAssured).replace(/,/g, ""));
+                                    const coverageAge = Number(plan.coverageAge);
+                                    const surrenderAge = Number(plan.surrenderAge);
+                                    const useSurrender = plan.useSurrender && plan.type !== "ชั่วระยะเวลา";
+                                    const planIsSurrenderYear = useSurrender && age === surrenderAge;
+                                    const planIsAfterSurrender = useSurrender && age > surrenderAge;
+                                    const planIsWithinCoverage = age <= coverageAge;
+
+                                    if (!planIsAfterSurrender && planIsWithinCoverage) {
+                                      isAfterSurrenderAll = false;
+                                      hasActiveCoverage = true;
+                                    }
+
+                                    // Pre-calculate Accumulated Pension for Annuity to check for depletion
+                                    let accumulatedPension = 0;
+                                    let initialDB = sumAssured;
+                                    let isDepleted = false;
+
+                                    if (plan.type === "บำนาญ") {
+                                      const dbPre = Number(String(plan.deathBenefitPrePension).replace(/,/g, ""));
+                                      if (dbPre > 0) initialDB = dbPre;
+
+                                      let startAge = Number(plan.pensionStartAge);
+                                      if (plan.unequalPension && plan.pensionTiers?.length > 0) {
+                                        const minTierStart = Math.min(...plan.pensionTiers.map(t => Number(t.startAge)));
+                                        startAge = minTierStart;
+                                      }
+
+                                      if (age >= startAge) {
+                                        for (let pastAge = startAge; pastAge < age; pastAge++) {
+                                          let pastAmount = 0;
+                                          if (plan.unequalPension && plan.pensionTiers) {
+                                            const tier = plan.pensionTiers.find(t => pastAge >= Number(t.startAge) && pastAge <= Number(t.endAge));
+                                            pastAmount = tier ? Number(String(tier.amount).replace(/,/g, "")) : 0;
+                                          } else {
+                                            if (pastAge >= Number(plan.pensionStartAge) && pastAge <= (Number(plan.pensionEndAge) || 100)) {
+                                              let pAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
+                                              if (Number(plan.pensionPercent) > 0) pAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
+                                              pastAmount = pAmt;
+                                            }
+                                          }
+                                          accumulatedPension += pastAmount;
+                                        }
+                                      }
+
+                                      // Check if depleted (Past Pension >= Initial DB)
+                                      if (accumulatedPension >= initialDB) {
+                                        isDepleted = true;
+                                      }
+                                    }
+
+                                    // Cash Inflow Calculation
+                                    let flow = 0;
+                                    let isPension = false;
+
+                                    if (planIsSurrenderYear) {
+                                      let sv = Number(String(plan.surrenderValue).replace(/,/g, ""));
+                                      if (plan.surrenderMode === "table" && plan.surrenderTableData) {
+                                        const row = plan.surrenderTableData.find(d => d.age === age);
+                                        if (row) sv = Number(String(row.amount).replace(/,/g, ""));
+                                      }
+                                      flow += sv;
+                                      isSurrenderYear = true;
+                                    } else if (!planIsAfterSurrender && planIsWithinCoverage) {
+                                      // Endowment
+                                      if (plan.type === "สะสมทรัพย์") {
+                                        const maturity = Number(String(plan.maturityAmount).replace(/,/g, ""));
+                                        const cashBack = Number(String(plan.cashBackAmount).replace(/,/g, ""));
+                                        const freq = Number(plan.cashBackFrequency) || 1;
+                                        const policyYear = age - Number(form.currentAge);
+
+                                        if (age === coverageAge) flow += maturity;
+                                        if (policyYear > 0 && policyYear % freq === 0) flow += cashBack;
+                                      }
+                                      // Annuity
+                                      if (plan.type === "บำนาญ") {
+                                        // If depleted, NO FLOW
+                                        if (!isDepleted) {
+                                          if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
+                                            for (const tier of plan.pensionTiers) {
+                                              if (age >= Number(tier.startAge) && age <= Number(tier.endAge)) {
+                                                flow += Number(String(tier.amount).replace(/,/g, ""));
+                                                isPension = true;
+                                              }
+                                            }
+                                          } else {
+                                            let pensionAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
+                                            if (Number(plan.pensionPercent) > 0) {
+                                              pensionAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
+                                            }
+                                            if (age >= Number(plan.pensionStartAge) && age <= (Number(plan.pensionEndAge) || 100)) {
+                                              flow += pensionAmt;
+                                              isPension = true;
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+
+                                    totalCashInflow += flow;
+                                    if (isPension) isPensionYear = true;
+
+                                    // Death Benefit Calculation
+                                    let currentDB = 0; // Start with 0 for this plan
+
+                                    if (!planIsAfterSurrender && planIsWithinCoverage) {
+                                      currentDB = sumAssured; // Base DB
+
+                                      // Annuity Logic: Reduced by accumulated pension
+                                      if (plan.type === "บำนาญ") {
+                                        const dbPre = Number(String(plan.deathBenefitPrePension).replace(/,/g, ""));
+                                        if (dbPre > 0) currentDB = dbPre;
+
+                                        // Calculate accumulated pension
+                                        let accumulatedPension = 0;
+                                        let startAge = Number(plan.pensionStartAge);
+                                        if (plan.unequalPension && plan.pensionTiers?.length > 0) {
+                                          const minTierStart = Math.min(...plan.pensionTiers.map(t => Number(t.startAge)));
+                                          startAge = minTierStart;
+                                        }
+
+                                        if (age >= startAge) {
+                                          for (let pastAge = startAge; pastAge < age; pastAge++) {
+                                            let pastAmount = 0;
+                                            if (plan.unequalPension && plan.pensionTiers) {
+                                              const tier = plan.pensionTiers.find(t => pastAge >= Number(t.startAge) && pastAge <= Number(t.endAge));
+                                              pastAmount = tier ? Number(String(tier.amount).replace(/,/g, "")) : 0;
+                                            } else {
+                                              if (pastAge >= Number(plan.pensionStartAge) && pastAge <= (Number(plan.pensionEndAge) || 100)) {
+                                                let pAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
+                                                if (Number(plan.pensionPercent) > 0) pAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
+                                                pastAmount = pAmt;
+                                              }
+                                            }
+                                            accumulatedPension += pastAmount;
+                                          }
+                                          // Reduce DB
+                                          currentDB = Math.max(0, currentDB - accumulatedPension);
+                                        }
+                                      }
+                                    }
+
+                                    totalDeathBenefit += currentDB;
+                                  });
+
+                                  let deathBenefitDisplay = formatNumber(totalDeathBenefit);
+                                  let cashInflowDisplay = totalCashInflow > 0 ? `+${formatNumber(totalCashInflow)}` : "-";
+                                  let rowClass = "hover:bg-indigo-50/30 transition-colors";
+
+                                  if (isSurrenderYear) {
+                                    statusText = "มีการเวนคืนกรมธรรม์";
+                                    rowClass = "bg-green-50/50 hover:bg-green-50";
+                                  } else if (hasActiveCoverage) {
+                                    statusText = "คุ้มครองปกติ";
+                                    if (totalCashInflow > 0) {
+                                      statusText = "ได้รับเงินคืน / จ่ายบำนาญ";
+                                      // Highlight row if receiving money
+                                      rowClass = "bg-emerald-50/50 hover:bg-emerald-50";
+                                    }
+                                  } else {
+                                    statusText = "สิ้นสุดความคุ้มครอง";
+                                    deathBenefitDisplay = "-";
+                                    rowClass = "text-slate-400 bg-slate-50/30";
+                                  }
+
+                                  const lifeExpectancy = Number(String(form.lifeExpectancy).replace(/,/g, ""));
+                                  if (age === lifeExpectancy) {
+                                    statusText = `เสียชีวิตที่อายุ ${age} → ทุนประกัน ${deathBenefitDisplay}`;
+                                    rowClass = "bg-red-50 hover:bg-red-100 font-bold border-l-4 border-l-red-500";
+                                  } else if (age > lifeExpectancy) {
+                                    statusText = "เสียชีวิตแล้ว";
+                                    deathBenefitDisplay = "-";
+                                    cashInflowDisplay = "-";
+                                    rowClass = "text-slate-300 bg-slate-100/50";
+                                  }
+
+                                  const editingThisPlan = form.selectedPlanId === targetPlans[0]?.id && targetPlans[0]?.surrenderMode === "table";
+                                  const pIndex = form.insurancePlans.findIndex(p => p.id === targetPlans[0]?.id);
+
+                                  const svTableVal = editingThisPlan && pIndex >= 0
+                                    ? (form.insurancePlans[pIndex].surrenderTableData?.find(d => d.age === age)?.amount || "")
+                                    : "";
 
                                   return (
-                                    <tr key={m.id} className="hover:bg-slate-50/50 transition-colors group">
-                                      <td className="py-5 px-6">
-                                        <div className="flex items-center gap-4">
-                                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-sm ring-2 ring-white
-                                            ${res.status === "enough" ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}>
-                                            {m.name.charAt(0)}
-                                          </div>
-                                          <div>
-                                            <div className="font-bold text-slate-800 text-base">{m.name}</div>
-                                            <div className="text-xs text-slate-400">{relationMap[m.relation || "self"] || m.relation} • อายุ {m.form.currentAge} ปี</div>
-                                          </div>
-                                        </div>
+                                    <tr key={age} className={rowClass}>
+                                      <td className="py-3 px-4 border-b border-slate-100 text-center font-bold text-slate-500">{age}</td>
+                                      {editingThisPlan && (
+                                        <td className="py-3 px-4 border-b border-slate-100 text-right">
+                                          <input
+                                            className="w-full text-right bg-blue-50/50 border-b border-blue-200 focus:outline-none focus:border-blue-500 text-xs py-1.5 px-2 rounded text-blue-700 font-mono"
+                                            placeholder="-"
+                                            value={svTableVal}
+                                            onChange={(e) => updateSurrenderTable(pIndex, age, e.target.value)}
+                                            onBlur={(e) => updateSurrenderTable(pIndex, age, formatInputDisplay(e.target.value))}
+                                          />
+                                        </td>
+                                      )}
+                                      <td className={`py-3 px-4 border-b border-slate-100 text-right font-mono text-base ${totalCashInflow > 0 ? 'text-emerald-600 font-bold' : 'text-slate-400'}`}>
+                                        {cashInflowDisplay}
                                       </td>
-                                      <td className="py-5 px-6 text-right">
-                                        <span className="font-bold text-slate-700">{Math.max(0, yearsLeft)}</span> <span className="text-xs text-slate-400 font-normal">ปี</span>
+                                      <td className="py-3 px-4 border-b border-slate-100 text-right font-mono">
+                                        {deathBenefitDisplay}
                                       </td>
-                                      <td className="py-5 px-6 text-right">
-                                        <div className="font-bold text-slate-700">฿{formatNumber(res.targetFund)}</div>
-                                        <div className="text-[10px] text-slate-400">ออมเดือนละ {formatNumber(Number(m.form.monthlySaving))}</div>
-                                      </td>
-                                      <td className="py-5 px-6 pl-8">
-                                        <div className="flex items-center justify-between text-xs mb-1.5">
-                                          <span className="font-bold text-slate-600">฿{formatNumber(res.projectedFund)}</span>
-                                          <span className={res.status === "enough" ? "text-emerald-600 font-bold" : "text-amber-600 font-bold"}>{progress.toFixed(0)}%</span>
-                                        </div>
-                                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                          <div className={`h-full rounded-full transition-all ${res.status === "enough" ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${progress}%` }}></div>
-                                        </div>
-                                      </td>
-                                      <td className="py-5 px-6 text-right">
-                                        {res.status === "enough" ? (
-                                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                            <span className="text-xs font-bold">Planned</span>
-                                          </div>
-                                        ) : (
-                                          <div className="inline-flex flex-col items-end">
-                                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-100 mb-1">
-                                              <span className="text-xs font-bold">Shortfall</span>
-                                            </div>
-                                            <div className="text-[10px] text-rose-600 font-medium">ขาดอีก ฿{formatNumber(Math.abs(res.gap))}</div>
-                                          </div>
-                                        )}
+                                      <td className="py-3 px-4 pl-8 border-b border-slate-100 text-xs font-medium text-slate-500">
+                                        {statusText}
                                       </td>
                                     </tr>
                                   );
@@ -4684,27 +4530,398 @@ export default function HomePage() {
                             </table>
                           </div>
                         </div>
-
                       </div>
-
-                      {/* Footer Actions */}
-                      <div className="p-4 bg-white border-t border-slate-100 flex justify-end gap-3 sticky bottom-0 z-10">
-                        <Button variant="outline" className="border-slate-200 text-slate-600" onClick={() => setShowFamilySummaryModal(false)}>ปิดหน้าต่าง</Button>
-                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200" onClick={() => window.print()}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
-                          พิมพ์รายงาน
-                        </Button>
-                      </div>
-
                     </div>
-                  </div>
-                )
-              }
+                  )
+                }
 
+
+
+
+
+                {/* ----- MODAL 1: PROJECTED SAVINGS (คำนวณเงินออม) ----- */}
+                {
+                  showProjectedModal && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-xl p-4 transition-all duration-500">
+                      <div className="w-full max-w-2xl rounded-[32px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-black/5">
+                        <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100">
+                          <div>
+                            <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                              <span className="w-8 h-8 rounded-lg bg-emerald-100/50 flex items-center justify-center text-emerald-600 text-lg">💰</span>
+                              ที่มาของเงินออม (Projected Savings)
+                            </h3>
+                            <p className="text-sm text-slate-500 mt-1 ml-10">วิเคราะห์องค์ประกอบของเงินออมในอนาคต</p>
+                          </div>
+                          <button onClick={() => setShowProjectedModal(false)} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                            <CloseIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        <div className="max-h-[75vh] overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
+                          {/* TABS */}
+                          <div className="flex gap-2 p-1.5 bg-white/80 backdrop-blur border border-slate-200/60 rounded-2xl mx-8 mt-6 mb-4 shadow-sm sticky top-0 z-10">
+                            <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${projectedModalTab === 'details' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setProjectedModalTab('details')}>รายละเอียด (Details)</button>
+                            <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${projectedModalTab === 'formula' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setProjectedModalTab('formula')}>สูตรคำนวณ (Formula)</button>
+                          </div>
+
+                          <div className="px-8 pb-8 pt-2">
+                            {projectedModalTab === "details" && (
+                              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
+                                  {["เริ่มต้นจากเงินสะสมที่มีอยู่ในปัจจุบัน", "คำนวณผลตอบแทนจากเงินสะสมทั้งหมดของปีนั้น (ผลตอบแทนเฉลี่ยต่อปี)", "เพิ่มเงินออมประจำปีเข้าไปในยอดสะสม", "หากมีเงินเพิ่มเติมจากแหล่งอื่น เช่น เงินคืนประกัน ก็จะนำมาบวกกับยอดสะสมของปีนั้นด้วย", "ทำซ้ำขั้นตอนทั้งหมดจนถึงปีเกษียณ → จะได้ยอดสะสมสุดท้าย"].map((step, idx) => (
+                                    <div key={idx} className="flex gap-4 text-sm text-slate-600 group">
+                                      <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 font-bold text-xs shadow-sm ring-1 ring-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                                        {idx + 1}
+                                      </div>
+                                      <div className="pt-1.5 leading-relaxed font-medium">{step}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 p-5 border border-amber-100/50 flex gap-4 items-start shadow-sm">
+                                  <span className="text-amber-500 text-2xl mt-0.5">💡</span>
+                                  <div className="text-sm text-slate-700 pt-1">
+                                    <span className="font-bold text-slate-900 block mb-1 text-base">Key Takeaway</span>
+                                    หัวใจสำคัญคือ <span className="font-bold text-amber-700">"พลังของดอกเบี้ยทบต้น"</span> (Compound Interest) ยิ่งออมเร็ว เงินยิ่งทบต้นได้นานขึ้น
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {projectedModalTab === "formula" && (
+                              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
+                                  <div className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                    <span className="w-1 h-6 bg-indigo-500 rounded-full"></span>
+                                    สูตรมูลค่าเงินในอนาคต (Future Value)
+                                  </div>
+                                  <p className="text-sm text-slate-500 leading-relaxed pl-3 border-l-2 border-slate-100">
+                                    คำนวณโดยนำเงิน 2 ส่วนมารวมกัน: <br />
+                                    1. <b>เงินก้อนเดิม</b> ที่เติบโตขึ้นตามผลตอบแทน <br />
+                                    2. <b>เงินออมใหม่</b> ที่เติมเข้ามาทุกปีพร้อมผลตอบแทน
+                                  </p>
+
+                                  <div className="rounded-2xl bg-slate-900 p-6 overflow-x-auto shadow-inner relative group">
+                                    <div className="absolute top-3 right-3 text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded">Math</div>
+                                    <div className="font-mono text-sm text-emerald-400 whitespace-nowrap">
+                                      FV = [P₀ × (1 + r)ⁿ] + [PMT × ((1 + r)ⁿ - 1) / r] + Others
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3 text-xs text-slate-500 mt-2">
+                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3"><span className="font-bold text-slate-900 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">FV</span> มูลค่าเงินในอนาคต</div>
+                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3"><span className="font-bold text-slate-900 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">P₀</span> เงินเริ่มต้น</div>
+                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3"><span className="font-bold text-slate-900 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">PMT</span> เงินออมเพิ่มต่อปี</div>
+                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3"><span className="font-bold text-slate-900 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">r</span> ผลตอบแทนต่อปี</div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4 pt-4">
+                                  <div className="text-sm font-bold text-slate-900">ตัวอย่างการคำนวณจริง (Live Calculation):</div>
+                                  <div className="rounded-3xl bg-white border border-slate-200 p-6 space-y-6 shadow-sm">
+                                    <div className="relative pl-4 border-l-2 border-indigo-100">
+                                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">ส่วนที่ 1: เงินก้อนเดิมเติบโต</div>
+                                      <div className="font-mono text-xs text-slate-600 break-all bg-slate-50 p-2 rounded-lg">
+                                        = {formatNumber(form.currentSavings)} × (1 + {Number(form.expectedReturn) / 100})^{result.yearsToRetire}
+                                      </div>
+                                      <div className="font-mono text-base font-bold text-indigo-600 mt-2">
+                                        = ฿ {formatNumber(result.fvLumpSum)}
+                                      </div>
+                                    </div>
+
+                                    <div className="relative pl-4 border-l-2 border-purple-100">
+                                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">ส่วนที่ 2: เงินออมใหม่เติบโต</div>
+                                      <div className="font-mono text-xs text-slate-600 break-all bg-slate-50 p-2 rounded-lg">
+                                        = ({formatNumber(form.monthlySaving)} × 12) × ((1 + {Number(form.expectedReturn) / 100})^{result.yearsToRetire} - 1) / {Number(form.expectedReturn) / 100}
+                                      </div>
+                                      <div className="font-mono text-base font-bold text-purple-600 mt-2">
+                                        = ฿ {formatNumber(result.fvAnnuity)}
+                                      </div>
+                                    </div>
+
+                                    {result.insuranceCashInflow > 0 && (
+                                      <div className="relative pl-4 border-l-2 border-emerald-100">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">ส่วนที่ 3: เงินคืนจากประกัน</div>
+                                        <div className="font-mono text-base font-bold text-emerald-600 mt-2">
+                                          + ฿ {formatNumber(result.insuranceCashInflow)}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    <div className="pt-4 mt-2 border-t border-slate-100 flex justify-between items-end">
+                                      <div className="text-sm font-bold text-slate-900">รวมเงินออมทั้งหมด (Total FV)</div>
+                                      <div className="font-mono text-2xl font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl">
+                                        ฿ {formatNumber(result.projectedFund)}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+
+                {/* ----- MODAL 2: TARGET FUND (เงินที่ต้องการ) ----- */}
+                {
+                  showTargetModal && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-xl p-4 transition-all duration-500">
+                      <div className="w-full max-w-2xl rounded-[32px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-black/5">
+                        <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100">
+                          <div>
+                            <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                              <span className="w-8 h-8 rounded-lg bg-blue-100/50 flex items-center justify-center text-blue-600 text-lg">🎯</span>
+                              เป้าหมายเกษียณ (Target Fund)
+                            </h3>
+                            <p className="text-sm text-slate-500 mt-1 ml-10">คำนวณเงินทุนที่ต้องมีเพื่อให้พอใช้</p>
+                          </div>
+                          <button onClick={() => setShowTargetModal(false)} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                            <CloseIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        <div className="max-h-[75vh] overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
+                          <div className="flex gap-2 p-1.5 bg-white/80 backdrop-blur border border-slate-200/60 rounded-2xl mx-8 mt-6 mb-4 shadow-sm sticky top-0 z-10">
+                            <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${targetModalTab === 'details' ? 'bg-blue-500 text-white shadow-md shadow-blue-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setTargetModalTab('details')}>รายละเอียด (Details)</button>
+                            <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${targetModalTab === 'formula' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setTargetModalTab('formula')}>สูตรคำนวณ (Formula)</button>
+                          </div>
+
+                          <div className="px-8 pb-8 pt-2">
+                            {targetModalTab === "details" && (
+                              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <p className="text-sm text-slate-600 leading-relaxed bg-white p-6 rounded-3xl border border-blue-100 shadow-sm relative overflow-hidden">
+                                  <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500"></span>
+                                  <span className="font-bold text-slate-900 block mb-2 text-base">นิยาม (Simple Definition)</span>
+                                  คือจำนวนเงินก้อนที่คุณ <b>"ต้องมี"</b> ณ วันสุดท้ายของการทำงาน เพื่อให้สามารถถอนออกมาใช้จ่ายได้ทุกเดือนไปจนถึงวันสุดท้ายของชีวิต โดยไม่เดือดร้อน
+                                </p>
+
+                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
+                                  <div className="text-base font-bold text-slate-900">ขั้นตอนการคิด (Step-by-Step):</div>
+                                  <ol className="list-none space-y-3">
+                                    {[
+                                      "ประมาณการรายจ่ายต่อเดือน หลังเกษียณ (ปรับเงินเฟ้อแล้ว)",
+                                      "หักลบรายได้อื่นๆ ที่จะมีแน่นอน เช่น บำนาญ, เบี้ยยังชีพ",
+                                      "คำนวณว่าต้องมีเงินก้อนเท่าไหร่ ที่จะถอนมาใช้ได้พอดีตามระยะเวลาที่คาดการณ์",
+                                      "บวกเงินมรดกที่ต้องการส่งต่อ (ถ้ามี)",
+                                      "ผลลัพธ์คือ เป้าหมายทางการเงิน (Target Fund)"
+                                    ].map((item, idx) => (
+                                      <li key={idx} className="flex gap-4 items-center p-3 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                                        <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">{idx + 1}</div>
+                                        <span className="text-sm text-slate-700 font-medium">{item}</span>
+                                      </li>
+                                    ))}
+                                  </ol>
+                                </div>
+                              </div>
+                            )}
+
+                            {targetModalTab === "formula" && (
+                              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
+                                  <div className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                    <span className="w-1 h-6 bg-blue-500 rounded-full"></span>
+                                    สูตรหาเงินออมที่ต้องเก็บ (PMT for Goal)
+                                  </div>
+                                  <p className="text-sm text-slate-500 leading-relaxed pl-3 border-l-2 border-slate-100">
+                                    คำนวณย้อนกลับว่า ต้องเก็บเงินเพิ่มปีละเท่าไหร่ จึงจะไปถึงเป้าหมาย โดยคำนึงถึงผลตอบแทนทบต้น
+                                  </p>
+
+                                  <div className="rounded-2xl bg-slate-900 p-6 overflow-x-auto shadow-inner relative group">
+                                    <div className="absolute top-3 right-3 text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded">Math</div>
+                                    <div className="font-mono text-sm text-blue-400 whitespace-nowrap">
+                                      PMT = (Target - Current × (1+r)^n) / [((1+r)^n - 1) / r]
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                  <div className="text-sm font-bold text-slate-900">สรุปการคำนวณจริง (Result):</div>
+                                  <div className="rounded-3xl bg-white border border-slate-200 p-6 overflow-hidden shadow-sm relative">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50 pointer-events-none"></div>
+
+                                    <div className="relative z-10 space-y-4">
+                                      <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                        <span className="text-sm text-slate-600">เป้าหมายทั้งหมดที่ต้องมี</span>
+                                        <span className="font-bold text-lg text-slate-800">฿ {formatNumber(result.targetFund)}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                        <span className="text-sm text-slate-600">เงินที่มีและจะโตไปในอนาคต</span>
+                                        <span className="font-bold text-lg text-slate-500">฿ {formatNumber(result.fvLumpSum + result.insuranceCashInflow)}</span>
+                                      </div>
+                                      <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                                        <div className="flex justify-between items-center mb-2">
+                                          <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">ต้องออมเพิ่มต่อปี</span>
+                                          <span className="font-mono text-base font-bold text-blue-700">฿ {formatNumber2(result.monthlyNeeded * 12, 0)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-sm font-black text-slate-800">เฉลี่ยต่อเดือน</span>
+                                          <span className="font-mono text-2xl font-black text-blue-600">฿ {formatNumber2(result.monthlyNeeded, 0)}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+
+                {/* ----- MODAL 3: EXPENSE DETAILS (ค่าใช้จ่าย) ----- */}
+                {
+                  showExpenseModal && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-xl p-4 transition-all duration-500">
+                      <div className="w-full max-w-2xl rounded-[32px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-black/5">
+                        <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100">
+                          <div>
+                            <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                              <span className="w-8 h-8 rounded-lg bg-purple-100/50 flex items-center justify-center text-purple-600 text-lg">💸</span>
+                              ค่าใช้จ่ายหลังเกษียณ (Future Expense)
+                            </h3>
+                            <p className="text-sm text-slate-500 mt-1 ml-10">ประมาณการเงินเฟ้อและค่าครองชีพ</p>
+                          </div>
+                          <button onClick={() => setShowExpenseModal(false)} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                            <CloseIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        <div className="max-h-[75vh] overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
+                          <div className="flex gap-2 p-1.5 bg-white/80 backdrop-blur border border-slate-200/60 rounded-2xl mx-8 mt-6 mb-4 shadow-sm sticky top-0 z-10">
+                            <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${expenseModalTab === 'details' ? 'bg-purple-500 text-white shadow-md shadow-purple-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setExpenseModalTab('details')}>รายละเอียด (Details)</button>
+                            <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${expenseModalTab === 'formula' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setExpenseModalTab('formula')}>สูตรคำนวณ (Formula)</button>
+                          </div>
+
+                          <div className="px-8 pb-8 pt-2">
+                            {expenseModalTab === "details" && (
+                              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="h-[260px] w-full rounded-3xl border border-slate-100 p-6 bg-white shadow-sm flex flex-col">
+                                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">กราฟค่าใช้จ่ายสะสม</h4>
+                                  <div className="flex-1 min-h-0">
+                                    {expenseChart ? <Line data={expenseChart.data} options={{ ...expenseChart.options, maintainAspectRatio: false }} /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">ไม่มีข้อมูลกราฟ</div>}
+                                  </div>
+                                </div>
+                                <div className="space-y-4">
+                                  <div className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                    <span className="w-1 h-5 bg-purple-500 rounded-full"></span>
+                                    ตารางค่าใช้จ่ายรายปี (จนถึงอายุขัย)
+                                  </div>
+                                  <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm bg-white">
+                                    <table className="w-full text-sm text-left">
+                                      <thead className="bg-slate-50/80 text-slate-600 font-bold border-b border-slate-200">
+                                        <tr><th className="p-4 w-1/4">อายุ (ปี)</th><th className="p-4 text-right w-1/3">รายเดือน (อนาคต)</th><th className="p-4 text-right">รายปี (อนาคต)</th></tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-slate-100">
+                                        {result.expenseSchedule.slice(0, 5).map((row, idx) => (
+                                          <tr key={row.age} className={`hover:bg-purple-50/30 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"}`}>
+                                            <td className="p-4 text-slate-800 font-bold">{row.age}</td>
+                                            <td className="p-4 text-right font-medium text-purple-600">฿{formatNumber(row.monthly)}</td>
+                                            <td className="p-4 text-right text-slate-600">฿{formatNumber(row.yearly)}</td>
+                                          </tr>
+                                        ))}
+                                        {result.expenseSchedule.length > 5 && (
+                                          <tr><td colSpan={3} className="p-3 text-center text-xs text-slate-400 bg-slate-50/50 italic border-t border-slate-100">... แสดงข้อมูลอีก {result.expenseSchedule.length - 5} ปี ...</td></tr>
+                                        )}
+                                      </tbody>
+                                      <tfoot className="bg-slate-900 text-white font-semibold">
+                                        <tr>
+                                          <td className="p-4 rounded-bl-xl">รวมทั้งหมดตลอดอายุขัย</td>
+                                          <td className="p-4 text-right">-</td>
+                                          <td className="p-4 text-right text-purple-300 text-lg rounded-br-xl">฿{formatNumber(result.totalLifetimeExpense)}</td>
+                                        </tr>
+                                      </tfoot>
+                                    </table>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            {expenseModalTab === "formula" && (
+                              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
+                                  <div className="text-base font-bold text-slate-900">การคิดค่าเงินเฟ้อ (Inflation Calc)</div>
+                                  <p className="text-sm text-slate-500 leading-relaxed pl-3 border-l-2 border-slate-100">
+                                    เงินในอนาคตจะมีค่าน้อยลง เราจึงต้องคำนวณว่า "จำนวนเงินที่เราต้องใช้" จะเพิ่มขึ้นเป็นเท่าไหร่
+                                  </p>
+                                  <div className="rounded-2xl bg-slate-900 p-6 text-sm text-purple-300 border border-slate-800 leading-relaxed font-mono shadow-inner">
+                                    FutureExpense = CurrentExpense × (1 + InflationRate) ^ Years
+                                  </div>
+                                </div>
+
+                                <div className="bg-purple-50 rounded-3xl p-6 border border-purple-100 space-y-3">
+                                  <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">ตัวอย่างวันนี้ vs วันเกษียณ</h4>
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="text-slate-600">ค่าใช้จ่ายวันนี้ (บาท/เดือน)</span>
+                                    <span className="font-bold text-slate-900">{formatNumber(form.retireExtraExpense)}</span>
+                                  </div>
+                                  <div className="w-full h-px bg-purple-200"></div>
+                                  <div className="flex items-center justify-between text-base">
+                                    <span className="text-purple-800 font-bold">ค่าใช้จ่ายวันเกษียณ (บาท/เดือน)</span>
+                                    <span className="font-black text-purple-700 text-xl">{formatNumber(result.fvExpenseMonthly)}</span>
+                                  </div>
+                                  <p className="text-xs text-purple-600/80 mt-2 text-right">
+                                    *คิดที่เงินเฟ้อ {form.inflation}% เป็นเวลา {result.yearsToRetire} ปี
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+
+                {/* ----- MODAL 4: MONTE CARLO DETAILS ----- */}
+                {
+                  showMonteCarloDetails && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-xl p-4 transition-all duration-500">
+                      <div className="w-full max-w-md rounded-[32px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-black/5">
+                        <div className="flex items-center justify-between px-6 py-5 bg-white border-b border-slate-100">
+                          <h3 className="text-lg font-bold text-slate-900 tracking-tight">🔎 ผลจำลอง Monte Carlo</h3>
+                          <button onClick={() => setShowMonteCarloDetails(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                            <CloseIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+                        <div className="p-6 bg-[#F8FAFC]">
+                          <p className="text-xs text-slate-500 mb-6 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm leading-relaxed">
+                            <b>Monte Carlo Simulation</b> คือการจำลองเหตุการณ์การลงทุนกว่า 1,000 ครั้ง โดยใส่ความผันผวน (Volatility 6%) เพื่อดูโอกาสรอดในสถานการณ์ต่างๆ
+                          </p>
+
+                          <div className="space-y-3 bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">ตัวอย่างผลลัพธ์ 5 เหตุการณ์</h4>
+                            {mcResult.finalBalances.map((run, idx) => (
+                              <div key={idx} className="flex justify-between items-center text-sm pb-3 border-b border-slate-50 last:border-0 last:pb-0">
+                                <span className="text-slate-500 font-bold text-xs">Run #{idx + 1}</span>
+                                <div className="flex items-center gap-3">
+                                  <span className={run.pass ? "text-emerald-600 font-bold font-mono" : "text-rose-600 font-bold font-mono"}>
+                                    ฿{formatNumber(run.balance)}
+                                  </span>
+                                  <span className={`w-2 h-2 rounded-full ring-2 ring-white shadow-sm ${run.pass ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="mt-6 flex flex-col items-center justify-center bg-slate-900 text-white rounded-3xl p-6 shadow-lg shadow-slate-200">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">ความน่าจะเป็นที่จะสำเร็จ</span>
+                            <span className="text-4xl font-black tracking-tight">{formatNumber2(mcResult.probability * 100, 0)}%</span>
+                            <span className="text-[10px] text-slate-500 mt-2">Success Rate from 1,000+ simulations</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+
+              </div>
             </div>
           )}
         </main>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 }
