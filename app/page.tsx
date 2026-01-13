@@ -38,6 +38,118 @@ ChartJS.register(
   Filler
 );
 
+const goalLabelPlugin = {
+  id: 'goalLabelPlugin',
+  afterDraw: (chart: any, args: any, options: any) => {
+    const { ctx, chartArea: { left, top, right, bottom }, scales: { x, y } } = chart;
+    const { goalValue, labelText, crossingAge, formatNumber } = options;
+    if (goalValue === undefined || goalValue === 0 || !labelText) return;
+
+    const yPos = y.getPixelForValue(goalValue);
+    if (yPos < top || yPos > bottom) return;
+
+    // Determine end X position (either crossing age or right boundary)
+    let endX = right;
+    if (crossingAge !== undefined) {
+      endX = x.getPixelForValue(crossingAge);
+      endX = Math.min(Math.max(left, endX), right);
+    }
+
+    ctx.save();
+
+    // 1. Draw horizontal dashed line across the chart up to endX
+    ctx.beginPath();
+    ctx.setLineDash([8, 8]);
+    ctx.moveTo(left, yPos);
+    ctx.lineTo(endX, yPos);
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#3b82f6';
+    ctx.globalAlpha = 0.6;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1.0;
+
+    // 2. Setup Label Styling
+    const displayLabel = labelText;
+    ctx.font = '800 13px Prompt, "Inter", sans-serif';
+    const textWidth = ctx.measureText(displayLabel).width;
+    const boxWidth = textWidth + 32;
+    const boxHeight = 28;
+
+    const xPos = left + 30;
+    const yPosBox = yPos - boxHeight / 2;
+
+    // High fidelity shadow for the label
+    ctx.shadowColor = 'rgba(59, 130, 246, 0.15)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 3;
+
+    // Premium Pill Shape for Label
+    const r = boxHeight / 2;
+    ctx.beginPath();
+    ctx.roundRect(xPos, yPosBox, boxWidth, boxHeight, r);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+
+    // Blue Border for label
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 1.25;
+    ctx.stroke();
+
+    // Text - Blue
+    ctx.fillStyle = '#1e40af';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(displayLabel, xPos + boxWidth / 2, yPos);
+
+    ctx.restore();
+  }
+};
+
+const crosshairPlugin = {
+  id: 'crosshair',
+  afterDraw: (chart: any) => {
+    if (chart.tooltip?._active?.length) {
+      const { ctx, chartArea: { left, bottom } } = chart;
+      const activePoints = chart.tooltip._active;
+      const x = activePoints[0].element.x;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1.25;
+      ctx.strokeStyle = 'rgba(71, 85, 105, 0.7)'; // slate-600
+
+      let minY = bottom;
+
+      activePoints.forEach((pt: any) => {
+        const dataset = chart.data.datasets[pt.datasetIndex];
+        const label = dataset.label;
+
+        // Skip background MC simulation areas and Financial Goal for crosshair lines
+        if (label === "P5" || label === "P95" || label === "เป้าหมายทางการเงิน") return;
+
+        const y = pt.element.y;
+        if (y < minY) minY = y;
+
+        // Draw horizontal line for each relevant point
+        ctx.moveTo(left, y);
+        ctx.lineTo(x, y);
+      });
+
+      // Draw one vertical line from the highest point down to the bottom axis
+      ctx.moveTo(x, minY);
+      ctx.lineTo(x, bottom);
+
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+};
+
+ChartJS.register(goalLabelPlugin, crosshairPlugin);
+
 /* ---------- Helper (formatting) ---------- */
 const nfNoDecimal = new Intl.NumberFormat("th-TH", { maximumFractionDigits: 0 });
 const nf2 = (value: number, digits = 2) =>
@@ -989,41 +1101,39 @@ function buildProjectionSeries(inputs: RetirementInputs, result: any) {
       }
     });
 
-    if (y > 0) {
-      if (age < retireAge) {
-        balance = balance * (1 + r_pre);
-        let monthly = monthlySaving || 0;
-        if (savingMode === "step5" && stepIncrements && stepIncrements.length > 0) {
-          for (const step of stepIncrements) {
-            if (age - 1 >= step.age && step.monthlySaving > 0) {
-              monthly = step.monthlySaving;
-            }
+    // Calculate End of Age logic for every data point
+    // Peak should be at age 59 if retireAge is 60.
+    if (age < retireAge) {
+      // growth on balance at start of year
+      balance = balance * (1 + r_pre);
+
+      let monthly = monthlySaving || 0;
+      if (savingMode === "step5" && stepIncrements && stepIncrements.length > 0) {
+        for (const step of stepIncrements) {
+          if (age - 1 >= step.age && step.monthlySaving > 0) {
+            monthly = step.monthlySaving;
           }
         }
-        balance += monthly * 12;
-        balance += insuranceInflow;
+      }
+      balance += monthly * 12;
+      balance += insuranceInflow;
 
-        // Lump sum at retirement point (end of year before retireAge)
-        if (age === retireAge - 1) {
-          balance += (retireFundOther || 0);
-        }
-      } else {
-        balance = balance * (1 + r_post);
-        const yearsInRetireSoFar = age - retireAge;
-        const expenseThisYear = expenseAnnualAtRetire * Math.pow(1 + r_inf, Math.max(0, yearsInRetireSoFar));
-        const specialThisYear = specialAnnualAtRetire * Math.pow(1 + r_inf, Math.max(0, yearsInRetireSoFar));
-        const incomeThisYear = incomeAnnualAtRetire;
-        const netWithdrawal = Math.max(0, expenseThisYear + specialThisYear - incomeThisYear);
-
-        balance += insuranceInflow;
-        balance -= netWithdrawal;
-        if (!Number.isFinite(balance) || balance < 0) balance = Math.max(0, balance);
+      // Lump sum at retirement point (exactly at last year of work)
+      if (age === retireAge - 1) {
+        balance += (retireFundOther || 0);
       }
     } else {
-      // Initial year inflow check (e.g. if surrender immediately? unlikely but consistent)
-      if (insuranceInflow > 0) {
-        balance += insuranceInflow;
-      }
+      // spending logic for current year 'age' (starting from age 60)
+      balance = balance * (1 + r_post);
+      const yearsInRetireSoFar = age - retireAge + 1;
+      const expenseThisYear = expenseAnnualAtRetire * Math.pow(1 + r_inf, Math.max(0, yearsInRetireSoFar - 1));
+      const specialThisYear = specialAnnualAtRetire * Math.pow(1 + r_inf, Math.max(0, yearsInRetireSoFar - 1));
+      const incomeThisYear = incomeAnnualAtRetire;
+      const netWithdrawal = Math.max(0, expenseThisYear + specialThisYear - incomeThisYear);
+
+      balance += insuranceInflow;
+      balance -= netWithdrawal;
+      if (!Number.isFinite(balance) || balance < 0) balance = Math.max(0, balance);
     }
 
     // Simplified retirement lump sum logic (moved inside the loop above)
@@ -1196,6 +1306,7 @@ const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
                       onKeyDown={(e) => e.key === 'Enter' && onLogin(name || "User")}
                     />
                   </div>
+
                 </div>
 
                 <Button
@@ -1389,6 +1500,9 @@ export default function HomePage() {
   const [showStrategyCard, setShowStrategyCard] = React.useState(true);
   const [showGoalCard, setShowGoalCard] = React.useState(true);
   const [showInsuranceCard, setShowInsuranceCard] = React.useState(true);
+
+  // Chart Controls
+  const [chartTickInterval, setChartTickInterval] = React.useState<number>(5);
 
 
   const [insuranceExpanded, setInsuranceExpanded] = React.useState(false);
@@ -2016,8 +2130,7 @@ export default function HomePage() {
     });
 
     // compute step to avoid overcrowding labels on the x axis
-    const maxTicks = 12; // show up to 12 ticks to keep readable (ปรับได้)
-    const step = Math.max(1, Math.ceil(labels.length / maxTicks));
+    const step = chartTickInterval;
 
     // Calculate dynamic max for Y-axis based on visible main lines (ignoring P95)
     const maxActual = Math.max(...actual);
@@ -2026,51 +2139,73 @@ export default function HomePage() {
     const maxMain = Math.max(maxActual, maxRequired, maxSumAssured);
     const suggestedMax = Math.ceil((maxMain * 1.1) / 1000000) * 1000000; // +10% padding, round to nearest M
 
+    // Find age where actual first meets targetFund
+    let crossingAge = labels[labels.length - 1];
+    for (let i = 0; i < actual.length; i++) {
+      if (actual[i] >= result.targetFund) {
+        crossingAge = labels[i];
+        break;
+      }
+    }
+
     return {
       data: {
         labels,
         datasets: [
+          // Goal Dataset for Tooltip only
+          {
+            label: "เป้าหมายทางการเงิน",
+            data: new Array(labels.length).fill(result.targetFund),
+            borderColor: "transparent",
+            backgroundColor: "#3b82f6", // Blue for indicator
+            pointRadius: 0,
+            pointHitRadius: 0,
+            fill: false,
+            order: 10,
+            hidden: false,
+          },
           // Monte Carlo lower (P5)
           {
             label: "P5",
             data: p5Series,
             borderColor: "transparent",
-            backgroundColor: "rgba(16, 185, 129, 0.1)", // Emerald tint
+            backgroundColor: "rgba(16, 185, 129, 0.08)", // Emerald tint
             pointRadius: 0,
             fill: "+1", // fill to the next dataset (P95)
             tension: 0.4,
             order: 1,
-            hidden: !showActualSavings,
+            hidden: false, // Keep MC visible by default
           },
           // Monte Carlo upper (P95)
           {
             label: "P95",
             data: p95Series,
             borderColor: "transparent",
-            backgroundColor: "rgba(16, 185, 129, 0.1)", // Emerald tint
+            backgroundColor: "rgba(16, 185, 129, 0.08)", // Emerald tint
             pointRadius: 0,
             fill: false,
             tension: 0.4,
             order: 2,
-            hidden: !showActualSavings,
+            hidden: false,
           },
           // Actual projected (เส้นหลัก)
           {
-            label: "เงินออมคาดว่าจะมี",
+            label: "เงินออมที่จะมี",
             data: actual,
             borderColor: "#10B981", // Emerald-500
-            backgroundColor: "transparent",
-            tension: 0.3,
-            fill: false,
+            backgroundColor: "rgba(16, 185, 129, 0.08)",
+            tension: 0.4,
+            fill: true,
             pointRadius: 4,
-            pointBackgroundColor: "#ffffff",
-            pointBorderColor: "#10B981",
+            pointBackgroundColor: "#10B981",
+            pointBorderColor: "#ffffff",
             pointBorderWidth: 2,
-            pointHoverRadius: 6,
+            pointHoverRadius: 7,
             pointHoverBackgroundColor: "#10B981",
             pointHoverBorderColor: "#ffffff",
+            pointHoverBorderWidth: 2,
             order: 3,
-            hidden: !showActualSavings,
+            hidden: false, // MAIN LINE ALWAYS VISIBLE
           },
           // Actual History (Blue dots)
           {
@@ -2089,33 +2224,20 @@ export default function HomePage() {
             showLine: false, // Show only points
             hidden: !showActualSavings,
           },
-          // Target (dashed) - Financial Freedom
-          {
-            label: "อิสรภาพทางการเงิน",
-            data: required.map((val, i) => Number(labels[i]) <= Number(inputs.retireAge) - 1 ? val : null),
-            borderColor: "#2563eb",
-            borderDash: [6, 6],
-            backgroundColor: "transparent",
-            pointRadius: 0,
-            borderWidth: 2,
-            fill: false,
-            order: 4,
-          },
           // Sum Assured (Aggregated)
           {
             label: "ทุนประกัน",
             data: sumAssuredSeries,
             borderColor: "#F97316", // Orange-500
             backgroundColor: "transparent",
-            borderWidth: 2,
-            stepped: false,
             pointRadius: 4,
-            pointBackgroundColor: "#ffffff",
-            pointBorderColor: "#F97316",
+            pointBackgroundColor: "#F97316",
+            pointBorderColor: "#ffffff",
             pointBorderWidth: 2,
-            pointHoverRadius: 6,
+            pointHoverRadius: 7,
             pointHoverBackgroundColor: "#F97316",
             pointHoverBorderColor: "#ffffff",
+            pointHoverBorderWidth: 2,
             fill: false,
             order: 5,
             hidden: !showSumAssured,
@@ -2141,89 +2263,113 @@ export default function HomePage() {
             displayColors: true,
             boxPadding: 4,
             usePointStyle: true,
+            itemSort: (a: any, b: any) => {
+              const order = ["เงินออมที่จะมี", "เงินออมคาดว่าจะมี", "เงินที่เก็บได้จริง", "เป้าหมายทางการเงิน", "ทุนประกัน"];
+              const idxA = order.indexOf(a.dataset.label);
+              const idxB = order.indexOf(b.dataset.label);
+              return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+            },
             callbacks: {
               title: (items: any[]) => {
                 if (!items.length) return "";
-                return `อายุ ${items[0].label}`;
+                const age = items[0].label;
+                return `อายุ ${age} ปี`;
               },
               label: (ctx: any) => {
                 const label = ctx.dataset.label;
                 const val = ctx.parsed.y || 0;
 
-                if (label === "เงินออมคาดว่าจะมี" || label === "เงินที่เก็บได้จริง") {
-                  return `เงินออม: ฿${formatNumber(val)}`;
+                if (label === "เป้าหมายทางการเงิน") {
+                  return `เป้าหมายทางการเงิน: ฿${formatNumber(val)}`;
                 }
 
-                if (label === "อิสรภาพทางการเงิน") {
-                  return `ทางเลือก: ฿${formatNumber(val)}`;
+                if (label === "เงินออมที่จะมี" || label === "เงินออมคาดว่าจะมี" || label === "เงินที่เก็บได้จริง") {
+                  return `เงินออมสะสม: ฿${formatNumber(val)}`;
                 }
 
                 if (label === "ทุนประกัน") {
                   const age = Number(ctx.label);
-                  // Find flow for this age from insuranceChartData
                   const flowIdx = insuranceChartData?.labels.indexOf(age) ?? -1;
                   const flow = flowIdx !== -1 ? (insuranceChartData?.datasets[1].data[flowIdx] as number) : 0;
 
+                  const planDetails = (form.insurancePlans || [])
+                    .filter(p => p.active)
+                    .map(p => {
+                      const db = calculateDeathBenefitAtAge(p, age);
+                      if (db <= 0) return null;
+                      return `• ${p.planName}: ฿${formatNumber(db)}`;
+                    })
+                    .filter(Boolean);
+
                   return [
-                    `วงเงินประกัน: ฿${formatNumber(val)}`,
+                    `รวมทุนประกัน: ฿${formatNumber(val)}`,
+                    ...planDetails as string[],
                     `กระแสเงินจากประกัน: ฿${formatNumber(flow)}`
                   ];
                 }
 
-                // Custom Tooltip for Financial Freedom
-                if (ctx.dataset.label === "อิสรภาพทางการเงิน") {
-                  return `เป้าหมายที่ต้องมี: ฿${formatNumber(ctx.parsed.y || 0)}`;
-                }
-
-                return null; // Hide other labels
+                return null;
               },
-            },
-            filter: (item: any) => true, // Allow all
-          },
-          annotation: {
-            annotations: {
-              label1: {
-                type: 'label',
-                content: 'อิสรภาพทางการเงิน',
-                position: {
-                  x: 'start',
-                  y: 'end'
-                },
-                color: '#2563eb',
-                font: {
-                  size: 12,
-                  weight: 'bold'
-                },
-                yAdjust: -10,
-                xAdjust: 10
+              labelColor: (ctx: any) => {
+                const label = ctx.dataset.label;
+                if (label === "เป้าหมายทางการเงิน") {
+                  return { borderColor: '#3b82f6', backgroundColor: '#3b82f6' };
+                }
+                if (label === "เงินออมที่จะมี" || label === "เงินที่เก็บได้จริง") {
+                  return { borderColor: '#10B981', backgroundColor: '#10B981' };
+                }
+                if (label === "ทุนประกัน") {
+                  return { borderColor: '#F97316', backgroundColor: '#F97316' };
+                }
+                return { borderColor: '#94a3b8', backgroundColor: '#94a3b8' };
               }
-            }
+            },
+            filter: (item: any) => true,
+          },
+          goalLabelPlugin: {
+            goalValue: result.targetFund,
+            labelText: "เป้าหมายทางการเงิน",
+            crossingAge,
+            formatNumber
           }
         },
         scales: {
           x: {
-            title: { display: true, text: "อายุ (ปี)" },
-            grid: { display: false },
+            title: { display: true, text: "อายุ (ปี)", color: '#94a3b8', font: { size: 10, weight: 'bold' } },
+            grid: {
+              display: true,
+              color: '#f8fafc',
+              drawOnChartArea: true,
+              drawTicks: false
+            },
             ticks: {
               autoSkip: false,
-              callback: function (val: any, index: number) {
-                if (index % step !== 0) return "";
-                return String(this.getLabelForValue(index));
+              callback: function (value: any, index: number, values: any[]) {
+                const age = Number(this.getLabelForValue(value));
+                if (age % chartTickInterval === 0) return age;
+                return '';
               },
-              maxRotation: 0,
+              color: '#94a3b8',
+              font: { size: 10, weight: 'bold' },
+              padding: 10,
               minRotation: 0,
+              maxRotation: 0
             },
           },
           y: {
-            title: { display: true, text: "จำนวนเงิน" },
-            grid: { color: "#f1f5f9" },
+            title: { display: false },
+            grid: { color: "#f8fafc", drawTicks: false },
+            border: { display: false },
             min: 0,
-            max: suggestedMax, // Restored per user request to keep graph "high"
+            max: suggestedMax,
             ticks: {
-              stepSize: 1000000,
+              maxTicksLimit: 8,
+              color: '#94a3b8',
+              font: { size: 10, weight: 'bold' },
+              padding: 10,
               callback: (v: any) => {
                 const val = v as number;
-                if (val >= 1000000) return (val / 1000000).toFixed(1) + "M";
+                if (val >= 1000000) return (val / 1000000).toFixed(0) + "M";
                 if (val >= 1000) return (val / 1000).toFixed(0) + "k";
                 return val;
               },
@@ -2232,7 +2378,7 @@ export default function HomePage() {
         },
       } as ChartOptions<"line">,
     };
-  }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData]);
+  }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData, chartTickInterval]);
 
   /* ---------- Expense Chart Data ---------- */
   const expenseChart = React.useMemo(() => {
@@ -3016,13 +3162,13 @@ export default function HomePage() {
           relative z-10 flex flex-col transition-all duration-700 ease-in-out bg-white/90 backdrop-blur-xl border border-white/60
           ${!showResult
             ? "w-full max-w-3xl mx-auto h-auto max-h-[85vh] rounded-[32px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] ring-1 ring-white/50 my-auto"
-            : "w-full lg:w-[480px] xl:w-[500px] h-full shrink-0 shadow-xl lg:shadow-none bg-white border-r border-slate-100/60 z-50"
+            : "w-full lg:w-[350px] xl:w-[370px] h-full shrink-0 shadow-xl lg:shadow-none bg-white border-r border-slate-100/60 z-50"
           }
         `}>
           {/* Wizard Header (Modern Stepper) */}
-          <div className="flex-1 overflow-y-auto p-5 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          <div className="flex-1 overflow-y-auto p-4 pb-20 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {/* Wizard Header (Modern Stepper) - MOVED INSIDE SCROLL VIEW */}
-            <div className="bg-white/80 backdrop-blur-md rounded-[28px] p-6 border border-slate-100 shadow-sm mb-6 relative overflow-hidden">
+            <div className="bg-white/80 backdrop-blur-md rounded-[24px] p-5 border border-slate-100 shadow-sm mb-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
               <div className="relative z-10 flex items-center justify-between">
                 <div>
@@ -3201,7 +3347,7 @@ export default function HomePage() {
                         <button onClick={changeBy("currentAge", -1)} className="w-12 h-12 rounded-2xl bg-white text-slate-400 border border-slate-100 hover:border-slate-300 hover:text-slate-600 hover:shadow-sm flex items-center justify-center transition-all active:scale-95"><Minus className="w-5 h-5" strokeWidth={3} /></button>
                         <div className="flex-1 flex flex-col items-center">
                           <NumericInput
-                            className="h-16 w-full text-center text-5xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 tracking-tighter"
+                            className="h-10 w-full text-center text-3xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 tracking-tighter"
                             value={form.currentAge}
                             onChange={(v) => setForm(prev => ({ ...prev, currentAge: v }))}
                           />
@@ -3221,7 +3367,7 @@ export default function HomePage() {
                         <button onClick={changeBy("retireAge", -1)} className="w-12 h-12 rounded-2xl bg-white text-indigo-300 border border-indigo-100 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-sm flex items-center justify-center transition-all active:scale-95"><Minus className="w-5 h-5" strokeWidth={3} /></button>
                         <div className="flex-1 flex flex-col items-center">
                           <NumericInput
-                            className="h-16 w-full text-center text-5xl font-black bg-transparent border-none p-0 focus:ring-0 text-indigo-600 leading-none placeholder:text-indigo-200 tracking-tighter"
+                            className="h-10 w-full text-center text-3xl font-black bg-transparent border-none p-0 focus:ring-0 text-indigo-600 leading-none placeholder:text-indigo-200 tracking-tighter"
                             value={form.retireAge}
                             onChange={(v) => setForm(prev => ({ ...prev, retireAge: v }))}
                           />
@@ -3241,7 +3387,7 @@ export default function HomePage() {
                         <button onClick={changeBy("lifeExpectancy", -1)} className="w-12 h-12 rounded-2xl bg-white text-slate-400 border border-slate-100 hover:border-slate-300 hover:text-slate-600 hover:shadow-sm flex items-center justify-center transition-all active:scale-95"><Minus className="w-5 h-5" strokeWidth={3} /></button>
                         <div className="flex-1 flex flex-col items-center">
                           <NumericInput
-                            className="h-16 w-full text-center text-5xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-500 leading-none placeholder:text-slate-200 tracking-tighter"
+                            className="h-10 w-full text-center text-3xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-500 leading-none placeholder:text-slate-200 tracking-tighter"
                             value={form.lifeExpectancy}
                             onChange={(v) => setForm(prev => ({ ...prev, lifeExpectancy: v }))}
                           />
@@ -3292,7 +3438,7 @@ export default function HomePage() {
                             <div className="flex items-baseline gap-2">
                               <span className="text-2xl font-black text-slate-300">฿</span>
                               <NumericInput
-                                className="h-16 w-full text-center text-5xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 tracking-tighter"
+                                className="h-12 w-full text-center text-3xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 tracking-tighter"
                                 value={form.currentSavings}
                                 onChange={(v) => setForm(prev => ({ ...prev, currentSavings: v }))}
                               />
@@ -3322,7 +3468,7 @@ export default function HomePage() {
                             <div className="flex items-baseline gap-2">
                               <span className="text-2xl font-black text-slate-300">฿</span>
                               <NumericInput
-                                className="h-16 w-full text-center text-5xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 tracking-tighter"
+                                className="h-12 w-full text-center text-3xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 tracking-tighter"
                                 value={form.monthlySaving}
                                 onChange={(v) => setForm(prev => ({ ...prev, monthlySaving: v }))}
                               />
@@ -3919,7 +4065,7 @@ export default function HomePage() {
                             <div className="flex items-baseline gap-2">
                               <span className="text-2xl font-black text-slate-300">฿</span>
                               <NumericInput
-                                className="h-16 w-full text-center text-5xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 tracking-tighter"
+                                className="h-12 w-full text-center text-3xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 tracking-tighter"
                                 value={form.retireExtraExpense}
                                 onChange={(v) => setForm(prev => ({ ...prev, retireExtraExpense: v }))}
                               />
@@ -3944,19 +4090,19 @@ export default function HomePage() {
                           <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
                         </div>
                         <div className="flex items-center gap-4">
-                          <button onClick={changeBy("legacyFund", -100000)} className="w-14 h-14 rounded-2xl bg-white text-slate-400 border border-slate-100 hover:border-slate-300 hover:text-slate-600 flex items-center justify-center transition-all active:scale-95 shadow-sm"><Minus className="w-6 h-6" strokeWidth={3} /></button>
+                          <button onClick={changeBy("legacyFund", -100000)} className="w-10 h-10 rounded-xl bg-white text-slate-400 border border-slate-100 hover:border-slate-300 hover:text-slate-600 flex items-center justify-center transition-all active:scale-95 shadow-sm"><Minus className="w-5 h-5" strokeWidth={3} /></button>
                           <div className="flex-1 flex flex-col items-center">
                             <div className="flex items-baseline gap-2">
-                              <span className="text-2xl font-black text-slate-200">฿</span>
+                              <span className="text-xl font-black text-slate-200">฿</span>
                               <NumericInput
-                                className="h-16 w-full text-center text-4xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 tracking-tighter"
+                                className="h-10 w-full text-center text-3xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-800 leading-none placeholder:text-slate-200 tracking-tighter"
                                 value={form.legacyFund}
                                 onChange={(v) => setForm(prev => ({ ...prev, legacyFund: v }))}
                               />
                             </div>
                             <span className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-[0.2em]">Legacy Goal</span>
                           </div>
-                          <button onClick={changeBy("legacyFund", 100000)} className="w-14 h-14 rounded-2xl bg-white text-slate-400 border border-slate-100 hover:border-slate-300 hover:text-slate-600 flex items-center justify-center transition-all active:scale-95 shadow-sm"><Plus className="w-6 h-6" strokeWidth={3} /></button>
+                          <button onClick={changeBy("legacyFund", 100000)} className="w-10 h-10 rounded-xl bg-white text-slate-400 border border-slate-100 hover:border-slate-300 hover:text-slate-600 flex items-center justify-center transition-all active:scale-95 shadow-sm"><Plus className="w-5 h-5" strokeWidth={3} /></button>
                         </div>
                         <input
                           type="range"
@@ -4145,14 +4291,14 @@ export default function HomePage() {
                             document.getElementById('projection-chart')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                           }, 100);
                         }}
-                        className="w-full h-20 md:h-28 rounded-[36px] bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white shadow-[0_20px_50px_-15px_rgba(79,70,229,0.5)] transition-all hover:scale-[1.02] active:scale-95 group/btn border-t border-white/10"
+                        className="w-full h-16 md:h-18 rounded-[24px] bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white shadow-lg shadow-indigo-100 transition-all hover:scale-[1.02] active:scale-95 group/btn border-t border-white/10"
                       >
-                        <div className="flex items-center gap-5">
-                          <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-white/20 flex items-center justify-center group-hover/btn:rotate-12 transition-transform duration-500 shadow-inner">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/20 flex items-center justify-center group-hover/btn:rotate-12 transition-transform duration-500 shadow-inner">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
                           </div>
                           <div className="text-left">
-                            <span className="block text-2xl md:text-3xl font-black tracking-tight leading-none mb-1">คำนวณแผน</span>
+                            <span className="block text-xl md:text-2xl font-black tracking-tight leading-none mb-1">คำนวณแผน</span>
                             <span className="block text-[10px] md:text-xs font-bold text-indigo-200 uppercase tracking-[0.2em] opacity-80">Generate Retirement Report</span>
                           </div>
                         </div>
@@ -4174,7 +4320,7 @@ export default function HomePage() {
           </div>
 
           {/* Wizard Footer */}
-          <div className={`p-6 border-t border-slate-100 bg-white flex shrink-0 sticky bottom-0 w-full z-30 transition-all duration-300 ${showResult ? "justify-center" : "justify-between"}`}>
+          <div className={`p-4 border-t border-slate-100 bg-white flex shrink-0 sticky bottom-0 w-full z-30 transition-all duration-300 ${showResult ? "justify-center" : "justify-between"}`}>
             {/* Back Button */}
             {!showResult ? (
               <div>
@@ -4212,10 +4358,10 @@ export default function HomePage() {
               </Button>
             )}
           </div>
-        </aside >
+        </aside>
 
         {/* RIGHT PANEL: RESULTS */}
-        <main className={`flex-1 min-w-0 overflow-y-auto bg-muted/20 text-foreground relative scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent ${!showResult ? "hidden" : "block animate-in fade-in zoom-in-95 duration-700"}`}>
+        <main className={`flex-1 min-w-0 overflow-y-auto bg-slate-50/40 text-foreground relative scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent ${!showResult ? "hidden" : "block animate-in fade-in zoom-in-95 duration-700"}`}>
           {!showResult ? null : (
             <div className="relative p-6 lg:p-10 max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
@@ -4344,45 +4490,37 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* 1. HERO SUMMARY CARD ("Your Future Overview") - REFINED PREMIUM */}
-              {/* 1. HERO SUMMARY CARD (Green Banner Style) */}
-              <div className={`rounded-[32px] p-8 lg:p-12 relative overflow-hidden font-sans mb-10 break-inside-avoid shadow-2xl transition-all duration-500 ${result.status === 'enough' ? 'bg-gradient-to-br from-[#025035] to-[#047556] text-white shadow-emerald-900/30' : 'bg-gradient-to-br from-[#7f1d1d] to-[#991b1b] text-white shadow-red-900/30'}`}>
-                {/* Clean Background - Discrete decoration */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none mix-blend-overlay"></div>
+              {/* 1. HERO SUMMARY CARD (Modern Refined Style) */}
+              <div className={`rounded-[32px] p-8 lg:p-10 relative overflow-hidden font-sans mb-8 transition-all duration-500 shadow-sm border ${result.status === 'enough' ? 'bg-white border-emerald-100' : 'bg-white border-rose-100'}`}>
+                {/* Subtle Gradient Accent */}
+                <div className={`absolute top-0 right-0 w-1/3 h-full opacity-10 pointer-events-none ${result.status === 'enough' ? 'bg-gradient-to-l from-emerald-500 to-transparent' : 'bg-gradient-to-l from-rose-500 to-transparent'}`}></div>
 
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
-                  <div className="flex-1 space-y-6">
-                    <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide ${result.status === 'enough' ? 'bg-white/20 text-white backdrop-blur-sm' : 'bg-white/20 text-white backdrop-blur-sm'}`}>
-                      <span className={`w-2.5 h-2.5 rounded-full ${result.status === 'enough' ? 'bg-[#34D399]' : 'bg-red-400'}`}></span>
-                      {result.status === 'enough' ? 'สถานะ : เป้าหมายสำเร็จ' : 'สถานะ : ต้องปรับปรุง'}
-                    </span>
-
-                    <div className="space-y-3">
-                      <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-tight">
-                        {result.status === 'enough' ? 'แผนการเงินมั่นคง' : 'แผนการเงินยังมีความเสี่ยง'}
-                      </h1>
-                      <h2 className="text-xl lg:text-2xl font-bold text-white/90">
-                        {result.status === 'enough' ? 'พร้อมเกษียณอย่างสบาย' : 'ควรเริ่มวางแผนเพิ่มเติมทันที'}
-                      </h2>
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                  <div className="flex-1 space-y-4">
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                      <span className={`w-2 h-2 rounded-full ${result.status === 'enough' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                      {result.status === 'enough' ? 'สถานะ: เป้าหมายสำเร็จ' : 'สถานะ: ต้องออมเพิ่ม'}
                     </div>
 
-                    <p className="text-white/80 text-base font-medium max-w-xl leading-relaxed">
-                      {result.status === 'enough'
-                        ? 'ยินดีด้วย! สินทรัพย์ของคุณเพียงพอสำหรับใช้จ่ายตามไลฟ์สไตล์ที่หวังไว้ตลอดช่วงเกษียณ'
-                        : `จากการคำนวณ คุณยังมีส่วนต่างที่ต้องออมเพิ่มอีกประมาณ ฿${formatNumber(Math.abs(result.gap))} เพื่อให้บรรลุเป้าหมาย`}
-                    </p>
+                    <div className="space-y-1">
+                      <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-slate-800">
+                        {result.status === 'enough' ? 'เงินออมเพียงพอ' : 'เงินออมยังไม่พอ'}
+                      </h1>
+                      <p className="text-lg font-bold text-slate-400">
+                        {result.status === 'enough' ? 'คุณมีเงินใช้สบายตลอดชีวิต' : `ขาดอีกประมาณ ฿${formatNumber(Math.abs(result.gap))}`}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="shrink-0 bg-white/10 backdrop-blur-sm rounded-[24px] p-8 min-w-[340px]">
-                    <div className="space-y-8">
-                      <div>
-                        <p className="text-[11px] font-bold text-white/70 uppercase tracking-widest mb-2">เงินออมที่จะมี (Projected)</p>
-                        <p className="text-5xl font-black tracking-tighter text-white drop-shadow-sm">฿{formatNumber(result.projectedFund)}</p>
-                      </div>
-                      <div className="pt-6 border-t border-white/10 opacity-90">
-                        <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-1">เงินต้นที่ควรมี (Target)</p>
-                        <p className={`text-2xl lg:text-3xl font-bold tracking-tight ${result.status === 'enough' ? 'text-white/90' : 'text-rose-200'}`}>฿{formatNumber(result.targetFund)}</p>
-                      </div>
+                  <div className="shrink-0 flex gap-6">
+                    <div className="text-center lg:text-right">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">เงินออมคาดว่าจะมี</p>
+                      <p className="text-4xl font-black text-emerald-600">฿{formatNumber(result.projectedFund)}</p>
+                    </div>
+                    <div className="w-px h-12 bg-slate-100 my-auto"></div>
+                    <div className="text-center lg:text-right">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">เป้าหมายเงินออม</p>
+                      <p className="text-4xl font-black text-slate-800">฿{formatNumber(result.targetFund)}</p>
                     </div>
                   </div>
                 </div>
@@ -4396,163 +4534,81 @@ export default function HomePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 break-inside-avoid px-2 relative z-10">
 
-                  {/* Card 1: Projected Savings - Emerald Theme */}
-                  <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(16,185_129,0.15)]">
-                    {/* Decorative Background Elements */}
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-100/30 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-emerald-200/40 transition-colors duration-700"></div>
-                    <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-emerald-50/50 rounded-full blur-2xl opacity-60"></div>
-
-                    {/* Large Decorative + Icon */}
-                    <div className="absolute top-8 right-8 text-emerald-100/80 group-hover:text-emerald-200/60 transition-colors duration-500 rotate-12 group-hover:rotate-0 transform origin-center transition-transform duration-700">
-                      <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  {/* Card 1: Projected Savings */}
+                  <div className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group/item">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                      </div>
+                      <button onClick={() => setShowProjectedModal(true)} className="text-slate-300 hover:text-emerald-500 transition-colors">
+                        <InfoIcon className="w-5 h-5" />
+                      </button>
                     </div>
-
-                    <div className="flex flex-col h-full justify-between relative z-10">
-                      <div>
-                        <div className="flex justify-between items-start mb-8">
-                          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-100 ring-4 ring-emerald-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
-                          </div>
-                          <button onClick={() => setShowProjectedModal(true)} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all border border-slate-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                          </button>
-                        </div>
-                        <p className="text-sm font-black text-slate-800 mb-1 tracking-tight">เงินออมที่มีตอนอายุเกษียณ</p>
-                        <h4 className="text-5xl lg:text-5xl font-black text-emerald-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
-                          ฿{formatNumber(result.projectedFund)}
-                        </h4>
-                        <p className="text-sm font-bold text-slate-400 mt-2">จากการออมและการลงทุน</p>
-                      </div>
-
-                      <div className="mt-8">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100 shadow-sm group-hover:bg-emerald-100 transition-colors">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                          </span>
-                          Wealth Projection
-                        </div>
-                      </div>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">เงินออมที่จะมี</p>
+                      <h4 className="text-3xl font-black text-emerald-600 leading-none tracking-tight">
+                        ฿{formatNumber(result.projectedFund)}
+                      </h4>
+                      <p className="text-xs font-bold text-slate-400 mt-2">รวมสินทรัพย์และการลงทุน</p>
                     </div>
                   </div>
 
-                  {/* Card 2: Target Fund - Blue Theme */}
-                  <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(59,130,246,0.15)]">
-                    {/* Decorative Background Elements */}
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-blue-100/30 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-blue-200/40 transition-colors duration-700"></div>
-                    <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-blue-50/50 rounded-full blur-2xl opacity-60"></div>
-
-                    {/* Large Decorative Circle Icon */}
-                    <div className="absolute top-8 right-8 text-blue-100/80 group-hover:text-blue-200/60 transition-colors duration-500 transform group-hover:scale-90 transition-transform duration-700">
-                      <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                  {/* Card 2: Target Fund */}
+                  <div className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group/item">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                      </div>
+                      <button onClick={() => setShowTargetModal(true)} className="text-slate-300 hover:text-blue-500 transition-colors">
+                        <InfoIcon className="w-5 h-5" />
+                      </button>
                     </div>
-
-                    <div className="flex flex-col h-full justify-between relative z-10">
-                      <div>
-                        <div className="flex justify-between items-start mb-8">
-                          <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm border border-blue-100 ring-4 ring-blue-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
-                          </div>
-                          <button onClick={() => setShowTargetModal(true)} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all border border-slate-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                          </button>
-                        </div>
-                        <p className="text-sm font-black text-slate-800 mb-1 tracking-tight">เงินที่ต้องการก่อนเกษียณ</p>
-                        <h4 className="text-5xl lg:text-5xl font-black text-blue-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
-                          ฿{formatNumber(result.targetFund)}
-                        </h4>
-                        <p className="text-xs font-bold text-slate-400 mt-2 leading-relaxed">
-                          สำหรับ {result.yearsInRetirement} ปีหลังเกษียณ (โดยไม่สร้างผลตอบแทนเพิ่มเติมเลย)<br />
-                          หรือออมขั้นต่ำคร่าวๆ ฿{formatNumber(result.monthlyNeeded)} ต่อเดือน
-                        </p>
-                      </div>
-
-                      <div className="mt-8 flex items-center justify-between">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold border border-blue-100 shadow-sm group-hover:bg-blue-100 transition-colors">
-                          Goal
-                        </div>
-                        <div className="px-3 py-1.5 rounded-xl bg-slate-50/80 border border-slate-200/60 text-slate-500 group-hover:text-blue-600 group-hover:border-blue-100 transition-all duration-300">
-                          <span className="text-[10px] font-bold tracking-tight opacity-70">~฿{formatNumber(result.monthlyNeeded)}/เดือน</span>
-                        </div>
-                      </div>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">เงินที่ต้องมี</p>
+                      <h4 className="text-3xl font-black text-blue-600 leading-none tracking-tight">
+                        ฿{formatNumber(result.targetFund)}
+                      </h4>
+                      <p className="text-xs font-bold text-slate-400 mt-2">สำหรับหลังเกษียณ {result.yearsInRetirement} ปี</p>
                     </div>
                   </div>
 
-                  {/* Card 3: Monthly Expense - Purple Theme */}
-                  <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(168,85,247,0.15)]">
-                    {/* Decorative Background Elements */}
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-purple-100/30 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-purple-200/40 transition-colors duration-700"></div>
-                    <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-purple-50/50 rounded-full blur-2xl opacity-60"></div>
-
-                    <div className="flex flex-col h-full justify-between relative z-10">
-                      <div>
-                        <div className="flex justify-between items-start mb-8">
-                          <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm border border-purple-100 ring-4 ring-purple-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
-                          </div>
-                          <button onClick={() => setShowExpenseModal(true)} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all border border-slate-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                          </button>
-                        </div>
-                        <p className="text-sm font-black text-slate-800 mb-1 tracking-tight">ค่าใช้จ่าย/เดือน (ปีแรก)</p>
-                        <h4 className="text-5xl lg:text-5xl font-black text-purple-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
-                          ฿{formatNumber(result.fvExpenseMonthly)}
-                        </h4>
-                        <div className="flex justify-between items-end mt-2">
-                          <p className="text-sm font-bold text-slate-400">หลังเกษียณ (รวมเงินเฟ้อ)</p>
-                          <p className="text-xs font-bold text-slate-400">รวม ฿{formatNumber(result.totalLifetimeExpense)}</p>
-                        </div>
+                  {/* Card 3: Monthly Expense */}
+                  <div className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group/item">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
                       </div>
-
-                      <div className="mt-8 flex items-center justify-between">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 text-purple-600 text-xs font-bold border border-purple-100 shadow-sm group-hover:bg-purple-100 transition-colors">
-                          Monthly
-                        </div>
-                        <div className="px-3 py-1.5 rounded-xl bg-slate-50/80 border border-slate-200/60 text-slate-500 group-hover:text-purple-600 group-hover:border-purple-100 transition-all duration-300">
-                          <span className="text-[10px] font-bold tracking-tight opacity-70">Total {(result.totalLifetimeExpense / 1000000).toFixed(1)}M</span>
-                        </div>
-                      </div>
+                      <button onClick={() => setShowExpenseModal(true)} className="text-slate-300 hover:text-purple-500 transition-colors">
+                        <InfoIcon className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">ค่าใช้จ่ายหลังเกษียณ</p>
+                      <h4 className="text-3xl font-black text-purple-600 leading-none tracking-tight">
+                        ฿{formatNumber(result.fvExpenseMonthly)}
+                      </h4>
+                      <p className="text-xs font-bold text-slate-400 mt-2">มูลค่าในวันที่เกษียณ (รวมเงินเฟ้อ)</p>
                     </div>
                   </div>
 
-                  {/* Card 4: Status - Adaptive Theme */}
-                  <div className={`bg-white/70 backdrop-blur-md rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 ${result.status === 'enough' ? 'hover:shadow-[0_30px_70px_-20px_rgba(16,185_129,0.15)]' : 'hover:shadow-[0_30px_70px_-20px_rgba(244,63,94,0.15)]'}`}>
-                    {/* Decorative Background Elements */}
-                    <div className={`absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl -mr-12 -mt-12 group-hover:opacity-60 transition-colors duration-700 ${result.status === 'enough' ? 'bg-emerald-100/30' : 'bg-rose-100/30'}`}></div>
-                    <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-slate-50/50 rounded-full blur-2xl opacity-60"></div>
-
-                    <div className="flex flex-col h-full justify-between relative z-10">
-                      <div>
-                        <div className="flex justify-between items-start mb-8">
-                          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm border ring-4 ring-offset-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500 ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 ring-emerald-50/50' : 'bg-rose-50 text-rose-600 border-rose-100 ring-rose-50/50'}`}>
-                            {result.status === 'enough' ?
-                              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg> :
-                              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-                            }
-                          </div>
-                        </div>
-                        <p className="text-sm font-black text-slate-800 mb-1 tracking-tight">สถานะแผน</p>
-                        <h4 className={`text-5xl lg:text-5xl font-black leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left ${result.status === 'enough' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          {result.status === 'enough' ? "เพียงพอ" : "ไม่เพียงพอ"}
-                        </h4>
-                        <div className="mt-2 space-y-0.5">
-                          <p className="text-sm font-bold text-slate-400">
-                            {result.status === 'enough' ? `มีส่วนเกินประมาณ ฿${formatNumber(result.gap)}` : `ขาดอีก ฿${formatNumber(Math.abs(result.gap))}`}
-                          </p>
-                          <p className={`text-sm font-bold ${result.status === 'enough' ? 'text-emerald-500/80' : 'text-rose-500/80'}`}>
-                            เงินหมดที่อายุ {result.moneyOutAge >= inputs.lifeExpectancy ? inputs.lifeExpectancy + '+' : result.moneyOutAge}
-                          </p>
-                        </div>
+                  {/* Card 4: Status */}
+                  <div className={`rounded-[24px] p-6 border transition-all duration-300 flex flex-col justify-between group/item ${result.status === 'enough' ? 'bg-white border-emerald-100' : 'bg-white border-rose-100'}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                        {result.status === 'enough' ?
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg> :
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                        }
                       </div>
-
-                      <div className="mt-8">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border shadow-sm transition-colors ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 group-hover:bg-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100 group-hover:bg-rose-100'}`}>
-                          {result.status === 'enough' ?
-                            <><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg> Goal Achieved</> :
-                            <><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Shortfall -฿{formatNumber(Math.abs(result.gap))}</>
-                          }
-                        </div>
-                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">ความพร้อมของแผน</p>
+                      <h4 className={`text-3xl font-black leading-none tracking-tight ${result.status === 'enough' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        {result.status === 'enough' ? "เพียงพอ" : "ไม่เพียงพอ"}
+                      </h4>
+                      <p className="text-xs font-bold text-slate-400 mt-2">
+                        {result.status === 'enough' ? `มีส่วนเกิน ฿${formatNumber(result.gap)}` : `ขาดอีก ฿${formatNumber(Math.abs(result.gap))}`}
+                      </p>
                     </div>
                   </div>
 
@@ -4570,13 +4626,25 @@ export default function HomePage() {
                   <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6">
                     <div>
                       <div className="flex items-center gap-3 mb-1">
-                        <div className="w-1.5 h-8 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
                         <h3 className="text-2xl font-black text-slate-800 tracking-tight">กราฟการเงินออม</h3>
                       </div>
-                      <p className="text-sm text-slate-500 font-medium pl-4.5">Wealth Projection & Goal Analysis</p>
+                      <p className="text-sm text-slate-500 font-medium opacity-70">Wealth Projection & Goal Analysis</p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-4">
+                      {/* Chart Intervals */}
+                      <div className="flex bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200">
+                        {[1, 5, 10].map((interval) => (
+                          <button
+                            key={interval}
+                            onClick={() => setChartTickInterval(interval)}
+                            className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${chartTickInterval === interval ? "bg-white text-indigo-600 shadow-sm ring-1 ring-black/5" : "text-slate-400 hover:text-slate-600"}`}
+                          >
+                            {interval} ปี
+                          </button>
+                        ))}
+                      </div>
+
                       <button className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5" onClick={() => setShowActualSavingsInput(true)}>
                         บันทึกเงินสะสมจริงตามอายุ
                       </button>
@@ -4590,7 +4658,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="w-full relative h-[500px] bg-gradient-to-b from-white to-slate-50/50 rounded-2xl border border-slate-100 p-4">
+                  <div className="w-full relative h-[600px] bg-gradient-to-b from-white to-slate-50/50 rounded-2xl border border-slate-100 p-4">
                     <Line
                       data={projectionChart.data}
                       options={{
@@ -4600,9 +4668,23 @@ export default function HomePage() {
                         scales: {
                           x: {
                             ...projectionChart.options.scales?.x,
-                            grid: { display: false },
+                            grid: {
+                              display: true,
+                              color: (ctx: any) => {
+                                const age = Number(ctx.tick?.label || ctx.label);
+                                if (!age || isNaN(age)) return 'transparent';
+                                if (age % chartTickInterval === 0) return '#f1f5f9';
+                                return 'transparent';
+                              },
+                              lineWidth: 1,
+                              drawTicks: false
+                            },
                             title: { display: true, text: 'ปี', color: '#64748b', font: { size: 12, weight: 'bold' } },
-                            ticks: { color: '#64748b', font: { size: 11, family: 'var(--font-sans)', weight: 'bold' } }
+                            ticks: {
+                              ...projectionChart.options.scales?.x?.ticks,
+                              color: '#94a3b8',
+                              padding: 10
+                            }
                           },
                           y: {
                             ...projectionChart.options.scales?.y,
@@ -4611,12 +4693,13 @@ export default function HomePage() {
                             grid: { color: '#f1f5f9', tickLength: 0 },
                             ticks: {
                               color: '#94a3b8',
-                              font: { size: 11, family: 'var(--font-sans)' },
+                              font: { size: 10, family: 'var(--font-sans)', weight: 'bold' },
                               callback: (value) => {
                                 const val = value as number;
-                                if (val >= 1000000) return "฿" + (val / 1000000).toFixed(1) + "M";
-                                if (val >= 1000) return "฿" + (val / 1000).toFixed(0) + "k";
-                                return "฿" + val;
+                                if (val >= 1000000000) return (val / 1000000000).toFixed(1) + "B";
+                                if (val >= 1000000) return (val / 1000000).toFixed(0) + "M";
+                                if (val >= 1000) return (val / 1000).toFixed(0) + "k";
+                                return val;
                               },
                               padding: 10
                             }
@@ -4630,27 +4713,28 @@ export default function HomePage() {
                     />
                   </div>
 
+
                   {/* Custom Legend Bar */}
-                  <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-4 pt-6 border-t border-slate-100">
+                  <div className="mt-10 flex flex-wrap items-center justify-center gap-x-12 gap-y-6 pt-8 border-t border-slate-100/80">
                     <label className="flex items-center gap-3 cursor-pointer select-none group/toggle">
-                      <div className={`w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center ${showSumAssured ? "bg-orange-500 border-orange-500 shadow-sm" : "bg-white border-slate-300 group-hover/toggle:border-slate-400"}`}>
-                        {showSumAssured && <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                      <div className={`w-4 h-4 rounded-full border-2 transition-all flex items-center justify-center ${showSumAssured ? "bg-orange-500 border-orange-500 shadow-lg shadow-orange-100" : "bg-white border-slate-300"}`}>
+                        {showSumAssured && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
                       </div>
                       <input type="checkbox" className="hidden" checked={showSumAssured} onChange={(e) => setShowSumAssured(e.target.checked)} />
-                      <span className="text-sm font-bold text-slate-700">แสดงทุนประกัน</span>
+                      <span className="text-sm font-bold text-slate-500 group-hover/toggle:text-slate-800 transition-colors uppercase tracking-tight">แสดงทุนประกัน</span>
                     </label>
 
                     <label className="flex items-center gap-3 cursor-pointer select-none group/toggle">
-                      <div className={`w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center ${showActualSavings ? "bg-blue-600 border-blue-600 shadow-sm" : "bg-white border-slate-300 group-hover/toggle:border-slate-400"}`}>
-                        {showActualSavings && <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                      <div className={`w-4 h-4 rounded-full border-2 transition-all flex items-center justify-center ${showActualSavings ? "bg-blue-600 border-blue-600 shadow-lg shadow-blue-100" : "bg-white border-slate-300"}`}>
+                        {showActualSavings && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
                       </div>
                       <input type="checkbox" className="hidden" checked={showActualSavings} onChange={(e) => setShowActualSavings(e.target.checked)} />
-                      <span className="text-sm font-bold text-slate-700">แสดงเงินที่เก็บได้จริง</span>
+                      <span className="text-sm font-bold text-slate-500 group-hover/toggle:text-slate-800 transition-colors uppercase tracking-tight">แสดงเงินที่เก็บได้จริง</span>
                     </label>
 
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-4 bg-emerald-100 border border-emerald-200 rounded"></div>
-                      <span className="text-sm font-bold text-slate-700">Monte Carlo Simulation P5-P95</span>
+                    <div className="flex items-center gap-3 group/mc">
+                      <div className="w-16 h-6 bg-emerald-50 border-2 border-emerald-100 rounded-md shadow-inner group-hover/mc:bg-emerald-100 transition-colors"></div>
+                      <span className="text-sm font-bold text-slate-500 group-hover/mc:text-slate-800 transition-colors uppercase tracking-tight">Monte Carlo Simulation P5-P95</span>
                     </div>
                   </div>
                 </div>
@@ -5420,8 +5504,8 @@ export default function HomePage() {
             </div>
           )}
         </main>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
 
