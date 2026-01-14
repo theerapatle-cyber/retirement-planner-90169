@@ -50,8 +50,17 @@ const goalLabelPlugin = {
 
     ctx.save();
 
+    // 1. Draw Horizontal Dashed Line (Blue)
+    ctx.beginPath();
+    ctx.setLineDash([6, 6]);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#2563eb'; // Blue-600
+    ctx.moveTo(left, yPos);
+    ctx.lineTo(right, yPos);
+    ctx.stroke();
+
     // Label Styling
-    const displayLabel = labelText; // "อิสรภาพทางการเงิน"
+    const displayLabel = labelText;
     ctx.font = 'bold 12px "Inter", "Prompt", sans-serif';
     const textWidth = ctx.measureText(displayLabel).width;
     const paddingX = 12;
@@ -59,13 +68,14 @@ const goalLabelPlugin = {
     const boxWidth = textWidth + (paddingX * 2);
     const boxHeight = 26;
 
-    // Position: Place it a bit to the right of the Y-axis (e.g. at 20% of chart width) to avoid clutter
-    const xPos = left + ((right - left) * 0.15);
+    // Position: Place it a bit to the right of the Y-axis
+    const xPos = left + ((right - left) * 0.10);
     const yPosBox = yPos - (boxHeight / 2);
 
     // Draw background pill (white)
     ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
     ctx.shadowBlur = 4;
+    ctx.setLineDash([]); // Reset dash for box
     ctx.beginPath();
     ctx.roundRect(xPos, yPosBox, boxWidth, boxHeight, 13);
     ctx.fillStyle = '#ffffff';
@@ -97,21 +107,17 @@ const crosshairPlugin = {
       const y = activePoint.element.y;
 
       ctx.save();
-      ctx.beginPath();
-      ctx.setLineDash([4, 4]);
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = '#94a3b8'; // slate-400
 
       // Vertical line (Dashed)
-      ctx.setLineDash([6, 6]);
-      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1.5;
       ctx.strokeStyle = '#64748b'; // slate-500
-
       ctx.moveTo(x, top);
       ctx.lineTo(x, bottom);
       ctx.stroke();
 
-      // Horizontal line (Dashed)
+      // Horizontal line (Optional, dashed)
       ctx.beginPath();
       ctx.moveTo(left, y);
       ctx.lineTo(right, y);
@@ -2200,11 +2206,11 @@ export default function HomePage() {
             },
             tension: 0.4,
             fill: true,
-            pointRadius: 4,
+            pointRadius: 5,
             pointBackgroundColor: "#ffffff",
             pointBorderColor: "#10B981",
             pointBorderWidth: 2,
-            pointHoverRadius: 6,
+            pointHoverRadius: 7,
             pointHoverBackgroundColor: "#10B981",
             pointHoverBorderColor: "#ffffff",
             order: 1, // On Top
@@ -2216,11 +2222,11 @@ export default function HomePage() {
             data: actualHistory,
             borderColor: "#2563eb", // Blue-600
             backgroundColor: "transparent",
-            pointRadius: 5, // Unifying size
-            pointBackgroundColor: "#ffffff", // White fill
-            pointBorderColor: "#2563eb", // Colored border
+            pointRadius: 6,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: "#2563eb",
             pointBorderWidth: 2,
-            pointHoverRadius: 7,
+            pointHoverRadius: 8,
             pointHoverBackgroundColor: "#2563eb",
             pointHoverBorderColor: "#ffffff",
             order: 0, // Very Top
@@ -2249,8 +2255,8 @@ export default function HomePage() {
             borderWidth: 2,
             stepped: false,
             pointRadius: 4,
-            pointBackgroundColor: "#ffffff", // White fill
-            pointBorderColor: "#F97316", // Colored border
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: "#F97316",
             pointBorderWidth: 2,
             pointHoverRadius: 6,
             pointHoverBackgroundColor: "#F97316",
@@ -2319,7 +2325,7 @@ export default function HomePage() {
           },
           goalLabelPlugin: {
             goalValue: result.targetFund, // Back to Blue Line
-            labelText: "เป้าหมายเงินออม", // "Savings Goal" text
+            labelText: "อิสรภาพทางการเงิน", // Updated Label Text
             formatNumber,
             chartTickInterval
           },
