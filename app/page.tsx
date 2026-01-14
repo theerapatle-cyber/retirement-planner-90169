@@ -2206,17 +2206,18 @@ export default function HomePage() {
             },
             tension: 0.4,
             fill: true,
-            pointRadius: 5,
+            pointRadius: 6,
             pointBackgroundColor: "#ffffff",
             pointBorderColor: "#10B981",
-            pointBorderWidth: 2,
-            pointHoverRadius: 7,
-            pointHoverBackgroundColor: "#10B981",
-            pointHoverBorderColor: "#ffffff",
+            pointBorderWidth: 3,
+            pointHoverRadius: 8,
+            pointHoverBackgroundColor: "#ffffff",
+            pointHoverBorderColor: "#10B981",
+            pointHoverBorderWidth: 4,
             order: 1, // On Top
             hidden: !showActualSavings,
           },
-          // Actual History (Points)
+          // Actual History (Points - Blue)
           {
             label: "เงินที่เก็บได้จริง",
             data: actualHistory,
@@ -2225,10 +2226,11 @@ export default function HomePage() {
             pointRadius: 6,
             pointBackgroundColor: "#ffffff",
             pointBorderColor: "#2563eb",
-            pointBorderWidth: 2,
+            pointBorderWidth: 3,
             pointHoverRadius: 8,
-            pointHoverBackgroundColor: "#2563eb",
-            pointHoverBorderColor: "#ffffff",
+            pointHoverBackgroundColor: "#ffffff",
+            pointHoverBorderColor: "#2563eb",
+            pointHoverBorderWidth: 4,
             order: 0, // Very Top
             showLine: false,
             hidden: !showActualSavings,
@@ -2254,13 +2256,14 @@ export default function HomePage() {
             backgroundColor: "transparent",
             borderWidth: 2,
             stepped: false,
-            pointRadius: 4,
+            pointRadius: 6,
             pointBackgroundColor: "#ffffff",
             pointBorderColor: "#F97316",
-            pointBorderWidth: 2,
-            pointHoverRadius: 6,
-            pointHoverBackgroundColor: "#F97316",
-            pointHoverBorderColor: "#ffffff",
+            pointBorderWidth: 3,
+            pointHoverRadius: 8,
+            pointHoverBackgroundColor: "#ffffff",
+            pointHoverBorderColor: "#F97316",
+            pointHoverBorderWidth: 4,
             fill: false,
             order: 3,
             hidden: !showSumAssured,
@@ -3658,362 +3661,340 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className={`relative z-10 transition-all duration-500 ease-in-out ${showInsuranceCard ? "opacity-100 max-h-[5000px] mt-6" : "opacity-0 max-h-0 overflow-hidden"}`}>
-                    <div className="flex items-center justify-between mb-6 px-1">
-                      <h4 className="font-black text-slate-800 text-base uppercase tracking-widest">รายการกรมธรรม์ ({form.insurancePlans.length})</h4>
-                      {form.insurancePlans.length > 0 && (
-                        <button
-                          onClick={() => setForm(prev => ({
-                            ...prev,
-                            insurancePlans: prev.insurancePlans.map(p => ({ ...p, expanded: false }))
-                          }))}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg"
-                        >
-                          ย่อทั้งหมด
-                        </button>
-                      )}
-                    </div>
-
+                  <div className={`relative z-10 transition-all duration-500 ease-in-out ${showInsuranceCard ? "opacity-100 max-h-[500px] mt-6" : "opacity-0 max-h-0 overflow-hidden"}`}>
                     <div className="space-y-4">
-                      {form.insurancePlans.map((plan, index) => (
-                        <div key={plan.id} className="bg-slate-50/50 rounded-[24px] border border-slate-200 p-5 space-y-5 transition-all relative">
-                          {/* Section 1: Plan Name & Type */}
-                          <div className="space-y-4">
-                            <div className="space-y-2">
-                              <Label className="text-xs font-bold text-slate-500 pl-1">ชื่อแผน</Label>
-                              <Input
-                                className="h-11 bg-white border-slate-200 rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-blue-100 transition-all"
-                                value={plan.planName}
-                                onChange={(e) => updateInsurancePlan(index, "planName", e.target.value)}
-                              />
-                            </div>
+                      {/* Header Actions */}
+                      <div className="flex items-center justify-between px-2">
+                        <h4 className="font-bold text-slate-800 text-lg">จัดการแผน ({form.insurancePlans.length})</h4>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setForm(prev => ({ ...prev, insurancePlans: prev.insurancePlans.map(p => ({ ...p, expanded: !p.expanded })) }))}
+                            className="text-sm font-bold text-slate-500 hover:text-slate-800 underline decoration-slate-300 underline-offset-4"
+                          >
+                            ย่อ/ขยายทั้งหมด
+                          </button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); addInsurancePlan(); }}
+                            className="h-9 px-4 rounded-xl bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100 font-bold text-xs gap-1.5 shadow-sm active:scale-95 transition-all"
+                          >
+                            <Plus className="w-3 h-3" strokeWidth={3} /> เพิ่มประกัน
+                          </Button>
+                        </div>
+                      </div>
 
-                            <div className="space-y-2">
-                              <Label className="text-xs font-bold text-slate-500 pl-1">ประเภท</Label>
-                              <select
-                                className="h-11 w-full bg-white border border-slate-200 rounded-xl px-4 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all appearance-none"
-                                value={plan.type}
-                                onChange={(e) => updateInsurancePlan(index, "type", e.target.value)}
-                              >
-                                <option value="สะสมทรัพย์">สะสมทรัพย์</option>
-                                <option value="บำนาญ">บำนาญ</option>
-                                <option value="ตลอดชีพ">ตลอดชีพ</option>
-                                <option value="ชั่วระยะเวลา">ประกันชั่วระยะเวลา</option>
-                                <option value="Unit Linked">Unit Linked</option>
-                              </select>
-                            </div>
-                          </div>
+                      {/* Plan List */}
+                      <div className="space-y-4">
+                        {form.insurancePlans.map((plan, index) => (
+                          <div key={plan.id} className="bg-white rounded-[20px] border border-slate-200 shadow-sm p-5 space-y-4 relative group hover:border-blue-300 hover:shadow-md transition-all">
 
-                          {/* Section 2: Universal Fields (Coverage & Sum Assured) */}
-                          <div className="space-y-5">
+                            {/* Card Header (Always Visible) */}
                             <div className="space-y-2">
-                              <Label className="text-xs font-bold text-slate-500 pl-1">คุ้มครองถึงอายุ</Label>
-                              <div className="flex items-center gap-3">
-                                <NumericInput
-                                  className="h-11 bg-white border-slate-200 rounded-xl text-center text-sm font-bold"
-                                  value={plan.coverageAge}
-                                  onChange={(v) => updateInsurancePlan(index, "coverageAge", v)}
-                                />
-                                <div className="flex gap-2">
-                                  <button onClick={() => changeInsuranceBy(index, "coverageAge", -1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-all shadow-sm font-bold text-xl">-</button>
-                                  <button onClick={() => changeInsuranceBy(index, "coverageAge", 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-all shadow-sm font-bold text-xl">+</button>
+                              {/* Title Row */}
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="space-y-1 flex-1">
+                                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-1">ชื่อแผน (Plan Name)</Label>
+                                  <Input
+                                    value={plan.planName}
+                                    onChange={(e) => updateInsurancePlan(index, "planName", e.target.value)}
+                                    className="font-bold text-slate-800 border-slate-200 focus:border-blue-400 rounded-xl bg-slate-50/50 focus:bg-white"
+                                    placeholder="ระบุชื่อแผน..."
+                                  />
                                 </div>
+                              </div>
+
+                              {/* Type Selection */}
+                              <div className="space-y-1">
+                                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-1">ประเภท (Type)</Label>
+                                <select
+                                  className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all"
+                                  value={plan.type}
+                                  onChange={(e) => updateInsurancePlan(index, "type", e.target.value)}
+                                >
+                                  <option value="สะสมทรัพย์">สะสมทรัพย์ (Endowment)</option>
+                                  <option value="บำนาญ">บำนาญ (Annuity)</option>
+                                  <option value="ตลอดชีพ">ตลอดชีพ (Whole Life)</option>
+                                  <option value="ชั่วระยะเวลา">ชั่วระยะเวลา (Term)</option>
+                                  <option value="Unit Linked">Unit Linked</option>
+                                </select>
                               </div>
                             </div>
 
-                            <div className="space-y-2">
-                              <Label className="text-xs font-bold text-slate-500 pl-1">ทุนประกัน</Label>
-                              <div className="flex items-center gap-3">
-                                <NumericInput
-                                  className="h-11 bg-white border-slate-200 rounded-xl text-center text-sm font-bold"
-                                  value={plan.sumAssured}
-                                  onChange={(v) => updateInsurancePlan(index, "sumAssured", v)}
-                                />
-                                <div className="flex gap-2">
-                                  <button onClick={() => changeInsuranceBy(index, "sumAssured", -100000)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-all shadow-sm font-bold text-xl">-</button>
-                                  <button onClick={() => changeInsuranceBy(index, "sumAssured", 100000)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-all shadow-sm font-bold text-xl">+</button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                            {/* Collapsible Content */}
+                            {plan.expanded !== false && (
+                              <div className="space-y-4 pt-2 animate-in slide-in-from-top-2 duration-300">
 
-                          {/* Section 3: Surrender Logic (Checkbox) */}
-                          {plan.type !== "ชั่วระยะเวลา" && (
-                            <div className="bg-white rounded-xl border border-slate-200 p-4">
-                              <label className="flex items-center gap-3 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                  checked={plan.useSurrender}
-                                  onChange={(e) => updateInsurancePlan(index, "useSurrender", e.target.checked)}
-                                />
-                                <span className="text-sm font-bold text-slate-800">เวนคืนประกัน</span>
-                              </label>
-
-                              {plan.useSurrender && (
-                                <div className="mt-4 space-y-4 pl-7 border-l-2 border-blue-50">
-                                  <div className="flex gap-2 p-1 bg-slate-100 rounded-lg w-fit">
-                                    <button
-                                      onClick={() => updateInsurancePlan(index, "surrenderMode", "single")}
-                                      className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${plan.surrenderMode === "single" || !plan.surrenderMode ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                                    >
-                                      ยอดเดียว
-                                    </button>
-                                    <button
-                                      onClick={() => updateInsurancePlan(index, "surrenderMode", "table")}
-                                      className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${plan.surrenderMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                                    >
-                                      ตารางรายปี
-                                    </button>
-                                  </div>
-
-                                  <div className="space-y-4">
-                                    <div className="space-y-2">
-                                      <Label className="text-[11px] font-bold text-slate-400">เวนคืนตอนอายุ</Label>
-                                      <div className="flex items-center gap-2">
-                                        <NumericInput className="h-9 w-20 bg-slate-50 text-center text-xs font-bold" value={plan.surrenderAge} onChange={(v) => updateInsurancePlan(index, "surrenderAge", v)} />
-                                        <div className="flex gap-1">
-                                          <button onClick={() => changeInsuranceBy(index, "surrenderAge", -1)} className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 font-bold text-sm">-</button>
-                                          <button onClick={() => changeInsuranceBy(index, "surrenderAge", 1)} className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 font-bold text-sm">+</button>
-                                        </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-1">
+                                    <Label className="text-[10px] font-bold text-slate-400 pl-1">คุ้มครองถึงอายุ</Label>
+                                    <div className="flex items-center gap-2">
+                                      <NumericInput
+                                        className="h-10 w-full bg-white border-slate-200 rounded-xl px-3 text-sm font-bold text-center focus:ring-2 focus:ring-blue-50"
+                                        value={plan.coverageAge}
+                                        onChange={(v) => updateInsurancePlan(index, "coverageAge", v)}
+                                      />
+                                      <div className="flex flex-col gap-1">
+                                        <button onClick={() => changeInsuranceBy(index, 'coverageAge', -1)} className="w-8 h-[18px] flex items-center justify-center rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-bold"><Minus className="w-2.5 h-2.5" /></button>
+                                        <button onClick={() => changeInsuranceBy(index, 'coverageAge', 1)} className="w-8 h-[18px] flex items-center justify-center rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-bold"><Plus className="w-2.5 h-2.5" /></button>
                                       </div>
                                     </div>
-
-                                    {(plan.surrenderMode === "single" || !plan.surrenderMode) ? (
-                                      <div className="space-y-2">
-                                        <Label className="text-[11px] font-bold text-slate-400">มูลค่าเวนคืน</Label>
-                                        <NumericInput className="h-9 bg-slate-50 font-bold text-xs" value={plan.surrenderValue} onChange={(v) => updateInsurancePlan(index, "surrenderValue", v)} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[10px] font-bold text-slate-400 pl-1">ทุนประกัน</Label>
+                                    <div className="flex items-center gap-2">
+                                      <NumericInput
+                                        className="h-10 w-full bg-white border-slate-200 rounded-xl px-3 text-sm font-bold text-center focus:ring-2 focus:ring-blue-50"
+                                        value={plan.sumAssured}
+                                        onChange={(v) => updateInsurancePlan(index, "sumAssured", v)}
+                                      />
+                                      <div className="flex flex-col gap-1">
+                                        <button onClick={() => changeInsuranceBy(index, 'sumAssured', -100000)} className="w-8 h-[18px] flex items-center justify-center rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-bold"><Minus className="w-2.5 h-2.5" /></button>
+                                        <button onClick={() => changeInsuranceBy(index, 'sumAssured', 100000)} className="w-8 h-[18px] flex items-center justify-center rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-bold"><Plus className="w-2.5 h-2.5" /></button>
                                       </div>
-                                    ) : (
-                                      <div className="py-2">
-                                        <Button
-                                          size="sm"
-                                          className="h-9 w-full rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-bold text-xs hover:bg-blue-100 transition-all gap-2"
-                                          onClick={() => {
-                                            setForm(prev => ({ ...prev, selectedPlanId: plan.id }));
-                                            setShowInsuranceTable(true);
-                                          }}
-                                        >
-                                          <TableIcon className="w-4 h-4" />
-                                          กรอกตารางเวนคืนรายปี
-                                        </Button>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Surrender Toggle */}
+                                {plan.type !== "ชั่วระยะเวลา" && (
+                                  <div className="pt-2">
+                                    <label className="flex items-center gap-2 cursor-pointer select-none w-fit">
+                                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${plan.useSurrender ? "bg-blue-500 border-blue-500" : "bg-white border-slate-300"}`}>
+                                        {plan.useSurrender && <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                                      </div>
+                                      <input type="checkbox" className="hidden" checked={plan.useSurrender} onChange={(e) => updateInsurancePlan(index, "useSurrender", e.target.checked)} />
+                                      <span className="text-sm font-bold text-slate-600">เวนคืนประกัน</span>
+                                    </label>
+
+                                    {plan.useSurrender && (
+                                      <div className="mt-3 bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-3">
+                                        <div className="grid grid-cols-2 gap-4">
+                                          <div>
+                                            <Label className="text-[10px] font-bold text-slate-400">เวนคืนอายุ</Label>
+                                            <NumericInput className="h-9 w-full bg-white border-slate-200 rounded-lg text-center font-bold text-sm" value={plan.surrenderAge} onChange={(v) => updateInsurancePlan(index, "surrenderAge", v)} />
+                                          </div>
+                                          <div>
+                                            <Label className="text-[10px] font-bold text-slate-400">มูลค่า (บาท)</Label>
+                                            <NumericInput className="h-9 w-full bg-white border-slate-200 rounded-lg text-right px-2 font-bold text-sm" value={plan.surrenderValue} onChange={(v) => updateInsurancePlan(index, "surrenderValue", v)} />
+                                          </div>
+                                        </div>
+                                        <div className="flex gap-2 text-xs">
+                                          <button onClick={() => updateInsurancePlan(index, 'surrenderMode', 'single')} className={`flex-1 py-1.5 rounded-lg font-bold border ${!plan.surrenderMode || plan.surrenderMode === 'single' ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-white text-slate-400 border-slate-200"}`}>ยอดเดียว</button>
+                                          <button onClick={() => updateInsurancePlan(index, 'surrenderMode', 'table')} className={`flex-1 py-1.5 rounded-lg font-bold border ${plan.surrenderMode === 'table' ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-white text-slate-400 border-slate-200"}`}>กรอกตาราง</button>
+                                        </div>
+                                        {plan.surrenderMode === 'table' && (
+                                          <div className="text-center">
+                                            <button onClick={() => { setForm(prev => ({ ...prev, selectedPlanId: plan.id })); setShowInsuranceTable(true); }} className="text-blue-600 text-xs font-bold underline">เปิดตารางเพื่อกรอกข้อมูล</button>
+                                          </div>
+                                        )}
                                       </div>
                                     )}
                                   </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Section 4: Type Specific Fields */}
-                          <div className="space-y-5">
-                            {plan.type === "สะสมทรัพย์" && (
-                              <div className="space-y-2">
-                                <Label className="text-xs font-bold text-slate-500 pl-1">ผลประโยชน์เมื่อครบกำหนด</Label>
-                                <div className="flex items-center gap-3">
-                                  <NumericInput
-                                    className="h-11 bg-white border-slate-200 rounded-xl text-center text-sm font-bold"
-                                    value={plan.maturityAmount}
-                                    onChange={(v) => updateInsurancePlan(index, "maturityAmount", v)}
-                                  />
-                                  <div className="flex gap-2">
-                                    <button onClick={() => changeInsuranceBy(index, "maturityAmount", -100000)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-all font-bold text-xl">-</button>
-                                    <button onClick={() => changeInsuranceBy(index, "maturityAmount", 100000)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-all font-bold text-xl">+</button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {plan.type === "บำนาญ" && (
-                              <div className="space-y-5">
-                                <div className="space-y-2">
-                                  <Label className="text-xs font-bold text-slate-500 pl-1">ผลประโยชน์เมื่อเสียชีวิต (ก่อนอายุรับบำนาญ)</Label>
-                                  <div className="flex items-center gap-3">
-                                    <NumericInput
-                                      className="h-11 bg-white border-slate-200 rounded-xl text-center text-sm font-bold"
-                                      value={plan.deathBenefitPrePension}
-                                      onChange={(v) => updateInsurancePlan(index, "deathBenefitPrePension", v)}
-                                    />
-                                    <div className="flex gap-2">
-                                      <button onClick={() => changeInsuranceBy(index, "deathBenefitPrePension", -100000)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 font-bold text-xl">-</button>
-                                      <button onClick={() => changeInsuranceBy(index, "deathBenefitPrePension", 100000)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 font-bold text-xl">+</button>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <label className="flex items-center gap-3 cursor-pointer bg-white p-4 rounded-xl border border-slate-200">
-                                  <input
-                                    type="checkbox"
-                                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                    checked={plan.unequalPension}
-                                    onChange={(e) => updateInsurancePlan(index, "unequalPension", e.target.checked)}
-                                  />
-                                  <span className="text-sm font-bold text-slate-800">ได้รับเงินเป็นช่วงไม่เท่ากัน</span>
-                                </label>
-
-                                {!plan.unequalPension && (
-                                  <>
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div className="space-y-2">
-                                        <Label className="text-xs font-bold text-slate-500 pl-1">เริ่มรับบำนาญ</Label>
-                                        <div className="flex items-center gap-3">
-                                          <NumericInput
-                                            className="h-11 bg-white border-slate-200 rounded-xl text-center text-sm font-bold"
-                                            value={plan.pensionStartAge}
-                                            onChange={(v) => updateInsurancePlan(index, "pensionStartAge", v)}
-                                          />
-                                          <div className="flex gap-2">
-                                            <button onClick={() => changeInsuranceBy(index, "pensionStartAge", -1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 font-bold text-xl">-</button>
-                                            <button onClick={() => changeInsuranceBy(index, "pensionStartAge", 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 font-bold text-xl">+</button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <div className="space-y-2">
-                                        <Label className="text-xs font-bold text-slate-500 pl-1">สิ้นสุดรับบำนาญ</Label>
-                                        <div className="flex items-center gap-3">
-                                          <NumericInput
-                                            className="h-11 bg-white border-slate-200 rounded-xl text-center text-sm font-bold"
-                                            value={plan.pensionEndAge}
-                                            onChange={(v) => updateInsurancePlan(index, "pensionEndAge", v)}
-                                          />
-                                          <div className="flex gap-2">
-                                            <button onClick={() => changeInsuranceBy(index, "pensionEndAge", -1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 font-bold text-xl">-</button>
-                                            <button onClick={() => changeInsuranceBy(index, "pensionEndAge", 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 font-bold text-xl">+</button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label className="text-xs font-bold text-slate-500 pl-1">บำนาญ % ของเงินทุน</Label>
-                                      <div className="flex items-center gap-3">
-                                        <NumericInput
-                                          className="h-11 bg-white border-slate-200 rounded-xl text-center text-sm font-bold"
-                                          value={plan.pensionPercent}
-                                          onChange={(v) => updateInsurancePlan(index, "pensionPercent", v)}
-                                        />
-                                        <div className="flex gap-2">
-                                          <button onClick={() => changeInsuranceBy(index, "pensionPercent", -1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 font-bold text-xl">-</button>
-                                          <button onClick={() => changeInsuranceBy(index, "pensionPercent", 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 font-bold text-xl">+</button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </>
                                 )}
+
+                                {/* Specific Fields based on Type */}
+                                {plan.type === "สะสมทรัพย์" && (
+                                  <div className="space-y-3 pt-2 border-t border-slate-100">
+                                    <div className="space-y-1">
+                                      <Label className="text-[10px] font-bold text-slate-400 uppercase">ผลประโยชน์เมื่อครบกำหนด</Label>
+                                      <div className="flex items-center gap-2">
+                                        <NumericInput className="h-10 w-full bg-emerald-50/50 border-emerald-100 rounded-xl px-3 text-sm font-bold text-emerald-700" value={plan.maturityAmount} onChange={(v) => updateInsurancePlan(index, "maturityAmount", v)} />
+                                        <div className="flex flex-col gap-1">
+                                          <button onClick={() => changeInsuranceBy(index, 'maturityAmount', -10000)} className="w-8 h-[18px] flex items-center justify-center rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-bold"><Minus className="w-2.5 h-2.5" /></button>
+                                          <button onClick={() => changeInsuranceBy(index, 'maturityAmount', 10000)} className="w-8 h-[18px] flex items-center justify-center rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-bold"><Plus className="w-2.5 h-2.5" /></button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <Label className="text-[10px] font-bold text-slate-400">เงินคืนระหว่างสัญญา</Label>
+                                        <NumericInput className="h-9 w-full bg-emerald-50/30 border-emerald-100 rounded-lg text-emerald-700 font-bold text-sm px-2 text-right" value={plan.cashBackAmount} onChange={(v) => updateInsurancePlan(index, "cashBackAmount", v)} />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-bold text-slate-400">คืนทุกๆ (ปี)</Label>
+                                        <div className="flex items-center gap-2">
+                                          <button onClick={() => changeInsuranceBy(index, 'cashBackFrequency', -1)} className="w-8 h-9 rounded-lg bg-white border border-slate-200 text-slate-500 flex items-center justify-center"><Minus className="w-3 h-3" /></button>
+                                          <span className="flex-1 text-center font-bold text-sm">{plan.cashBackFrequency || 1}</span>
+                                          <button onClick={() => changeInsuranceBy(index, 'cashBackFrequency', 1)} className="w-8 h-9 rounded-lg bg-white border border-slate-200 text-slate-500 flex items-center justify-center"><Plus className="w-3 h-3" /></button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {plan.type === "บำนาญ" && (
+                                  <div className="space-y-3 pt-2 border-t border-slate-100">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <Label className="text-[10px] font-bold text-slate-400">เริ่มรับบำนาญ (อายุ)</Label>
+                                        <NumericInput className="h-9 w-full bg-white border-slate-200 rounded-lg text-center font-bold text-sm" value={plan.pensionStartAge} onChange={(v) => updateInsurancePlan(index, "pensionStartAge", v)} />
+                                      </div>
+                                      <div>
+                                        <Label className="text-[10px] font-bold text-slate-400">สิ้นสุด (อายุ)</Label>
+                                        <NumericInput className="h-9 w-full bg-white border-slate-200 rounded-lg text-center font-bold text-sm" value={plan.pensionEndAge} onChange={(v) => updateInsurancePlan(index, "pensionEndAge", v)} />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <Label className="text-[10px] font-bold text-slate-400 uppercase">เงินบำนาญต่อปี</Label>
+                                      <div className="flex items-center gap-2">
+                                        <NumericInput className="h-10 w-full bg-indigo-50/50 border-indigo-100 rounded-xl px-3 text-sm font-bold text-indigo-700" value={plan.pensionAmount} onChange={(v) => updateInsurancePlan(index, "pensionAmount", v)} />
+                                        <div className="flex flex-col gap-1">
+                                          <button onClick={() => changeInsuranceBy(index, 'pensionAmount', -1000)} className="w-8 h-[18px] flex items-center justify-center rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-bold"><Minus className="w-2.5 h-2.5" /></button>
+                                          <button onClick={() => changeInsuranceBy(index, 'pensionAmount', 1000)} className="w-8 h-[18px] flex items-center justify-center rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-bold"><Plus className="w-2.5 h-2.5" /></button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="flex items-center gap-2 cursor-pointer mt-2">
+                                        <input type="checkbox" className="rounded text-indigo-600 focus:ring-indigo-500" checked={plan.unequalPension} onChange={(e) => updateInsurancePlan(index, "unequalPension", e.target.checked)} />
+                                        <span className="text-xs font-bold text-slate-600">ได้รับเงินเป็นช่วงไม่เท่ากัน?</span>
+                                      </label>
+                                      {plan.unequalPension && (
+                                        <div className="mt-2 text-center">
+                                          <button onClick={() => { setForm(prev => ({ ...prev, selectedPlanId: plan.id })); setShowInsuranceTable(true); }} className="text-indigo-600 text-xs font-bold underline">จัดการช่วงบำนาญในตาราง</button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Inline Table (Toggled) */}
+                                {plan.showTable && (
+                                  <div className="mt-4 pt-4 border-t border-dashed border-slate-200 animate-in fade-in duration-300">
+                                    <div className="flex items-center justify-between mb-3">
+                                      <h5 className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                        <span className="bg-slate-100 p-1 rounded text-slate-500"><TableIcon className="w-3 h-3" /></span>
+                                        ตารางผลประโยชน์ (Cash Flow)
+                                      </h5>
+                                      <button onClick={() => updateInsurancePlan(index, "showTable", false)} className="text-[10px] text-slate-400 underline hover:text-slate-600">ซ่อนตาราง</button>
+                                    </div>
+                                    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50/30 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                      <table className="w-full text-xs text-left">
+                                        <thead className="bg-slate-100 text-slate-500 font-bold sticky top-0 z-10 shadow-sm">
+                                          <tr>
+                                            <th className="py-2 px-3 text-center border-b border-slate-200 w-[10%]">อายุ</th>
+                                            <th className="py-2 px-3 text-right border-b border-slate-200 w-[30%]">ตาย (Death)</th>
+                                            <th className="py-2 px-3 text-right border-b border-slate-200 w-[30%]">คืน (Return)</th>
+                                            <th className="py-2 px-3 text-right border-b border-slate-200 w-[30%] text-emerald-600">{plan.surrenderMode === 'table' ? "เวนคืน (ระบุ)" : "เวนคืน (Surrender)"}</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 bg-white">
+                                          {Array.from({ length: Math.max(0, Number(plan.coverageAge) - Number(String(form.currentAge).replace(/,/g, "")) + 1) }).map((_, i) => {
+                                            const age = Number(String(form.currentAge).replace(/,/g, "")) + i;
+                                            const sumAssured = Number(String(plan.sumAssured).replace(/,/g, "")) || 0;
+                                            const death = sumAssured;
+
+                                            // Cash Flow Calc
+                                            let flow = 0;
+                                            if (plan.type === "สะสมทรัพย์") {
+                                              if (age === Number(plan.coverageAge)) flow += Number(String(plan.maturityAmount).replace(/,/g, ""));
+                                              const py = age - Number(String(form.currentAge).replace(/,/g, ""));
+                                              const freq = Number(plan.cashBackFrequency) || 1;
+                                              if (py > 0 && py % freq === 0 && age <= Number(plan.coverageAge)) flow += Number(String(plan.cashBackAmount).replace(/,/g, ""));
+                                            } else if (plan.type === "บำนาญ") {
+                                              if (age >= Number(plan.pensionStartAge) && age <= Number(plan.pensionEndAge)) {
+                                                // Display Pension
+                                                if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
+                                                  const t = plan.pensionTiers.find(x => age >= Number(x.startAge) && age <= Number(x.endAge));
+                                                  if (t) flow = Number(String(t.amount).replace(/,/g, ""));
+                                                } else {
+                                                  let pAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
+                                                  const pct = Number(plan.pensionPercent);
+                                                  if (pct > 0) pAmt = (sumAssured * pct) / 100;
+                                                  flow = pAmt;
+                                                }
+                                              }
+                                            }
+
+                                            // Surrender Calc/Input
+                                            let surrenderVal: string | number = "-";
+                                            let isEditable = false;
+                                            if (plan.useSurrender) {
+                                              if (plan.surrenderMode === "table") {
+                                                const d = (plan.surrenderTableData || []).find(x => x.age === age);
+                                                surrenderVal = d ? d.amount : "";
+                                                isEditable = true;
+                                              } else {
+                                                if (age === Number(plan.surrenderAge)) surrenderVal = plan.surrenderValue;
+                                              }
+                                            }
+
+                                            return (
+                                              <tr key={age} className="hover:bg-slate-50 transition-colors">
+                                                <td className="py-2 px-3 text-center font-bold text-slate-500">{age}</td>
+                                                <td className="py-2 px-3 text-right text-slate-600">{formatNumber(death)}</td>
+                                                <td className="py-2 px-3 text-right font-semibold text-indigo-600">{flow > 0 ? formatNumber(flow) : "-"}</td>
+                                                <td className="py-2 px-3 text-right">
+                                                  {isEditable ? (
+                                                    <input
+                                                      type="text"
+                                                      className="w-full text-right bg-emerald-50/50 border border-emerald-100 rounded px-2 py-0.5 text-xs font-bold text-emerald-700 outline-none focus:border-emerald-400 focus:bg-white transition-all"
+                                                      placeholder="0"
+                                                      value={surrenderVal as string}
+                                                      onChange={(e) => updateSurrenderTable(index, age, e.target.value)}
+                                                    />
+                                                  ) : (
+                                                    <span className={`font-bold ${surrenderVal !== "-" ? "text-emerald-500" : "text-slate-300"}`}>{surrenderVal !== "-" ? formatNumber(surrenderVal) : "-"}</span>
+                                                  )}
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Card Footer Actions */}
+                                <div className="flex items-center justify-between pt-4 mt-2 border-t border-slate-100">
+                                  <button
+                                    onClick={() => removeInsurancePlan(plan.id)}
+                                    className="px-4 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-xl text-xs font-bold transition-colors"
+                                  >
+                                    ลบ
+                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => updateInsurancePlan(index, 'expanded', false)}
+                                      className="px-4 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-xl text-xs font-bold transition-colors"
+                                    >
+                                      ย่อ
+                                    </button>
+                                    <button
+                                      onClick={() => updateInsurancePlan(index, 'showTable', !plan.showTable)}
+                                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${plan.showTable ? "bg-blue-600 text-white shadow-md shadow-blue-200 scale-105" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
+                                    >
+                                      {plan.showTable ? "ปิดตาราง" : "ดูตาราง"}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Collapsed State Summary */}
+                            {plan.expanded === false && (
+                              <div className="flex items-center justify-between pt-1">
+                                <div className="text-xs text-slate-500">
+                                  {plan.type} • ทุน {plan.sumAssured}
+                                </div>
+                                <div className="flex gap-2">
+                                  <button onClick={() => updateInsurancePlan(index, 'expanded', true)} className="text-blue-600 text-xs font-bold hover:underline">แก้ไข</button>
+                                  <button onClick={() => { updateInsurancePlan(index, 'expanded', true); setTimeout(() => updateInsurancePlan(index, 'showTable', true), 50); }} className="text-slate-400 text-xs hover:text-blue-600">ตาราง</button>
+                                </div>
                               </div>
                             )}
                           </div>
+                        ))}
+                      </div>
 
-                          {/* Section 5: Plan Card Footer (Actions) */}
-                          <div className="flex items-center justify-between pt-4 gap-3">
-                            <button
-                              onClick={() => removeInsurancePlan(plan.id)}
-                              className="h-10 px-6 rounded-xl bg-rose-100 text-rose-600 font-bold text-xs hover:bg-rose-200 transition-all flex items-center justify-center"
-                            >
-                              ลบ
-                            </button>
-                            <div className="flex items-center gap-3">
-                              <button
-                                onClick={() => updateInsurancePlan(index, "expanded", false)}
-                                className="h-10 px-6 rounded-xl bg-amber-100 text-amber-600 font-bold text-xs hover:bg-amber-200 transition-all flex items-center justify-center"
-                              >
-                                ย่อ
-                              </button>
-                              <button
-                                onClick={() => updateInsurancePlan(index, "showTable", !plan.showTable)}
-                                className="h-10 px-6 rounded-xl bg-blue-100 text-blue-600 font-bold text-xs hover:bg-blue-200 transition-all flex items-center justify-center"
-                              >
-                                ดูตาราง
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Inline Table (Conditionally Rendered) */}
-                          {plan.showTable && (
-                            <div className="mt-4 bg-white rounded-2xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
-                              <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                                <h4 className="text-xs font-bold text-slate-700">ตารางผลประโยชน์รายปี</h4>
-                              </div>
-                              <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
-                                <table className="w-full text-xs text-left">
-                                  <thead className="bg-slate-50 text-slate-500 font-bold sticky top-0">
-                                    <tr>
-                                      <th className="p-3">อายุ</th>
-                                      <th className="p-3 text-right">เงินคืน</th>
-                                      <th className="p-3 text-right">ทุนประกัน</th>
-                                      <th className="p-3">รายละเอียด</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-100">
-                                    {Array.from({ length: 110 - Number(String(form.currentAge).replace(/,/g, "")) + 1 }, (_, i) => Number(String(form.currentAge).replace(/,/g, "")) + i).map(age => {
-                                      const benefit = calculateDeathBenefitAtAge(plan, age);
-
-                                      // Local flow calculation for this specific plan
-                                      let flow = 0;
-                                      if (plan.type === "สะสมทรัพย์") {
-                                        const coverageAge = Number(plan.coverageAge);
-                                        if (age === coverageAge) flow += Number(String(plan.maturityAmount).replace(/,/g, ""));
-                                        const policyYear = age - Number(String(form.currentAge).replace(/,/g, ""));
-                                        if (policyYear > 0 && policyYear % (Number(plan.cashBackFrequency) || 1) === 0 && age <= coverageAge) {
-                                          flow += Number(String(plan.cashBackAmount).replace(/,/g, ""));
-                                        }
-                                      } else if (plan.type === "บำนาญ") {
-                                        if (plan.unequalPension && plan.pensionTiers) {
-                                          const tier = plan.pensionTiers.find(t => age >= Number(t.startAge) && age <= Number(t.endAge));
-                                          if (tier) flow = Number(String(tier.amount).replace(/,/g, ""));
-                                        } else {
-                                          const start = Number(plan.pensionStartAge);
-                                          const end = Number(plan.pensionEndAge) || 100;
-                                          if (age >= start && age <= end) {
-                                            let pAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
-                                            if (Number(plan.pensionPercent) > 0) pAmt = (Number(String(plan.sumAssured).replace(/,/g, "")) * Number(plan.pensionPercent)) / 100;
-                                            flow = pAmt;
-                                          }
-                                        }
-                                      }
-
-                                      // Status Logic
-                                      const coverageAge = Number(plan.coverageAge);
-                                      let status = "-";
-                                      if (age > coverageAge) {
-                                        if (age === coverageAge + 1) status = "ตายแล้ว";
-                                        else return null;
-                                      } else {
-                                        if (plan.type === "บำนาญ") {
-                                          const pStart = Number(plan.pensionStartAge);
-                                          if (age === coverageAge) status = "เสียชีวิต แต่ไม่ได้รับเงินประกัน";
-                                          else if (age < pStart) status = "คุ้มครอง";
-                                          else if (benefit > 0) status = "เงินบำนาญ | คุ้มครอง";
-                                          else status = "เงินบำนาญ";
-                                        } else {
-                                          status = benefit > 0 ? "คุ้มครอง" : "-";
-                                        }
-                                      }
-
-                                      if (benefit <= 0 && flow <= 0 && age > coverageAge) return null;
-
-                                      return (
-                                        <tr key={age} className={`hover:bg-slate-50 ${age === coverageAge && plan.type === "บำนาญ" ? "bg-rose-50/50" : ""}`}>
-                                          <td className="p-3 font-mono font-bold text-slate-800">{age}</td>
-                                          <td className="p-3 text-right text-emerald-600 font-bold">
-                                            {flow > 0 ? `+${formatNumber(flow)}` : "-"}
-                                          </td>
-                                          <td className="p-3 text-right text-slate-600 font-bold">
-                                            {benefit > 0 ? formatNumber(benefit) : "-"}
-                                          </td>
-                                          <td className={`p-3 font-medium ${age === coverageAge && plan.type === "บำนาญ" ? "text-rose-600" : "text-slate-500"}`}>
-                                            {status}
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          )}
+                      {form.insurancePlans.length === 0 && (
+                        <div className="text-center py-8 text-slate-400 text-sm">
+                          ยังไม่มีแผนประกัน เพิ่มแผนแรกของคุณเลย
                         </div>
-                      ))}
-
+                      )}
                     </div>
                   </div>
 
@@ -4903,8 +4884,8 @@ export default function HomePage() {
                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" /><path d="M8 18h.01" /><path d="M12 18h.01" /><path d="M16 18h.01" /></svg>
                             </div>
                             <div>
-                              <h3 className="text-xl font-black text-slate-900 tracking-tight">ตารางกระแสเงินสด (Cash Flow Table)</h3>
-                              <p className="text-sm text-slate-500 font-medium">รายละเอียดผลประโยชน์และความคุ้มครองรายปี</p>
+                              <h3 className="text-xl font-black text-slate-900 tracking-tight">พอร์ตโฟลิโอประกัน (Insurance Portfolio)</h3>
+                              <p className="text-sm text-slate-500 font-medium">จัดการแผนประกันและดูตารางกระแสเงินสดรวม</p>
                             </div>
                           </div>
                           <button
@@ -4916,151 +4897,191 @@ export default function HomePage() {
                           </button>
                         </div>
 
-                        <div className="overflow-y-auto px-8 py-6 custom-scrollbar bg-slate-50/50 flex-1">
-                          <div className="rounded-[24px] border border-slate-200 overflow-hidden shadow-sm bg-white">
-                            <table className="w-full text-sm border-collapse">
-                              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px] backdrop-blur-sm sticky top-0 z-10">
-                                <tr>
-                                  <th className="py-4 px-4 text-left w-[10%] font-bold text-slate-600">อายุ (Age)</th>
-                                  {form.selectedPlanId && form.insurancePlans.find(p => p.id === form.selectedPlanId)?.surrenderMode === "table" && (
-                                    <th className="py-4 px-4 text-right w-[20%] text-blue-600">เวนคืน (Surrender)</th>
+                        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden bg-[#F8FAFC]">
+
+                          {/* LEFT PANEL: Plan Inputs */}
+                          <div className="w-full lg:w-[450px] bg-slate-50/50 border-b lg:border-r border-slate-200 overflow-y-auto p-6 flex flex-col gap-6 custom-scrollbar shrink-0">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                                <span>รายการแผน ({form.insurancePlans.length})</span>
+                              </h4>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={addInsurancePlan}
+                                className="h-9 px-3 rounded-lg bg-blue-600 text-white border-blue-600 hover:bg-blue-700 font-bold text-xs gap-1.5 shadow-sm active:scale-95 transition-all"
+                              >
+                                <Plus className="w-3.5 h-3.5" strokeWidth={3} /> เพิ่มแผน
+                              </Button>
+                            </div>
+
+                            <div className="space-y-4 pb-12">
+                              {form.insurancePlans.map((plan, index) => (
+                                <div key={plan.id} className="bg-white rounded-[20px] border border-slate-200 shadow-sm p-4 space-y-4 transition-all relative group hover:border-blue-300 hover:shadow-md">
+
+                                  {/* Header / Delete */}
+                                  <div className="flex justify-between items-start gap-2">
+                                    <div className="flex-1 space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-[10px] border border-indigo-100 shrink-0">
+                                          {index + 1}
+                                        </div>
+                                        <Input
+                                          className="h-8 bg-transparent border-transparent hover:bg-slate-50 focus:bg-white focus:border-blue-200 rounded px-2 text-sm font-bold text-slate-900 w-full transition-all"
+                                          value={plan.planName}
+                                          onChange={(e) => updateInsurancePlan(index, "planName", e.target.value)}
+                                          placeholder="ชื่อแผนประกัน..."
+                                        />
+                                      </div>
+                                      <select
+                                        className="h-9 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-100"
+                                        value={plan.type}
+                                        onChange={(e) => updateInsurancePlan(index, "type", e.target.value)}
+                                      >
+                                        <option value="สะสมทรัพย์">สะสมทรัพย์</option>
+                                        <option value="บำนาญ">บำนาญ</option>
+                                        <option value="ตลอดชีพ">ตลอดชีพ</option>
+                                        <option value="ชั่วระยะเวลา">ประกันชั่วระยะเวลา</option>
+                                        <option value="Unit Linked">Unit Linked</option>
+                                      </select>
+                                    </div>
+                                    <button
+                                      onClick={() => removeInsurancePlan(plan.id)}
+                                      className="text-slate-300 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 transition-all self-start"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                    </button>
+                                  </div>
+
+                                  {/* Stats Grid */}
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                      <Label className="text-[10px] font-bold text-slate-400 pl-1">คุ้มครองถึงอายุ</Label>
+                                      <NumericInput
+                                        className="h-9 w-full bg-slate-50 border-slate-200 rounded-lg px-2 text-xs font-bold text-center"
+                                        value={plan.coverageAge}
+                                        onChange={(v) => updateInsurancePlan(index, "coverageAge", v)}
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-[10px] font-bold text-slate-400 pl-1">ทุนประกัน</Label>
+                                      <NumericInput
+                                        className="h-9 w-full bg-slate-50 border-slate-200 rounded-lg px-2 text-xs font-bold text-center"
+                                        value={plan.sumAssured}
+                                        onChange={(v) => updateInsurancePlan(index, "sumAssured", v)}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Additional Fields based on Type (Compact) */}
+                                  {plan.type === "สะสมทรัพย์" && (
+                                    <div className="pt-2 border-t border-slate-50 grid grid-cols-2 gap-3">
+                                      <div className="space-y-1">
+                                        <Label className="text-[9px] font-bold text-slate-400">เงินครบกำหนด</Label>
+                                        <NumericInput className="h-8 w-full bg-emerald-50/50 border-emerald-100 rounded-lg px-2 text-xs text-emerald-700 font-bold" value={plan.maturityAmount} onChange={(v) => updateInsurancePlan(index, "maturityAmount", v)} />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <Label className="text-[9px] font-bold text-slate-400">เงินคืนระหว่างสัญญา</Label>
+                                        <NumericInput className="h-8 w-full bg-emerald-50/50 border-emerald-100 rounded-lg px-2 text-xs text-emerald-700 font-bold" value={plan.cashBackAmount} onChange={(v) => updateInsurancePlan(index, "cashBackAmount", v)} />
+                                      </div>
+                                    </div>
                                   )}
-                                  <th className="py-4 px-4 text-right w-[25%] font-bold text-slate-600">กระแสเงินสดรับ (Inflow)</th>
-                                  <th className="py-4 px-4 text-right w-[25%] font-bold text-slate-600">ทุนประกัน (Death Benefit)</th>
-                                  <th className="py-4 px-4 pl-8 text-left w-[20%] font-bold text-slate-600">สถานะ (Status)</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-50">
-                                {Array.from({ length: 100 - Number(form.currentAge) + 1 }, (_, i) => Number(form.currentAge) + i).map(age => {
-                                  let totalCashInflow = 0;
-                                  let totalDeathBenefit = 0;
-                                  let statusText = "";
-                                  let isSurrenderYear = false;
-                                  let isAfterSurrenderAll = true; // If all plans are surrendered/ended
-                                  let hasActiveCoverage = false;
-                                  let isPensionYear = false;
 
-                                  // Strict Isolation: ONLY use selectedPlanId if present.
-                                  const targetPlans = form.selectedPlanId
-                                    ? form.insurancePlans.filter(p => p.id === form.selectedPlanId)
-                                    : form.insurancePlans.filter(p => p.active);
+                                  {/* Surrender Section (Compact) */}
+                                  {plan.type !== "ชั่วระยะเวลา" && (
+                                    <div className="border-t border-slate-100 pt-3">
+                                      <label className="flex items-center gap-2 cursor-pointer mb-2">
+                                        <input
+                                          type="checkbox"
+                                          className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                          checked={plan.useSurrender}
+                                          onChange={(e) => updateInsurancePlan(index, "useSurrender", e.target.checked)}
+                                        />
+                                        <span className="text-xs font-bold text-slate-600">เวนคืนกรมธรรม์</span>
+                                      </label>
 
-                                  targetPlans.forEach(plan => {
-                                    const sumAssured = Number(String(plan.sumAssured).replace(/,/g, ""));
-                                    const coverageAge = Number(plan.coverageAge);
-                                    const surrenderAge = Number(plan.surrenderAge);
-                                    const useSurrender = plan.useSurrender && plan.type !== "ชั่วระยะเวลา";
-                                    const planIsSurrenderYear = useSurrender && age === surrenderAge;
-                                    const planIsAfterSurrender = useSurrender && age > surrenderAge;
-                                    const planIsWithinCoverage = age <= coverageAge;
+                                      {plan.useSurrender && (
+                                        <div className="space-y-2 bg-slate-50 rounded-lg p-3 border border-slate-100">
+                                          <div className="flex items-center gap-2 justify-between">
+                                            <Label className="text-[10px] font-bold text-slate-400">เวนคืนตอนอายุ</Label>
+                                            <NumericInput className="h-8 w-16 bg-white border-slate-200 text-center text-xs font-bold rounded-lg" value={plan.surrenderAge} onChange={(v) => updateInsurancePlan(index, "surrenderAge", v)} />
+                                          </div>
 
-                                    if (!planIsAfterSurrender && planIsWithinCoverage) {
-                                      isAfterSurrenderAll = false;
-                                      hasActiveCoverage = true;
-                                    }
+                                          <div className="flex gap-1 p-0.5 bg-white rounded-lg border border-slate-200">
+                                            <button onClick={() => updateInsurancePlan(index, "surrenderMode", "single")} className={`flex-1 py-1 text-[9px] font-bold rounded transition-all ${!plan.surrenderMode || plan.surrenderMode === "single" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}>ยอดเดียว</button>
+                                            <button onClick={() => updateInsurancePlan(index, "surrenderMode", "table")} className={`flex-1 py-1 text-[9px] font-bold rounded transition-all ${plan.surrenderMode === "table" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}>ตาราง</button>
+                                          </div>
 
-                                    // Pre-calculate Accumulated Pension for Annuity to check for depletion
-                                    let accumulatedPension = 0;
-                                    let initialDB = sumAssured;
-                                    let isDepleted = false;
+                                          {(!plan.surrenderMode || plan.surrenderMode === "single") ? (
+                                            <div className="flex items-center gap-2 justify-between">
+                                              <Label className="text-[10px] font-bold text-slate-400">มูลค่า</Label>
+                                              <NumericInput className="h-8 w-1/2 bg-white border-slate-200 text-right text-xs font-bold rounded-lg px-2" value={plan.surrenderValue} onChange={(v) => updateInsurancePlan(index, "surrenderValue", v)} />
+                                            </div>
+                                          ) : (
+                                            <div className="text-[9px] text-blue-500 font-medium text-center bg-blue-50/50 rounded py-1">
+                                              กรอกข้อมูลในตารางทางขวา 👉
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
 
-                                    if (plan.type === "บำนาญ") {
-                                      const dbPre = Number(String(plan.deathBenefitPrePension).replace(/,/g, ""));
-                                      if (dbPre > 0) initialDB = dbPre;
+                          {/* RIGHT PANEL: Cash Flow Table */}
+                          <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar bg-slate-50/30">
+                            <div className="rounded-[24px] border border-slate-200 overflow-hidden shadow-sm bg-white">
+                              <table className="w-full text-sm border-collapse">
+                                <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px] backdrop-blur-sm sticky top-0 z-10">
+                                  <tr>
+                                    <th className="py-4 px-4 text-left w-[10%] font-bold text-slate-600">อายุ (Age)</th>
+                                    <th className="py-4 px-4 text-right w-[20%] text-emerald-600">เวนคืน (Surrender)</th>
+                                    <th className="py-4 px-4 text-right w-[20%] font-bold text-slate-600">กระแสเงินสดรับ (Inflow)</th>
+                                    <th className="py-4 px-4 text-right w-[20%] font-bold text-slate-600">ทุนประกัน (Death Benefit)</th>
+                                    <th className="py-4 px-4 pl-8 text-left w-[30%] font-bold text-slate-600">สถานะ (Status)</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                  {Array.from({ length: 100 - Number(form.currentAge) + 1 }, (_, i) => Number(form.currentAge) + i).map(age => {
+                                    let totalCashInflow = 0;
+                                    let totalDeathBenefit = 0;
+                                    let statusText = "";
+                                    let isSurrenderYear = false;
+                                    let isAfterSurrenderAll = true; // If all plans are surrendered/ended
+                                    let hasActiveCoverage = false;
+                                    let isPensionYear = false;
 
-                                      let startAge = Number(plan.pensionStartAge);
-                                      if (plan.unequalPension && plan.pensionTiers?.length > 0) {
-                                        const minTierStart = Math.min(...plan.pensionTiers.map(t => Number(t.startAge)));
-                                        startAge = minTierStart;
+                                    // Strict Isolation: ONLY use selectedPlanId if present.
+                                    const targetPlans = form.selectedPlanId
+                                      ? form.insurancePlans.filter(p => p.id === form.selectedPlanId)
+                                      : form.insurancePlans.filter(p => p.active);
+
+                                    targetPlans.forEach(plan => {
+                                      const sumAssured = Number(String(plan.sumAssured).replace(/,/g, ""));
+                                      const coverageAge = Number(plan.coverageAge);
+                                      const surrenderAge = Number(plan.surrenderAge);
+                                      const useSurrender = plan.useSurrender && plan.type !== "ชั่วระยะเวลา";
+                                      const planIsSurrenderYear = useSurrender && age === surrenderAge;
+                                      const planIsAfterSurrender = useSurrender && age > surrenderAge;
+                                      const planIsWithinCoverage = age <= coverageAge;
+
+                                      if (!planIsAfterSurrender && planIsWithinCoverage) {
+                                        isAfterSurrenderAll = false;
+                                        hasActiveCoverage = true;
                                       }
 
-                                      if (age >= startAge) {
-                                        for (let pastAge = startAge; pastAge < age; pastAge++) {
-                                          let pastAmount = 0;
-                                          if (plan.unequalPension && plan.pensionTiers) {
-                                            const tier = plan.pensionTiers.find(t => pastAge >= Number(t.startAge) && pastAge <= Number(t.endAge));
-                                            pastAmount = tier ? Number(String(tier.amount).replace(/,/g, "")) : 0;
-                                          } else {
-                                            if (pastAge >= Number(plan.pensionStartAge) && pastAge <= (Number(plan.pensionEndAge) || 100)) {
-                                              let pAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
-                                              if (Number(plan.pensionPercent) > 0) pAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
-                                              pastAmount = pAmt;
-                                            }
-                                          }
-                                          accumulatedPension += pastAmount;
-                                        }
-                                      }
+                                      // Pre-calculate Accumulated Pension for Annuity to check for depletion
+                                      let accumulatedPension = 0;
+                                      let initialDB = sumAssured;
+                                      let isDepleted = false;
 
-                                      // Check if depleted (Past Pension >= Initial DB)
-                                      if (accumulatedPension >= initialDB) {
-                                        isDepleted = true;
-                                      }
-                                    }
-
-                                    // Cash Inflow Calculation
-                                    let flow = 0;
-                                    let isPension = false;
-
-                                    if (planIsSurrenderYear) {
-                                      let sv = Number(String(plan.surrenderValue).replace(/,/g, ""));
-                                      if (plan.surrenderMode === "table" && plan.surrenderTableData) {
-                                        const row = plan.surrenderTableData.find(d => d.age === age);
-                                        if (row) sv = Number(String(row.amount).replace(/,/g, ""));
-                                      }
-                                      flow += sv;
-                                      isSurrenderYear = true;
-                                    } else if (!planIsAfterSurrender && planIsWithinCoverage) {
-                                      // Endowment
-                                      if (plan.type === "สะสมทรัพย์") {
-                                        const maturity = Number(String(plan.maturityAmount).replace(/,/g, ""));
-                                        const cashBack = Number(String(plan.cashBackAmount).replace(/,/g, ""));
-                                        const freq = Number(plan.cashBackFrequency) || 1;
-                                        const policyYear = age - Number(form.currentAge);
-
-                                        if (age === coverageAge) flow += maturity;
-                                        if (policyYear > 0 && policyYear % freq === 0) flow += cashBack;
-                                      }
-                                      // Annuity
-                                      if (plan.type === "บำนาญ") {
-                                        // If depleted, NO FLOW
-                                        if (!isDepleted) {
-                                          if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
-                                            for (const tier of plan.pensionTiers) {
-                                              if (age >= Number(tier.startAge) && age <= Number(tier.endAge)) {
-                                                flow += Number(String(tier.amount).replace(/,/g, ""));
-                                                isPension = true;
-                                              }
-                                            }
-                                          } else {
-                                            let pensionAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
-                                            if (Number(plan.pensionPercent) > 0) {
-                                              pensionAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
-                                            }
-                                            if (age >= Number(plan.pensionStartAge) && age <= (Number(plan.pensionEndAge) || 100)) {
-                                              flow += pensionAmt;
-                                              isPension = true;
-                                            }
-                                          }
-                                        }
-                                      }
-                                    }
-
-                                    totalCashInflow += flow;
-                                    if (isPension) isPensionYear = true;
-
-                                    // Death Benefit Calculation
-                                    let currentDB = 0; // Start with 0 for this plan
-
-                                    if (!planIsAfterSurrender && planIsWithinCoverage) {
-                                      currentDB = sumAssured; // Base DB
-
-                                      // Annuity Logic: Reduced by accumulated pension
                                       if (plan.type === "บำนาญ") {
                                         const dbPre = Number(String(plan.deathBenefitPrePension).replace(/,/g, ""));
-                                        if (dbPre > 0) currentDB = dbPre;
+                                        if (dbPre > 0) initialDB = dbPre;
 
-                                        // Calculate accumulated pension
-                                        let accumulatedPension = 0;
                                         let startAge = Number(plan.pensionStartAge);
                                         if (plan.unequalPension && plan.pensionTiers?.length > 0) {
                                           const minTierStart = Math.min(...plan.pensionTiers.map(t => Number(t.startAge)));
@@ -5082,81 +5103,175 @@ export default function HomePage() {
                                             }
                                             accumulatedPension += pastAmount;
                                           }
-                                          // Reduce DB
-                                          currentDB = Math.max(0, currentDB - accumulatedPension);
+                                        }
+
+                                        // Check if depleted (Past Pension >= Initial DB)
+                                        if (accumulatedPension >= initialDB) {
+                                          isDepleted = true;
                                         }
                                       }
+
+                                      // Cash Inflow Calculation
+                                      let flow = 0;
+                                      let isPension = false;
+
+                                      if (planIsSurrenderYear) {
+                                        let sv = Number(String(plan.surrenderValue).replace(/,/g, ""));
+                                        if (plan.surrenderMode === "table" && plan.surrenderTableData) {
+                                          const row = plan.surrenderTableData.find(d => d.age === age);
+                                          if (row) sv = Number(String(row.amount).replace(/,/g, ""));
+                                        }
+                                        flow += sv;
+                                        isSurrenderYear = true;
+                                      } else if (!planIsAfterSurrender && planIsWithinCoverage) {
+                                        // Endowment
+                                        if (plan.type === "สะสมทรัพย์") {
+                                          const maturity = Number(String(plan.maturityAmount).replace(/,/g, ""));
+                                          const cashBack = Number(String(plan.cashBackAmount).replace(/,/g, ""));
+                                          const freq = Number(plan.cashBackFrequency) || 1;
+                                          const policyYear = age - Number(form.currentAge);
+
+                                          if (age === coverageAge) flow += maturity;
+                                          if (policyYear > 0 && policyYear % freq === 0) flow += cashBack;
+                                        }
+                                        // Annuity
+                                        if (plan.type === "บำนาญ") {
+                                          // If depleted, NO FLOW
+                                          if (!isDepleted) {
+                                            if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
+                                              for (const tier of plan.pensionTiers) {
+                                                if (age >= Number(tier.startAge) && age <= Number(tier.endAge)) {
+                                                  flow += Number(String(tier.amount).replace(/,/g, ""));
+                                                  isPension = true;
+                                                }
+                                              }
+                                            } else {
+                                              let pensionAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
+                                              if (Number(plan.pensionPercent) > 0) {
+                                                pensionAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
+                                              }
+                                              if (age >= Number(plan.pensionStartAge) && age <= (Number(plan.pensionEndAge) || 100)) {
+                                                flow += pensionAmt;
+                                                isPension = true;
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+
+                                      totalCashInflow += flow;
+                                      if (isPension) isPensionYear = true;
+
+                                      // Death Benefit Calculation
+                                      let currentDB = 0; // Start with 0 for this plan
+
+                                      if (!planIsAfterSurrender && planIsWithinCoverage) {
+                                        currentDB = sumAssured; // Base DB
+
+                                        // Annuity Logic: Reduced by accumulated pension
+                                        if (plan.type === "บำนาญ") {
+                                          const dbPre = Number(String(plan.deathBenefitPrePension).replace(/,/g, ""));
+                                          if (dbPre > 0) currentDB = dbPre;
+
+                                          // Calculate accumulated pension
+                                          let accumulatedPension = 0;
+                                          let startAge = Number(plan.pensionStartAge);
+                                          if (plan.unequalPension && plan.pensionTiers?.length > 0) {
+                                            const minTierStart = Math.min(...plan.pensionTiers.map(t => Number(t.startAge)));
+                                            startAge = minTierStart;
+                                          }
+
+                                          if (age >= startAge) {
+                                            for (let pastAge = startAge; pastAge < age; pastAge++) {
+                                              let pastAmount = 0;
+                                              if (plan.unequalPension && plan.pensionTiers) {
+                                                const tier = plan.pensionTiers.find(t => pastAge >= Number(t.startAge) && pastAge <= Number(t.endAge));
+                                                pastAmount = tier ? Number(String(tier.amount).replace(/,/g, "")) : 0;
+                                              } else {
+                                                if (pastAge >= Number(plan.pensionStartAge) && pastAge <= (Number(plan.pensionEndAge) || 100)) {
+                                                  let pAmt = Number(String(plan.pensionAmount).replace(/,/g, ""));
+                                                  if (Number(plan.pensionPercent) > 0) pAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
+                                                  pastAmount = pAmt;
+                                                }
+                                              }
+                                              accumulatedPension += pastAmount;
+                                            }
+                                            // Reduce DB
+                                            currentDB = Math.max(0, currentDB - accumulatedPension);
+                                          }
+                                        }
+                                      }
+
+                                      totalDeathBenefit += currentDB;
+                                    });
+
+                                    let deathBenefitDisplay = formatNumber(totalDeathBenefit);
+                                    let cashInflowDisplay = totalCashInflow > 0 ? `+${formatNumber(totalCashInflow)}` : "-";
+                                    let rowClass = "hover:bg-indigo-50/30 transition-colors";
+
+                                    if (isSurrenderYear) {
+                                      statusText = "มีการเวนคืนกรมธรรม์";
+                                      rowClass = "bg-green-50/50 hover:bg-green-50";
+                                    } else if (hasActiveCoverage) {
+                                      statusText = "คุ้มครองปกติ";
+                                      if (totalCashInflow > 0) {
+                                        statusText = "ได้รับเงินคืน / จ่ายบำนาญ";
+                                        // Highlight row if receiving money
+                                        rowClass = "bg-emerald-50/50 hover:bg-emerald-50";
+                                      }
+                                    } else {
+                                      statusText = "สิ้นสุดความคุ้มครอง";
+                                      deathBenefitDisplay = "-";
+                                      rowClass = "text-slate-400 bg-slate-50/30";
                                     }
 
-                                    totalDeathBenefit += currentDB;
-                                  });
-
-                                  let deathBenefitDisplay = formatNumber(totalDeathBenefit);
-                                  let cashInflowDisplay = totalCashInflow > 0 ? `+${formatNumber(totalCashInflow)}` : "-";
-                                  let rowClass = "hover:bg-indigo-50/30 transition-colors";
-
-                                  if (isSurrenderYear) {
-                                    statusText = "มีการเวนคืนกรมธรรม์";
-                                    rowClass = "bg-green-50/50 hover:bg-green-50";
-                                  } else if (hasActiveCoverage) {
-                                    statusText = "คุ้มครองปกติ";
-                                    if (totalCashInflow > 0) {
-                                      statusText = "ได้รับเงินคืน / จ่ายบำนาญ";
-                                      // Highlight row if receiving money
-                                      rowClass = "bg-emerald-50/50 hover:bg-emerald-50";
+                                    const lifeExpectancy = Number(String(form.lifeExpectancy).replace(/,/g, ""));
+                                    if (age === lifeExpectancy) {
+                                      statusText = `เสียชีวิตที่อายุ ${age} → ทุนประกัน ${deathBenefitDisplay}`;
+                                      rowClass = "bg-red-50 hover:bg-red-100 font-bold border-l-4 border-l-red-500";
+                                    } else if (age > lifeExpectancy) {
+                                      statusText = "เสียชีวิตแล้ว";
+                                      deathBenefitDisplay = "-";
+                                      cashInflowDisplay = "-";
+                                      rowClass = "text-slate-300 bg-slate-100/50";
                                     }
-                                  } else {
-                                    statusText = "สิ้นสุดความคุ้มครอง";
-                                    deathBenefitDisplay = "-";
-                                    rowClass = "text-slate-400 bg-slate-50/30";
-                                  }
 
-                                  const lifeExpectancy = Number(String(form.lifeExpectancy).replace(/,/g, ""));
-                                  if (age === lifeExpectancy) {
-                                    statusText = `เสียชีวิตที่อายุ ${age} → ทุนประกัน ${deathBenefitDisplay}`;
-                                    rowClass = "bg-red-50 hover:bg-red-100 font-bold border-l-4 border-l-red-500";
-                                  } else if (age > lifeExpectancy) {
-                                    statusText = "เสียชีวิตแล้ว";
-                                    deathBenefitDisplay = "-";
-                                    cashInflowDisplay = "-";
-                                    rowClass = "text-slate-300 bg-slate-100/50";
-                                  }
+                                    const editingThisPlan = form.selectedPlanId === targetPlans[0]?.id && targetPlans[0]?.surrenderMode === "table";
+                                    const pIndex = form.insurancePlans.findIndex(p => p.id === targetPlans[0]?.id);
 
-                                  const editingThisPlan = form.selectedPlanId === targetPlans[0]?.id && targetPlans[0]?.surrenderMode === "table";
-                                  const pIndex = form.insurancePlans.findIndex(p => p.id === targetPlans[0]?.id);
+                                    const svTableVal = editingThisPlan && pIndex >= 0
+                                      ? (form.insurancePlans[pIndex].surrenderTableData?.find(d => d.age === age)?.amount || "")
+                                      : "";
 
-                                  const svTableVal = editingThisPlan && pIndex >= 0
-                                    ? (form.insurancePlans[pIndex].surrenderTableData?.find(d => d.age === age)?.amount || "")
-                                    : "";
-
-                                  return (
-                                    <tr key={age} className={rowClass}>
-                                      <td className="py-3 px-4 border-b border-slate-100 text-center font-bold text-slate-500">{age}</td>
-                                      {editingThisPlan && (
-                                        <td className="py-3 px-4 border-b border-slate-100 text-right">
-                                          <input
-                                            className="w-full text-right bg-blue-50/50 border-b border-blue-200 focus:outline-none focus:border-blue-500 text-xs py-1.5 px-2 rounded text-blue-700 font-mono"
-                                            placeholder="-"
-                                            value={svTableVal}
-                                            onChange={(e) => updateSurrenderTable(pIndex, age, e.target.value)}
-                                            onBlur={(e) => updateSurrenderTable(pIndex, age, formatInputDisplay(e.target.value))}
-                                          />
+                                    return (
+                                      <tr key={age} className={rowClass}>
+                                        <td className="py-3 px-4 border-b border-slate-100 text-center font-bold text-slate-500">{age}</td>
+                                        {editingThisPlan && (
+                                          <td className="py-3 px-4 border-b border-slate-100 text-right">
+                                            <input
+                                              className="w-full text-right bg-blue-50/50 border-b border-blue-200 focus:outline-none focus:border-blue-500 text-xs py-1.5 px-2 rounded text-blue-700 font-mono"
+                                              placeholder="-"
+                                              value={svTableVal}
+                                              onChange={(e) => updateSurrenderTable(pIndex, age, e.target.value)}
+                                              onBlur={(e) => updateSurrenderTable(pIndex, age, formatInputDisplay(e.target.value))}
+                                            />
+                                          </td>
+                                        )}
+                                        <td className={`py-3 px-4 border-b border-slate-100 text-right font-mono text-base ${totalCashInflow > 0 ? 'text-emerald-600 font-bold' : 'text-slate-400'}`}>
+                                          {cashInflowDisplay}
                                         </td>
-                                      )}
-                                      <td className={`py-3 px-4 border-b border-slate-100 text-right font-mono text-base ${totalCashInflow > 0 ? 'text-emerald-600 font-bold' : 'text-slate-400'}`}>
-                                        {cashInflowDisplay}
-                                      </td>
-                                      <td className="py-3 px-4 border-b border-slate-100 text-right font-mono">
-                                        {deathBenefitDisplay}
-                                      </td>
-                                      <td className="py-3 px-4 pl-8 border-b border-slate-100 text-xs font-medium text-slate-500">
-                                        {statusText}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+                                        <td className="py-3 px-4 border-b border-slate-100 text-right font-mono">
+                                          {deathBenefitDisplay}
+                                        </td>
+                                        <td className="py-3 px-4 pl-8 border-b border-slate-100 text-xs font-medium text-slate-500">
+                                          {statusText}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
                           </div>
                         </div>
                       </div>
