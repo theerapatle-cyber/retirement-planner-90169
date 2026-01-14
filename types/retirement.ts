@@ -47,6 +47,7 @@ export type FormState = {
     retireExtraExpense: string;
     retireSpendTrendPercent: string;
     retireSpecialAnnual: string;
+    retirePension: string; // เงินเดือนหลังเกษียณ
     legacyFund: string;
     retireNote: string;
 

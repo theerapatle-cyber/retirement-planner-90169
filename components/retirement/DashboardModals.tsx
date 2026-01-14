@@ -6,6 +6,7 @@ import { NumericInput } from "@/components/NumericInput";
 import { formatNumber, formatNumber2, formatInputDisplay } from "@/lib/utils";
 import { Plus, X as CloseIcon } from "lucide-react";
 import { ExpenseChart } from "./DashboardCharts";
+import { PensionTiersManager } from "./PensionTiersManager";
 import { FormState, InsurancePlan, CalculationResult, MonteCarloResult, RetirementInputs } from "@/types/retirement";
 
 // --- Props Interfaces ---
@@ -162,6 +163,9 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
     show, onClose, form, addInsurancePlan, removeInsurancePlan, updateInsurancePlan, updateSurrenderTable
 }) => {
     const { calculateDeathBenefitAtAge } = useInsuranceLogic(form);
+
+
+
     if (!show) return null;
 
     return (
@@ -274,6 +278,68 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                             </div>
                                         </div>
                                     )}
+
+                                    {plan.type === "บำนาญ" && (
+                                        <div className="pt-2 border-t border-slate-50 space-y-3">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <Label className="text-[9px] font-bold text-slate-400">รับบำนาญอายุ</Label>
+                                                    <div className="flex gap-1 items-center">
+                                                        <NumericInput className="h-8 w-full bg-slate-50 border-slate-200 rounded-lg px-1 text-xs text-center font-bold" value={plan.pensionStartAge} onChange={(v) => updateInsurancePlan(index, "pensionStartAge", v)} />
+                                                        <span className="text-[9px] text-slate-400">-</span>
+                                                        <NumericInput className="h-8 w-full bg-slate-50 border-slate-200 rounded-lg px-1 text-xs text-center font-bold" value={plan.pensionEndAge} onChange={(v) => updateInsurancePlan(index, "pensionEndAge", v)} />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className="text-[9px] font-bold text-slate-400">ทุนก่อนรับบำนาญ</Label>
+                                                    <NumericInput className="h-8 w-full bg-slate-50 border-slate-200 rounded-lg px-2 text-xs text-right font-bold" value={plan.deathBenefitPrePension} onChange={(v) => updateInsurancePlan(index, "deathBenefitPrePension", v)} />
+                                                </div>
+                                            </div>
+
+                                            {!plan.unequalPension && (
+                                                <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 space-y-2">
+                                                    <div className="flex gap-2 mb-1">
+                                                        <button
+                                                            onClick={() => updateInsurancePlan(index, "pensionPercent", 0)}
+                                                            className={`flex-1 text-[9px] font-bold py-1 rounded transition-all ${!Number(plan.pensionPercent) ? "bg-white text-indigo-600 shadow-sm ring-1 ring-indigo-100" : "text-slate-400 hover:text-slate-600"}`}
+                                                        >ระบุยอดเงิน</button>
+                                                        <button
+                                                            onClick={() => updateInsurancePlan(index, "pensionAmount", 0)}
+                                                            className={`flex-1 text-[9px] font-bold py-1 rounded transition-all ${Number(plan.pensionPercent) > 0 ? "bg-white text-indigo-600 shadow-sm ring-1 ring-indigo-100" : "text-slate-400 hover:text-slate-600"}`}
+                                                        >ระบุ % ทุน</button>
+                                                    </div>
+                                                    {Number(plan.pensionPercent) > 0 ? (
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <NumericInput className="h-8 w-20 bg-white border-indigo-200 text-indigo-600 text-center font-bold rounded-lg" value={plan.pensionPercent} onChange={(v) => updateInsurancePlan(index, "pensionPercent", v)} />
+                                                                <span className="text-xs text-slate-500 font-bold">% ของทุน</span>
+                                                            </div>
+                                                            <p className="text-[10px] text-slate-400 text-right">= {formatNumber((Number(String(plan.sumAssured).replace(/,/g, '')) * Number(plan.pensionPercent)) / 100)} บาท/ปี</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-1">
+                                                            <NumericInput className="h-8 w-full bg-white border-indigo-200 text-indigo-600 text-right font-bold rounded-lg px-2" value={plan.pensionAmount} onChange={(v) => updateInsurancePlan(index, "pensionAmount", v)} />
+                                                            <p className="text-[10px] text-slate-400 text-right">บาท/ปี</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <label className="flex items-center gap-2 cursor-pointer pt-2 border-t border-slate-100">
+                                                <input type="checkbox" className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" checked={plan.unequalPension} onChange={(e) => updateInsurancePlan(index, "unequalPension", e.target.checked)} />
+                                                <span className="text-xs font-bold text-slate-600">รับบำนาญไม่เท่ากัน (Tiered)</span>
+                                            </label>
+
+                                            {plan.unequalPension && (
+                                                <PensionTiersManager
+                                                    plan={plan}
+                                                    planIndex={index}
+                                                    updateInsurancePlan={updateInsurancePlan}
+                                                />
+                                            )}
+                                        </div>
+                                    )}
+
 
                                     {/* Surrender Section (Compact) */}
                                     {plan.type !== "ชั่วระยะเวลา" && (

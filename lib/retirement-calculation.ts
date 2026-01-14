@@ -32,6 +32,7 @@ export const initialForm: FormState = {
     retireExtraExpense: "12,000",
     retireSpendTrendPercent: "0",
     retireSpecialAnnual: "0",
+    retirePension: "0",
     legacyFund: "0",
     retireNote: "",
 
