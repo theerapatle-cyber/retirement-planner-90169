@@ -1,6 +1,8 @@
 import React from "react";
 
-export const PlanSelectionScreen = ({ onSelect }: { onSelect: (type: "individual" | "family") => void }) => {
+export const PlanSelectionScreen = ({ onSelect, user }: { onSelect: (type: "individual" | "family") => void, user: { name: string } | null }) => {
+    const isGuest = user?.name === "Guest";
+
     return (
         <div className="min-h-screen w-full bg-[#0B0F19] relative flex items-center justify-center p-4 lg:p-8 font-sans overflow-hidden selection:bg-indigo-500/30">
             {/* Background Decor (Same as Login) */}
@@ -48,25 +50,35 @@ export const PlanSelectionScreen = ({ onSelect }: { onSelect: (type: "individual
 
                     {/* Option 2: Family */}
                     <button
-                        onClick={() => onSelect("family")}
-                        className="group relative bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/50 rounded-[32px] p-8 transition-all duration-300 text-left hover:-translate-y-2 hover:shadow-2xl hover:shadow-emerald-500/20"
+                        onClick={() => !isGuest && onSelect("family")}
+                        disabled={isGuest}
+                        className={`group relative rounded-[32px] p-8 transition-all duration-300 text-left ${isGuest
+                            ? "bg-white/5 border border-white/5 opacity-50 cursor-not-allowed"
+                            : "bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/50 hover:-translate-y-2 hover:shadow-2xl hover:shadow-emerald-500/20"
+                            }`}
                     >
-                        <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-emerald-500/20">
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-transform duration-300 border ${isGuest ? "bg-slate-700/20 text-slate-500 border-slate-600/20" : "bg-emerald-500/20 text-emerald-300 group-hover:scale-110 border-emerald-500/20"}`}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">ครอบครัว (Family)</h3>
-                        <p className="text-slate-400 text-sm leading-relaxed">
-                            วางแผนร่วมกับครอบครัว จัดการเป้าหมายร่วมกัน และดูภาพรวมความมั่งคั่งของทุกคนในบ้าน
-                        </p>
-                        <div className="absolute bottom-8 right-8 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                        <div className="flex items-center gap-2 mb-2">
+                            <h3 className={`text-2xl font-bold transition-colors ${isGuest ? "text-slate-500" : "text-white group-hover:text-emerald-300"}`}>ครอบครัว (Family)</h3>
+                            {isGuest && <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">Login Required</span>}
                         </div>
+
+                        <p className="text-slate-400 text-sm leading-relaxed">
+                            {isGuest ? "กรุณาเข้าสู่ระบบด้วยชื่อจริงเพื่อใช้งานฟีเจอร์วางแผนครอบครัว (Guest Mode ไม่รองรับ)" : "วางแผนร่วมกับครอบครัว จัดการเป้าหมายร่วมกัน และดูภาพรวมความมั่งคั่งของทุกคนในบ้าน"}
+                        </p>
+                        {!isGuest && (
+                            <div className="absolute bottom-8 right-8 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                            </div>
+                        )}
                     </button>
                 </div>
 
                 <div className="mt-12 text-center">
                     <p className="text-xs text-slate-500">
-                        คุณสามารถเปลี่ยนโหมดการวางแผนได้ภายหลัง
+                        {isGuest ? "คุณกำลังใช้งานในโหมด Guest" : "คุณสามารถเปลี่ยนโหมดการวางแผนได้ภายหลัง"}
                     </p>
                 </div>
             </div>

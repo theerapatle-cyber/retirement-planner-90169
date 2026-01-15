@@ -9,6 +9,7 @@ import { RetirementDashboard } from "@/components/retirement/RetirementDashboard
 import { FamilyDashboard } from "@/components/retirement/FamilyDashboard";
 import { RetirementInputPage } from "@/components/retirement/RetirementInputPage";
 import { InsuranceTableModal } from "@/components/retirement/DashboardModals";
+import { ProfileSettingsModal } from "@/components/retirement/ProfileSettingsModal";
 
 export default function HomePage() {
   const {
@@ -58,6 +59,7 @@ export default function HomePage() {
   if (!planType) {
     return (
       <PlanSelectionScreen
+        user={user}
         onSelect={(type) => {
           setPlanType(type);
           // If family, we go to Family Dashboard
@@ -125,7 +127,15 @@ export default function HomePage() {
             setters.setShowResult(false);
             setters.setShowFamilyResult(false);
             setters.setInputStep(1);
+            setters.setInputStep(1);
           }}
+          onEditProfile={() => setters.setShowProfileSettings(true)}
+        />
+        <ProfileSettingsModal
+          isOpen={state.showProfileSettings}
+          onClose={() => setters.setShowProfileSettings(false)}
+          user={user}
+          onSave={handlers.handleUpdateUser}
         />
         <InsuranceTableModal
           show={state.showInsuranceTable}
@@ -143,46 +153,55 @@ export default function HomePage() {
   // 5. Main Retirement Dashboard (Individual View)
   if (showResult) {
     return (
-      <RetirementDashboard
-        user={user}
-        form={form}
-        setForm={setForm}
-        inputs={inputs}
-        result={result}
-        mcResult={mcResult}
-        planType={planType}
-        syncCurrentToFamily={syncCurrentToFamily}
-        setShowFamilyResult={setShowFamilyResult}
-        handleExportCSV={handleExportCSV}
-        handlePrint={handlePrint}
-        addInsurancePlan={addInsurancePlan}
-        removeInsurancePlan={removeInsurancePlan}
-        updateInsurancePlan={updateInsurancePlan}
-        updateSurrenderTable={updateSurrenderTable}
-        setRetireSpendMode={setRetireSpendMode}
-        retireSpendMode={retireSpendMode}
-        handleChange={handleChange}
-        changeBy={changeBy}
-        setGender={setGender}
-        gender={gender}
-        // Extended Props
-        savingMode={state.savingMode}
-        setSavingMode={setters.setSavingMode}
-        returnMode={state.returnMode}
-        setReturnMode={setters.setReturnMode}
-        allocations={state.allocations}
-        setAllocations={setters.setAllocations}
-        addAllocation={addAllocation}
-        removeAllocation={removeAllocation}
-        updateAllocation={updateAllocation}
-        onLogout={() => {
-          setters.setUser(null);
-          setters.setPlanType(null);
-          setters.setShowResult(false);
-          setters.setShowFamilyResult(false);
-          setters.setInputStep(1);
-        }}
-      />
+      <>
+        <RetirementDashboard
+          user={user}
+          form={form}
+          setForm={setForm}
+          inputs={inputs}
+          result={result}
+          mcResult={mcResult}
+          planType={planType}
+          syncCurrentToFamily={syncCurrentToFamily}
+          setShowFamilyResult={setShowFamilyResult}
+          handleExportCSV={handleExportCSV}
+          handlePrint={handlePrint}
+          addInsurancePlan={addInsurancePlan}
+          removeInsurancePlan={removeInsurancePlan}
+          updateInsurancePlan={updateInsurancePlan}
+          updateSurrenderTable={updateSurrenderTable}
+          setRetireSpendMode={setRetireSpendMode}
+          retireSpendMode={retireSpendMode}
+          handleChange={handleChange}
+          changeBy={changeBy}
+          setGender={setGender}
+          gender={gender}
+          // Extended Props
+          savingMode={state.savingMode}
+          setSavingMode={setters.setSavingMode}
+          returnMode={state.returnMode}
+          setReturnMode={setters.setReturnMode}
+          allocations={state.allocations}
+          setAllocations={setters.setAllocations}
+          addAllocation={addAllocation}
+          removeAllocation={removeAllocation}
+          updateAllocation={updateAllocation}
+          onLogout={() => {
+            setters.setUser(null);
+            setters.setPlanType(null);
+            setters.setShowResult(false);
+            setters.setShowFamilyResult(false);
+            setters.setInputStep(1);
+          }}
+          onEditProfile={() => setters.setShowProfileSettings(true)}
+        />
+        <ProfileSettingsModal
+          isOpen={state.showProfileSettings}
+          onClose={() => setters.setShowProfileSettings(false)}
+          user={user}
+          onSave={handlers.handleUpdateUser}
+        />
+      </>
     );
   }
 }

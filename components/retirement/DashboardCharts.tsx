@@ -46,6 +46,39 @@ ChartJS.register(
 );
 
 // Chart Plugins
+const crosshairPlugin = {
+    id: 'crosshair',
+    afterDraw: (chart: any) => {
+        if (chart.tooltip?._active?.length) {
+            const { ctx, chartArea: { left, right, top, bottom } } = chart;
+            const activePoint = chart.tooltip._active[0];
+            const x = activePoint.element.x;
+            const y = activePoint.element.y;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#64748b'; // Slate 500 (Grey)
+
+            // Vertical Line (Point -> Bottom) - "Lines meet at the point"
+            // Starts at y (dataset value) going down to bottom axis
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, bottom);
+            ctx.stroke();
+
+            // Horizontal Line (Value Line)
+            ctx.beginPath();
+            ctx.moveTo(left, y);
+            // Draw to the point (x)
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+    }
+};
+
 const goalLabelPlugin = {
     id: "goalLabelPlugin",
     afterDraw: (chart: any, args: any, options: any) => {
@@ -56,70 +89,49 @@ const goalLabelPlugin = {
 
         const yPos = y.getPixelForValue(goalVal);
         const xStart = x.left;
-
-        // Calculate limit based on retireAge
         let xEnd = x.right;
+
+        // Calculate limit based on retireAge? Example image shows line goes somewhat far.
+        // User previously asked to "reach the age".
+        // Let's use Full Width or Retire Age. 
+        // Example image shows line stops at green chart peak?
+        // Safest is to draw to Retire Age or Full Width.
         if (retireAge) {
             const px = x.getPixelForValue(String(retireAge));
-            if (px !== undefined && px !== null && !isNaN(px)) {
-                xEnd = px;
-            }
+            if (px !== undefined && px !== null && !isNaN(px)) xEnd = px;
         }
 
-        // Draw Line
+        // Draw Blue Dashed Line
         ctx.save();
         ctx.beginPath();
         ctx.strokeStyle = "#2563eb"; // Blue
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([6, 6]); // Match dataset dash
+        ctx.lineWidth = 2; // Thicker as per image
+        ctx.setLineDash([8, 8]); // Wider dash
+
         ctx.moveTo(xStart, yPos);
         ctx.lineTo(xEnd, yPos);
         ctx.stroke();
+        ctx.restore();
 
-        // Draw Label (Centered)
-        const text = `เป้าหมายทางการเงิน`; // User requested "เป้าหมายทางการเงิน"
-        ctx.font = "bold 12px 'Inter', 'Prompt', sans-serif";
+        // Draw Label "เป้าหมายทางการเงิน" (Updated from "อิสรภาพทางการเงิน")
+        const text = "เป้าหมายทางการเงิน";
+        ctx.font = "bold 16px 'Inter', 'Prompt', sans-serif"; // Larger/Bold
         const textWidth = ctx.measureText(text).width;
 
-        const centerX = xStart + (xEnd - xStart) / 2;
-        const rectX = centerX - (textWidth / 2) - 8;
-        const rectY = yPos - 12; // Centered on line vertically? Or above? User image shows above.
+        // Position: Indented from left
+        const textX = xStart + 40;
+        const textY = yPos;
 
-        // Background for text to read clearly
         if (yPos > y.top && yPos < y.bottom) {
-            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-            ctx.beginPath();
-            ctx.roundRect(rectX, rectY - 14, textWidth + 16, 20, 4);
-            ctx.fill();
-
-            ctx.fillStyle = "#1e3a8a"; // Darker blue for text
-            ctx.textAlign = "center";
-            ctx.fillText(text, centerX, rectY);
-        }
-        ctx.restore();
-    }
-};
-
-const crosshairPlugin = {
-    id: 'crosshair',
-    afterDraw: (chart: any) => {
-        if (chart.tooltip?._active?.length) {
-            const { ctx, chartArea: { left, right, top, bottom } } = chart;
-            const activePoint = chart.tooltip._active[0];
-            const x = activePoint.element.x;
-            const y = activePoint.element.y;
             ctx.save();
-            ctx.beginPath();
-            ctx.setLineDash([4, 4]);
-            ctx.lineWidth = 1.5;
-            ctx.strokeStyle = '#64748b';
-            ctx.moveTo(x, top);
-            ctx.lineTo(x, bottom);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(left, y);
-            ctx.lineTo(right, y);
-            ctx.stroke();
+            // Optional: White background for text to mask line
+            ctx.fillStyle = "rgba(255,255,255,0.8)";
+            ctx.fillRect(textX - 4, textY - 10, textWidth + 8, 20);
+
+            ctx.fillStyle = "#000000"; // Black Text
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, textX, textY);
             ctx.restore();
         }
     }
@@ -179,16 +191,54 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                     { label: "P5", data: p5Series, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: "+1", tension: 0.4, order: 5, hidden: false },
                     { label: "P95", data: p95Series, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: false, tension: 0.4, order: 6, hidden: false },
                     {
-                        label: "เงินออมคาดว่าจะมี", data: actual, borderColor: "#10B981", backgroundColor: (context: any) => {
+                        label: "เงินออมคาดว่าจะมี", data: actual, borderColor: "#10B981", borderWidth: 3, backgroundColor: (context: any) => {
                             const ctx = context.chart.ctx;
                             const gradient = ctx.createLinearGradient(0, 0, 0, 400);
                             gradient.addColorStop(0, "rgba(16, 185, 129, 0.2)"); gradient.addColorStop(1, "rgba(16, 185, 129, 0.0)"); return gradient;
-                        }, tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: "#ffffff", pointBorderColor: "#10B981", pointBorderWidth: 2.5, pointHoverRadius: 7, pointHoverBackgroundColor: "#ffffff", pointHoverBorderColor: "#10B981", pointHoverBorderWidth: 3.5, order: 1, hidden: !showActualSavings
+                        }, tension: 0.4, fill: true,
+                        pointRadius: 3, // Restored small dots
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: "#ffffff", // White center
+                        pointBorderColor: "#10B981", // Green border
+                        pointBorderWidth: 2,
+                        pointHoverBackgroundColor: "#ffffff",
+                        pointHoverBorderColor: "#10B981",
+                        pointHoverBorderWidth: 3,
+                        order: 1, hidden: !showActualSavings
                     },
-                    { label: "เงินที่เก็บได้จริง", data: actualHistory, borderColor: "#2563eb", backgroundColor: "transparent", pointRadius: 5, pointBackgroundColor: "#ffffff", pointBorderColor: "#2563eb", pointBorderWidth: 2.5, pointHoverRadius: 7, pointHoverBackgroundColor: "#ffffff", pointHoverBorderColor: "#2563eb", pointHoverBorderWidth: 3.5, order: 0, showLine: false, hidden: !showActualSavings },
-                    // Set pointRadius to 0 and transparent border for "Target Line" dataset because Plugin handles the drawing. Keeping dataset for Reference/Tooltip but hiding line to avoid conflict.
-                    { label: "อิสรภาพทางการเงิน", data: required.map((val, i) => Number(labels[i]) <= Number(inputs.retireAge) ? val : null), borderColor: "transparent", borderDash: [6, 6], backgroundColor: "transparent", pointRadius: 0, borderWidth: 0, fill: false, order: 2, hidden: false },
-                    { label: "ทุนประกัน", data: sumAssuredSeries, borderColor: "#F97316", backgroundColor: "transparent", borderWidth: 2, stepped: false, pointRadius: 5, pointBackgroundColor: "#ffffff", pointBorderColor: "#F97316", pointBorderWidth: 2.5, pointHoverRadius: 7, pointHoverBackgroundColor: "#ffffff", pointHoverBorderColor: "#F97316", pointHoverBorderWidth: 3.5, fill: false, order: 3, hidden: !showSumAssured },
+                    { label: "เงินที่เก็บได้จริง", data: actualHistory, borderColor: "#2563eb", backgroundColor: "transparent", pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: "#ffffff", pointBorderColor: "#2563eb", pointBorderWidth: 2, order: 0, showLine: false, hidden: !showActualSavings },
+                    // Label changed to "เป้าหมาย" (Target) and Color to Blue
+                    {
+                        label: "เป้าหมาย",
+                        data: required.map((val, i) => Number(labels[i]) <= Number(inputs.retireAge) ? val : null),
+                        borderColor: "#2563eb",
+                        borderDash: [6, 6],
+                        backgroundColor: "#2563eb",
+                        borderWidth: 0, // Hidden Line (drawn by plugin)
+
+                        // Point Style (Hollow Blue Circle like friends)
+                        pointRadius: 0,
+                        pointBackgroundColor: "#ffffff",
+                        pointBorderColor: "#2563eb",
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 4,
+
+                        fill: false,
+                        order: 2,
+                        hidden: false
+                    },
+                    {
+                        label: "ทุนประกัน", data: sumAssuredSeries, borderColor: "#F97316", backgroundColor: "transparent", borderWidth: 2, stepped: false,
+                        pointRadius: 3, // Restored small dots
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: "#ffffff",
+                        pointBorderColor: "#F97316",
+                        pointBorderWidth: 2,
+                        pointHoverBackgroundColor: "#ffffff",
+                        pointHoverBorderColor: "#F97316",
+                        pointHoverBorderWidth: 3,
+                        fill: false, order: 3, hidden: !showSumAssured
+                    },
                 ],
             },
             options: {
@@ -203,7 +253,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                             label: (ctx: any) => {
                                 const label = ctx.dataset.label; const val = ctx.parsed.y || 0;
                                 if (label === "เงินออมคาดว่าจะมี" || label === "เงินที่เก็บได้จริง") return `เงินออม: ฿${formatNumber(val)}`;
-                                if (label === "อิสรภาพทางการเงิน") return `ทางเลือก: ฿${formatNumber(val)}`;
+                                if (label === "เป้าหมาย") return `เป้าหมาย: ฿${formatNumber(val)}`;
                                 if (label === "ทุนประกัน") {
                                     const age = Number(ctx.label);
                                     const flowIdx = insuranceChartData?.labels.indexOf(age) ?? -1;

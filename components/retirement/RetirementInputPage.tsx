@@ -24,6 +24,7 @@ interface RetirementInputPageProps {
     removeAllocation: (id: number) => void;
     updateAllocation: (id: number, field: keyof Allocation) => (e: any) => void;
     onLogout?: () => void;
+    onEditProfile?: () => void;
 }
 
 export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
@@ -46,7 +47,8 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
     addAllocation,
     removeAllocation,
     updateAllocation,
-    onLogout
+    onLogout,
+    onEditProfile
 }) => {
     return (
         <div className="min-h-screen bg-white font-['Inter'] pb-32 relative">
@@ -73,12 +75,16 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
                 </div>
 
                 <div className="flex items-center gap-6">
-                    <div className="hidden sm:flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center border-2 border-white shadow-sm font-bold text-xs">
-                            {user?.name?.substring(0, 2).toUpperCase() || "U"}
+                    <button onClick={onEditProfile} className="hidden sm:flex items-center gap-3 bg-slate-50 hover:bg-slate-100 transition-colors px-3 py-1.5 rounded-full border border-slate-100 cursor-pointer">
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center border-2 border-white shadow-sm font-bold text-xs overflow-hidden">
+                            {(user as any)?.avatar ? (
+                                <img src={(user as any).avatar} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                user?.name?.substring(0, 2).toUpperCase() || "U"
+                            )}
                         </div>
                         <span className="text-sm font-bold text-slate-700 pr-2">{user?.name || "Guest User"}</span>
-                    </div>
+                    </button>
                     <button
                         onClick={onLogout}
                         className="text-slate-400 hover:text-red-500 transition-colors"

@@ -20,7 +20,7 @@ import { useInsuranceLogic } from "@/components/retirement/DashboardModals";
 
 export function useRetirementApp() {
     /* ---------- Authentication (mock) ---------- */
-    const [user, setUser] = React.useState<{ name: string } | null>(null);
+    const [user, setUser] = React.useState<{ name: string; password?: string; avatar?: string; } | null>(null);
     const [planType, setPlanType] = React.useState<"individual" | "family" | null>(null);
 
     /* ---------- Family State ---------- */
@@ -56,6 +56,7 @@ export function useRetirementApp() {
     const [showGoalCard, setShowGoalCard] = React.useState(true);
     const [showInsuranceCard, setShowInsuranceCard] = React.useState(true);
     const [isRelationOpen, setIsRelationOpen] = React.useState(false);
+    const [showProfileSettings, setShowProfileSettings] = React.useState(false);
 
     // Modals & Chart Controls
     const [showInsuranceTable, setShowInsuranceTable] = React.useState(false);
@@ -670,6 +671,13 @@ export function useRetirementApp() {
         if (typeof window !== "undefined") {
             window.localStorage.setItem("mock-user", JSON.stringify(u));
         }
+
+        // Auto-select Individual for Guest
+        if (name === "Guest") {
+            setPlanType("individual");
+            setShowResult(false);
+            setForm(initialForm); // Reset form just in case
+        }
     };
 
     const handleLogout = () => {
@@ -684,6 +692,14 @@ export function useRetirementApp() {
         setShowResult(false);
         setShowFamilyResult(false);
         setPlanType(null);
+    };
+
+    const handleUpdateUser = (data: { name: string; password?: string; avatar?: string }) => {
+        const u = user ? { ...user, ...data } : { ...data };
+        setUser(u);
+        if (typeof window !== "undefined") {
+            window.localStorage.setItem("mock-user", JSON.stringify(u));
+        }
     };
 
     const handlePrint = () => {
@@ -721,7 +737,7 @@ export function useRetirementApp() {
             isRelationOpen, showInsuranceTable, showExpenseModal, showTargetModal,
             showProjectedModal, showMonteCarloDetails, chartTickInterval, showActualSavingsInput,
             isMonteCarloOpen, // Removed mcVolatility, mcSimulations
-            planSaved, saveMessage, savedPlans
+            planSaved, saveMessage, savedPlans, showProfileSettings
         },
         setters: {
             setUser, setPlanType, setFamilyMembers, setCurrentMemberId, setShowFamilyPanel,
@@ -732,7 +748,7 @@ export function useRetirementApp() {
             setIsRelationOpen, setShowInsuranceTable, setShowExpenseModal, setShowTargetModal,
             setShowProjectedModal, setShowMonteCarloDetails, setChartTickInterval, setShowActualSavingsInput,
             setIsMonteCarloOpen, // Removed setMcVolatility, setMcSimulations
-            setPlanSaved, setSaveMessage, setSavedPlans
+            setPlanSaved, setSaveMessage, setSavedPlans, setShowProfileSettings
         },
         calculations: {
             inputs, result, mcResult, projectionChart, expenseChart, insuranceChartData
@@ -742,7 +758,7 @@ export function useRetirementApp() {
             addInsurancePlan, removeInsurancePlan, updateInsurancePlan, changeInsuranceBy, updateSurrenderTable,
             syncCurrentToFamily, loadMember, handleSwitchMember, handleAddMember, handleRemoveMember, getFamilySummary,
             handleSavePlan, handleLoadPlan, handleDeletePlan, resetRetirement, handleLogin, handleLogout,
-            handleExportCSV, handlePrint
+            handleExportCSV, handlePrint, handleUpdateUser
         }
     };
 }

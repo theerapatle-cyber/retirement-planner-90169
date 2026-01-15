@@ -63,6 +63,7 @@ interface RetirementDashboardProps {
     setGender: (g: "male" | "female") => void;
     gender: "male" | "female";
     onLogout?: () => void;
+    onEditProfile?: () => void;
 }
 
 export const RetirementDashboard = ({
@@ -96,7 +97,8 @@ export const RetirementDashboard = ({
     changeBy,
     setGender,
     gender,
-    onLogout
+    onLogout,
+    onEditProfile
 }: RetirementDashboardProps) => {
 
     const [showSumAssured, setShowSumAssured] = React.useState(true);
@@ -140,12 +142,16 @@ export const RetirementDashboard = ({
                 </div>
 
                 <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center border-2 border-white shadow-sm font-bold text-xs">
-                            {user?.name?.substring(0, 2).toUpperCase() || "U"}
+                    <button onClick={onEditProfile} className="flex items-center gap-3 bg-slate-50 hover:bg-slate-100 transition-colors px-3 py-1.5 rounded-full border border-slate-100 cursor-pointer">
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center border-2 border-white shadow-sm font-bold text-xs overflow-hidden">
+                            {(user as any)?.avatar ? (
+                                <img src={(user as any).avatar} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                user?.name?.substring(0, 2).toUpperCase() || "U"
+                            )}
                         </div>
                         <span className="text-sm font-bold text-slate-700 pr-2">{user?.name || "Guest User"}</span>
-                    </div>
+                    </button>
                     <button
                         onClick={onLogout}
                         className="text-slate-400 hover:text-red-500 transition-colors"
