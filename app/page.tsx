@@ -107,7 +107,10 @@ export default function HomePage() {
           addInsurancePlan={addInsurancePlan}
           removeInsurancePlan={removeInsurancePlan}
           updateInsurancePlan={updateInsurancePlan}
-          onViewTable={() => setShowInsuranceTable(true)}
+          onViewTable={(id) => {
+            if (id && typeof id === 'string') setForm(prev => ({ ...prev, selectedPlanId: id }));
+            setShowInsuranceTable(true);
+          }}
           savingMode={state.savingMode}
           setSavingMode={setters.setSavingMode}
           returnMode={state.returnMode}

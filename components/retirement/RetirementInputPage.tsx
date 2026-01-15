@@ -14,7 +14,7 @@ interface RetirementInputPageProps {
     addInsurancePlan: () => void;
     removeInsurancePlan: (id: string) => void;
     updateInsurancePlan: (index: number, key: keyof InsurancePlan, value: any) => void;
-    onViewTable: () => void;
+    onViewTable: (planId?: string) => void;
     savingMode: "flat" | "step5";
     setSavingMode: (mode: "flat" | "step5") => void;
     returnMode: "avg" | "custom";
