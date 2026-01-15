@@ -137,7 +137,7 @@ export const RetirementDashboard = ({
                     </div>
                     <div>
                         <h1 className="text-lg font-black text-slate-800 tracking-tight leading-none">Financial Planner</h1>
-                        <p className="text-xs text-slate-500 font-medium">วางแผนเกษียณและภาษีครบวงจร</p>
+                        <p className="text-xs text-slate-500 font-medium">วางแผนการเงิน</p>
                     </div>
                 </div>
 
@@ -165,80 +165,7 @@ export const RetirementDashboard = ({
             <div className="w-full px-4 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
 
                 {/* Print Summary Section */}
-                <div className="hidden print:block mb-4 font-sans">
-                    <div className="border-b-2 border-slate-900 pb-2 mb-4 flex justify-between items-end">
-                        <div>
-                            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">แผนเกษียณอายุส่วนบุคคล</h1>
-                            <p className="text-sm text-slate-600 mt-1">รายงานวิเคราะห์และวางแผนการเงินฉบับสมบูรณ์</p>
-                        </div>
-                        <div className="text-right text-sm text-slate-500">
-                            <p>จัดทำสำหรับ: <span className="font-semibold text-slate-900">{user?.name || "ผู้ใช้งาน"}</span></p>
-                            <p>วันที่: {new Date().toLocaleDateString("th-TH", { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                        </div>
-                    </div>
-                    <div className="mb-4 break-inside-avoid">
-                        <h2 className="text-lg font-bold text-slate-800 border-b border-slate-300 pb-1 mb-2 uppercase tracking-wider">บทสรุปผู้บริหาร</h2>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-slate-50 p-3 rounded-sm border border-slate-100">
-                                <h3 className="font-semibold text-slate-700 mb-1 text-sm">ข้อมูลส่วนตัว</h3>
-                                <div className="grid grid-cols-2 gap-y-1 text-sm">
-                                    <span className="text-slate-500">อายุปัจจุบัน:</span>
-                                    <span className="font-medium">{form.currentAge} ปี</span>
-                                    <span className="text-slate-500">เกษียณอายุ:</span>
-                                    <span className="font-medium">{form.retireAge} ปี</span>
-                                    <span className="text-slate-500">อายุขัยคาดการณ์:</span>
-                                    <span className="font-medium">{form.lifeExpectancy} ปี</span>
-                                </div>
-                            </div>
-                            <div className="bg-slate-50 p-3 rounded-sm border border-slate-100">
-                                <h3 className="font-semibold text-slate-700 mb-1 text-sm">สุขภาพทางการเงิน</h3>
-                                <div className="grid grid-cols-2 gap-y-1 text-sm">
-                                    <span className="text-slate-500">สถานะ:</span>
-                                    <span className={`font-bold ${result.status === 'enough' ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                        {result.status === 'enough' ? 'เพียงพอ' : 'ต้องปรับปรุง'}
-                                    </span>
-                                    <span className="text-slate-500">เงินออมคาดการณ์:</span>
-                                    <span className="font-medium">฿{formatNumber(result.projectedFund)}</span>
-                                    <span className="text-slate-500">เป้าหมายเงินออม:</span>
-                                    <span className="font-medium">฿{formatNumber(result.targetFund)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {form.insurancePlans.length > 0 && (
-                        <div className="mb-4 break-inside-avoid">
-                            <h2 className="text-lg font-bold text-slate-800 border-b border-slate-300 pb-1 mb-2 uppercase tracking-wider">พอร์ตโฟลิโอประกันชีวิต</h2>
-                            <div className="overflow-hidden border border-slate-200 rounded-sm">
-                                <table className="min-w-full divide-y divide-slate-200">
-                                    <thead className="bg-slate-50">
-                                        <tr>
-                                            <th scope="col" className="px-4 py-2 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ชื่อแผน</th>
-                                            <th scope="col" className="px-4 py-2 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ประเภท</th>
-                                            <th scope="col" className="px-4 py-2 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">คุ้มครองถึง</th>
-                                            <th scope="col" className="px-4 py-2 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">ทุนประกัน</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-slate-200">
-                                        {form.insurancePlans.filter(p => p.active).map((plan, idx) => (
-                                            <tr key={idx}>
-                                                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-slate-900">{plan.planName}</td>
-                                                <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-500">{plan.type}</td>
-                                                <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-500 text-right">{plan.coverageAge}</td>
-                                                <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-900 text-right font-medium">฿{formatNumber(plan.sumAssured)}</td>
-                                            </tr>
-                                        ))}
-                                        <tr className="bg-slate-50 font-bold">
-                                            <td colSpan={3} className="px-4 py-2 text-right text-sm text-slate-700">ทุนประกันรวมทั้งหมด</td>
-                                            <td className="px-4 py-2 text-right text-sm text-orange-600">
-                                                -
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-                </div>
+
 
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 break-inside-avoid px-1">
@@ -365,32 +292,22 @@ export const RetirementDashboard = ({
                                 <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-6 md:p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(16,185_129,0.15)]">
                                     <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-100/30 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-emerald-200/40 transition-colors duration-700"></div>
                                     <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-emerald-50/50 rounded-full blur-2xl opacity-60"></div>
-                                    <div className="absolute top-6 right-6 text-emerald-100/80 group-hover:text-emerald-200/60 transition-colors duration-500 rotate-12 group-hover:rotate-0 transform origin-center transition-transform duration-700">
-                                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                                    </div>
                                     <div className="flex flex-col h-full justify-between relative z-10">
                                         <div>
-                                            <div className="flex justify-between items-start mb-6">
-                                                <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-100 ring-4 ring-emerald-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                                            <div className="flex justify-between items-start mb-4">
+                                                <p className="text-lg font-bold text-slate-800 tracking-tight">เงินออมที่มีตอนอายุเกษียณ</p>
+                                                <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 text-slate-800">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
                                                 </div>
-                                                <button onClick={() => setShowProjectedModal(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all border border-slate-100 shadow-sm hover:scale-110">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                                                </button>
                                             </div>
-                                            <p className="text-sm font-black text-slate-600 mb-1 tracking-tight uppercase opacity-80">เงินออมที่จะมี (Projected)</p>
-                                            <h4 className="text-4xl md:text-5xl font-black text-emerald-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
+                                            <h4 className="text-3xl md:text-3xl font-black text-emerald-600 leading-none tracking-tight mb-2">
                                                 ฿{formatNumber(result.projectedFund)}
                                             </h4>
-                                            <p className="text-sm font-bold text-slate-400 mt-2">จากการออมและการลงทุน</p>
-                                        </div>
-                                        <div className="mt-8">
-                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100 shadow-sm group-hover:bg-emerald-100 transition-colors">
-                                                <span className="relative flex h-2 w-2">
-                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                                </span>
-                                                Wealth Projection
+                                            <div className="flex items-center gap-1">
+                                                <p className="text-sm text-slate-400">จากการออมและการลงทุน</p>
+                                                <button onClick={() => setShowProjectedModal(true)} className="text-slate-300 hover:text-slate-500 transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -400,35 +317,25 @@ export const RetirementDashboard = ({
                                 <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-6 md:p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(59,130,246,0.15)]">
                                     <div className="absolute top-0 right-0 w-48 h-48 bg-blue-100/30 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-blue-200/40 transition-colors duration-700"></div>
                                     <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-blue-50/50 rounded-full blur-2xl opacity-60"></div>
-                                    <div className="absolute top-6 right-6 text-blue-100/80 group-hover:text-blue-200/60 transition-colors duration-500 transform group-hover:scale-90 transition-transform duration-700">
-                                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
-                                    </div>
                                     <div className="flex flex-col h-full justify-between relative z-10">
                                         <div>
-                                            <div className="flex justify-between items-start mb-6">
-                                                <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm border border-blue-100 ring-4 ring-blue-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-lg font-bold text-slate-800 tracking-tight">เงินที่ต้องการก่อนเกษียณ</p>
+                                                    <button onClick={() => setShowTargetModal(true)} className="text-slate-300 hover:text-slate-500 transition-colors">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                                                    </button>
                                                 </div>
-                                                <button onClick={() => setShowTargetModal(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all border border-slate-100 shadow-sm hover:scale-110">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                                                </button>
+                                                <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center text-slate-800 font-serif font-black text-xl">
+                                                    $
+                                                </div>
                                             </div>
-                                            <p className="text-sm font-black text-slate-600 mb-1 tracking-tight uppercase opacity-80">เงินที่ต้องการ (Target)</p>
-                                            <h4 className="text-4xl md:text-5xl font-black text-blue-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
+                                            <h4 className="text-3xl md:text-3xl font-black text-blue-600 leading-none tracking-tight mb-2">
                                                 ฿{formatNumber(result.targetFund)}
                                             </h4>
-                                            <p className="text-xs font-bold text-slate-400 mt-2 leading-relaxed">
-                                                สำหรับ {result.yearsInRetirement} ปีหลังเกษียณ <br className="hidden md:block" />
-                                                (ออมเพิ่ม ฿{formatNumber(result.monthlyNeeded)}/เดือน)
+                                            <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                                                สำหรับ {result.yearsInRetirement} ปีหลังเกษียณ (โดยไม่สร้างผลตอบแทนเพิ่มเลย) <br className="hidden md:block" /> หรือออมขั้นต่ำคร่าวๆ ฿{formatNumber(result.monthlyNeeded)} ต่อเดือน <button onClick={() => setShowTargetModal(true)} className="inline-block text-slate-300 hover:text-slate-500 align-middle"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg></button>
                                             </p>
-                                        </div>
-                                        <div className="mt-8 flex items-center justify-between">
-                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold border border-blue-100 shadow-sm group-hover:bg-blue-100 transition-colors">
-                                                Target Goal
-                                            </div>
-                                            <div className="px-3 py-1.5 rounded-xl bg-slate-50/80 border border-slate-200/60 text-slate-500 group-hover:text-blue-600 group-hover:border-blue-100 transition-all duration-300 transform group-hover:scale-105 shadow-sm">
-                                                <span className="text-[10px] font-bold tracking-tight opacity-70">Gap: {formatNumber(Math.abs(result.gap))}</span>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -439,28 +346,28 @@ export const RetirementDashboard = ({
                                     <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-purple-50/50 rounded-full blur-2xl opacity-60"></div>
                                     <div className="flex flex-col h-full justify-between relative z-10">
                                         <div>
-                                            <div className="flex justify-between items-start mb-6">
-                                                <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm border border-purple-100 ring-4 ring-purple-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-lg font-bold text-slate-800 tracking-tight">ค่าใช้จ่าย/เดือน (ปีแรก)</p>
+                                                    <button onClick={() => setShowExpenseModal(true)} className="text-slate-300 hover:text-slate-500 transition-colors">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                                                    </button>
                                                 </div>
-                                                <button onClick={() => setShowExpenseModal(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all border border-slate-100 shadow-sm hover:scale-110">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                                                </button>
+                                                <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center text-slate-800">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                                                </div>
                                             </div>
-                                            <p className="text-sm font-black text-slate-600 mb-1 tracking-tight uppercase opacity-80">ค่าใช้จ่าย/เดือน (ปีแรก)</p>
-                                            <h4 className="text-4xl md:text-5xl font-black text-purple-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
+                                            <h4 className="text-3xl md:text-3xl font-black text-purple-600 leading-none tracking-tight mb-2">
                                                 ฿{formatNumber(result.fvExpenseMonthly)}
                                             </h4>
-                                            <div className="flex justify-between items-end mt-2">
-                                                <p className="text-sm font-bold text-slate-400">หลังเกษียณ (รวมเงินเฟ้อ)</p>
-                                            </div>
-                                        </div>
-                                        <div className="mt-8 flex items-center justify-between">
-                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 text-purple-600 text-xs font-bold border border-purple-100 shadow-sm group-hover:bg-purple-100 transition-colors">
-                                                Monthly
-                                            </div>
-                                            <div className="px-3 py-1.5 rounded-xl bg-slate-50/80 border border-slate-200/60 text-slate-500 group-hover:text-purple-600 group-hover:border-purple-100 transition-all duration-300 transform group-hover:scale-105 shadow-sm">
-                                                <span className="text-[10px] font-bold tracking-tight opacity-70">Total {(result.totalLifetimeExpense / 1000000).toFixed(1)}M</span>
+                                            <div className="flex justify-between items-end">
+                                                <p className="text-sm font-medium text-slate-500">
+                                                    หลังเกษียณ (รวมเงินเฟ้อ) <br /> รวม ฿{formatNumber(result.totalLifetimeExpense)}
+                                                </p>
+                                                <button onClick={() => setShowExpenseModal(true)} className="flex items-center gap-1 text-slate-400 hover:text-purple-600 transition-colors text-xs font-bold">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                                                    รายละเอียด
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -472,31 +379,25 @@ export const RetirementDashboard = ({
                                     <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-slate-50/50 rounded-full blur-2xl opacity-60"></div>
                                     <div className="flex flex-col h-full justify-between relative z-10">
                                         <div>
-                                            <div className="flex justify-between items-start mb-6">
-                                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm border ring-4 ring-offset-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500 ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 ring-emerald-50/50' : 'bg-rose-50 text-rose-600 border-rose-100 ring-rose-50/50'}`}>
+                                            <div className="flex justify-between items-start mb-4">
+                                                <p className="text-lg font-bold text-slate-800 tracking-tight">สถานะแผน</p>
+                                                <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center text-emerald-500">
                                                     {result.status === 'enough' ?
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg> :
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
+                                                        :
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="22"></line><line x1="17" y1="7" x2="7" y2="17"></line></svg>
                                                     }
                                                 </div>
                                             </div>
-                                            <p className="text-sm font-black text-slate-600 mb-1 tracking-tight uppercase opacity-80">สถานะแผน</p>
-                                            <h4 className={`text-4xl md:text-5xl font-black leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left ${result.status === 'enough' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                            <h4 className={`text-3xl md:text-3xl font-black leading-none tracking-tight mb-2 ${result.status === 'enough' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                 {result.status === 'enough' ? "เพียงพอ" : "ไม่เพียงพอ"}
                                             </h4>
-                                            <div className="mt-2 space-y-0.5">
-                                                <p className={`text-sm font-bold ${result.status === 'enough' ? 'text-emerald-500/80' : 'text-rose-500/80'}`}>
-                                                    เงินหมดที่อายุ {result.moneyOutAge >= inputs.lifeExpectancy ? inputs.lifeExpectancy + '+' : result.moneyOutAge}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="mt-8">
-                                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border shadow-sm transition-colors ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 group-hover:bg-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100 group-hover:bg-rose-100'}`}>
-                                                {result.status === 'enough' ?
-                                                    <><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg> Goal Achieved</> :
-                                                    <><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Shortfall -฿{formatNumber(Math.abs(result.gap))}</>
-                                                }
-                                            </div>
+                                            <p className="text-sm font-medium text-slate-500 leading-relaxed mb-1">
+                                                {result.status === 'enough' ? "แผนการออมเพียงพอสำหรับเกษียณ" : "แผนการออมยังไม่ครอบคลุมเกษียณ"}
+                                            </p>
+                                            <p className={`text-sm font-bold ${result.status === 'enough' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                {result.status === 'enough' ? "อิสรภาพทางการเงิน" : "ควรเริ่มวางแผนเพิ่มเติม"}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -528,19 +429,16 @@ export const RetirementDashboard = ({
                                                 </button>
                                             ))}
                                         </div>
-                                        <button className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5" onClick={() => { } /* Modal Removed or placeholder */}>
-                                            บันทึกเงินสะสมจริงตามอายุ
-                                        </button>
                                         <button className="px-5 py-2.5 text-sm font-bold text-blue-600 bg-white hover:bg-blue-50 rounded-xl border-2 border-blue-600 flex items-center gap-2 transition-all hover:-translate-y-0.5" onClick={handleExportCSV}>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                                            Export CSV
+                                            Export Excel
                                         </button>
                                         <button className="px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5" onClick={handlePrint}>
                                             Print
                                         </button>
                                     </div>
                                 </div>
-                                <div className="w-full relative h-[500px] bg-gradient-to-b from-white to-slate-50/50 rounded-2xl border border-slate-100 p-4">
+                                <div id="printable-chart" className="w-full relative h-[500px] bg-gradient-to-b from-white to-slate-50/50 rounded-2xl border border-slate-100 p-4">
                                     <ProjectionChart
                                         inputs={inputs}
                                         result={result}
@@ -573,40 +471,7 @@ export const RetirementDashboard = ({
                                 </div>
                             </div>
 
-                            {/* Insurance Summary Card */}
-                            {form.insurancePlans.filter(p => p.active).length > 0 && (
-                                <div className="bg-white rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                    {/* Decorative BG */}
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50/50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
-                                    <div className="flex items-center gap-4 z-10 w-full md:w-auto">
-                                        <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shadow-sm border border-orange-100 shrink-0">
-                                            <TableIcon className="w-6 h-6" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-slate-900 text-lg tracking-tight">สรุปพอร์ตโฟลิโอประกัน (Insurance Overview)</h3>
-                                            <p className="text-xs text-slate-500 font-medium">ภาพรวมผลประโยชน์และกระแสเงินสดรับตลอดชีพ</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-8 z-10 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-                                        <div className="shrink-0 min-w-[100px]">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">กรมธรรม์</p>
-                                            <p className="text-2xl font-black text-slate-800">{form.insurancePlans.filter(p => p.active).length} <span className="text-sm font-medium text-slate-400">เล่ม</span></p>
-                                        </div>
-                                        <div className="w-px h-10 bg-slate-100 hidden md:block"></div>
-                                        <div className="shrink-0 min-w-[140px]">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">ผลประโยชน์รวม (Inflow)</p>
-                                            <p className="text-2xl font-black text-emerald-600">฿{formatNumber(result.insuranceCashInflow)}</p>
-                                        </div>
-                                        <div className="w-px h-10 bg-slate-100 hidden md:block"></div>
-                                        <div className="shrink-0 min-w-[140px]">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">ทุนประกันสูงสุด (Max DB)</p>
-                                            <p className="text-2xl font-black text-indigo-600">฿{formatNumber(Math.max(0, ...(insuranceChartData?.datasets[0].data as number[] || [0])))}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* Side Column Widgets */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

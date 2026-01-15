@@ -4,9 +4,7 @@ import * as React from "react";
 import { X, Check, Delete, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { formatPreviewNumber } from "@/app/lib/number-utils";
-
 import { createPortal } from "react-dom";
 
 interface NumericKeypadProps {
@@ -94,45 +92,44 @@ export function NumericKeypad({
         <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-4 sm:p-0">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-indigo-900/30 backdrop-blur-[8px] transition-all duration-300"
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-all duration-500"
                 onClick={onClose}
             />
 
-            <div className="relative z-50 w-full sm:w-[380px] animate-in zoom-in-95 slide-in-from-bottom-12 duration-300">
-                <Card className="w-full bg-white/90 backdrop-blur-2xl border-white/60 shadow-[0_40px_80px_-20px_rgba(50,50,93,0.3)] rounded-[3rem] overflow-hidden ring-1 ring-white/80 p-1">
-                    <div className="bg-gradient-to-b from-white/50 to-white/20 p-6 rounded-[2.8rem] flex flex-col gap-5 relative">
+            <div className="relative z-50 w-full sm:w-[360px] animate-in zoom-in-95 slide-in-from-bottom-12 duration-300">
+                <div className="w-full bg-white/80 backdrop-blur-2xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] rounded-[3rem] p-1.5 ring-1 ring-white/50">
+                    <div className="bg-gradient-to-br from-white via-white/80 to-indigo-50/30 p-6 rounded-[2.8rem] flex flex-col gap-6 w-full h-full relative border border-white/60">
 
-                        {/* Close Button (Floating) */}
+                        {/* Close Button */}
+                        <div className="absolute top-6 left-6 z-20">
+                            <span className="text-[10px] font-bold text-indigo-300 tracking-widest uppercase bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100/50">
+                                {label || "INPUT"}
+                            </span>
+                        </div>
+
                         <div className="absolute top-5 right-5 z-20">
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={onClose}
-                                className="h-8 w-8 rounded-full bg-slate-100/80 text-slate-400 hover:bg-rose-100 hover:text-rose-500 transition-colors shadow-sm"
+                                className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
                             >
-                                <X className="w-4 h-4" strokeWidth={3} />
+                                <X className="w-4 h-4" />
                             </Button>
                         </div>
 
                         {/* Display Area */}
-                        <div className="w-full pt-6 pb-2 flex flex-col items-end px-2 space-y-1 relative">
-                            {/* Decorative background blob */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-200/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-
-                            <span className="text-[9px] font-extrabold text-indigo-300 tracking-[0.2em] uppercase">Value</span>
-                            <div className="relative z-10 w-full text-right">
-                                <span className="text-6xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-slate-800 via-slate-700 to-slate-500 drop-shadow-sm select-none break-all leading-none">
-                                    {displayValue === "" ? <span className="text-slate-200/50">0</span> : formattedDisplay}
+                        <div className="w-full pt-10 pb-4 flex flex-col items-end px-2 space-y-0.5">
+                            <span className="text-[10px] font-black text-indigo-400/60 tracking-[0.2em] uppercase mb-1">VALUE</span>
+                            <div className="w-full text-right overflow-hidden">
+                                <span className="text-[4rem] font-black tracking-tight text-slate-700 leading-none drop-shadow-sm break-all">
+                                    {displayValue === "" ? <span className="text-slate-200">0</span> : formattedDisplay}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Separator */}
-                        <div className="w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent opacity-50" />
-
                         {/* Keypad Grid */}
                         <div className="grid grid-cols-4 gap-3">
-
                             {/* Row 1 */}
                             <KeypadButton onClick={() => handleNumClick("7")}>7</KeypadButton>
                             <KeypadButton onClick={() => handleNumClick("8")}>8</KeypadButton>
@@ -140,11 +137,9 @@ export function NumericKeypad({
 
                             <KeypadButton
                                 onClick={handleClear}
-                                className="bg-rose-50/80 text-rose-500 hover:bg-rose-100 border-rose-100"
+                                className="bg-rose-50 text-rose-500 hover:bg-rose-100 border-rose-100 hover:shadow-rose-100"
                             >
-                                <div className="flex flex-col items-center justify-center">
-                                    <RotateCcw className="w-5 h-5 mb-0.5" strokeWidth={2.5} />
-                                </div>
+                                <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
                             </KeypadButton>
 
                             {/* Row 2 */}
@@ -154,7 +149,7 @@ export function NumericKeypad({
 
                             <KeypadButton
                                 onClick={handleBackspace}
-                                className="bg-amber-50/80 text-amber-500 hover:bg-amber-100 border-amber-100"
+                                className="bg-[#fff9e6] text-[#fbbf24] hover:bg-amber-100 border-amber-100 hover:shadow-amber-100"
                             >
                                 <Delete className="w-6 h-6" strokeWidth={2.5} />
                             </KeypadButton>
@@ -165,22 +160,19 @@ export function NumericKeypad({
                             <KeypadButton onClick={() => handleNumClick("3")}>3</KeypadButton>
 
                             {/* Confirm (Big Button) */}
-                            <Button
+                            <button
                                 onClick={handleConfirm}
-                                className="row-span-2 h-full w-full rounded-[2rem] bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.5)] border-t border-white/20 active:scale-95 transition-all group"
+                                className="row-span-2 w-full h-full rounded-[2rem] bg-[#5856D6] hover:bg-[#4d4ba3] text-white shadow-lg shadow-indigo-500/30 flex items-center justify-center transition-all active:scale-95 group border-t border-white/20"
                             >
-                                <div className="flex flex-col items-center gap-1 group-hover:scale-110 transition-transform duration-200">
-                                    <Check className="w-8 h-8" strokeWidth={4} />
-                                </div>
-                            </Button>
+                                <Check className="w-8 h-8 group-hover:scale-110 transition-transform" strokeWidth={4} />
+                            </button>
 
                             {/* Row 4 */}
-                            <KeypadButton onClick={() => handleNumClick("0")} className="col-span-2 aspect-auto h-[4.5rem]">0</KeypadButton>
-                            <KeypadButton onClick={handleDecimal} disabled={!allowDecimal} className="h-[4.5rem] text-4xl pb-4">.</KeypadButton>
-
+                            <KeypadButton onClick={() => handleNumClick("0")} className="col-span-2 w-full">0</KeypadButton>
+                            <KeypadButton onClick={handleDecimal} disabled={!allowDecimal} className="text-3xl pb-4">.</KeypadButton>
                         </div>
                     </div>
-                </Card>
+                </div>
             </div>
         </div>,
         document.body
@@ -203,10 +195,10 @@ function KeypadButton({
             onClick={onClick}
             disabled={disabled}
             className={cn(
-                "h-[4.5rem] w-full rounded-[1.5rem] text-2xl font-bold transition-all duration-200 select-none flex items-center justify-center",
-                "bg-white shadow-[0_4px_10px_-4px_rgba(0,0,0,0.05)] border border-slate-100",
-                "text-slate-600 hover:text-slate-900 hover:bg-white hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/10",
-                "active:scale-90 active:bg-slate-50",
+                "h-[4.5rem] w-full rounded-[1.8rem] text-2xl font-bold transition-all duration-200 select-none flex items-center justify-center cursor-pointer",
+                "bg-white shadow-[0_4px_12px_-2px_rgba(0,0,0,0.06)] border border-slate-50",
+                "text-slate-700 hover:text-slate-900 hover:shadow-xl hover:-translate-y-0.5",
+                "active:scale-95 active:bg-slate-50 active:translate-y-0",
                 "disabled:opacity-30 disabled:pointer-events-none",
                 className
             )}

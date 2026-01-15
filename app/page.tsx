@@ -50,6 +50,11 @@ export default function HomePage() {
     addAllocation, removeAllocation, updateAllocation
   } = handlers;
 
+  // Scroll to top on view change
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [user, planType, showFamilyResult, showResult, inputStep, currentMemberId]);
+
   // 1. Unauthenticated -> Login Screen
   if (!user) {
     return <LoginScreen onLogin={handleLogin} />;
@@ -67,6 +72,7 @@ export default function HomePage() {
             setShowFamilyResult(true);
           } else {
             // Individual -> Input Page First
+            setShowFamilyResult(false);
             setShowResult(false);
           }
         }}

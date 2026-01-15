@@ -57,6 +57,12 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
     const toggleSection = (section: number) => {
         setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
+
+    // Scroll to top when step changes
+    React.useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [step]);
+
     const [avatarImage, setAvatarImage] = useState<string | null>(null);
     const [showMonteCarlo, setShowMonteCarlo] = useState(false);
     // Local state for spending mode just for UI toggling as per screenshot
@@ -145,7 +151,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     <div className={`flex-1 relative bg-white/50 border border-slate-200 rounded-2xl h-12 flex items-center px-4 transition-all duration-300 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50/50 shadow-sm hover:shadow-md focus-within:bg-white backdrop-blur-sm ${disabled ? 'bg-slate-50/50 opacity-70' : ''}`}>
                         <NumericInput
                             value={value}
-                            onChange={field ? handleChange(field) : undefined}
+                            onChange={field ? handleChange(field) : () => { }}
                             disabled={disabled}
                             className={`flex-1 min-w-0 h-full text-lg font-bold bg-transparent border-none p-0 focus:ring-0 text-center text-slate-700 ${disabled ? 'text-slate-400' : ''}`}
                         />
@@ -217,27 +223,47 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
             </div>
 
             <div className="grid gap-6 px-4">
-                <InputControl label="อายุปัจจุบัน" value={form.currentAge} field="currentAge" suffix="ปี" icon={User} />
-                <InputControl label="ต้องการเกษียณอายุ" value={form.retireAge} field="retireAge" suffix="ปี" icon={Settings2} />
-                <InputControl label="คาดว่าจะมีอายุถึง" value={form.lifeExpectancy} field="lifeExpectancy" subLabel="Life Expectancy" suffix="ปี" icon={RotateCcw} />
+                <InputControl label="อายุปัจจุบัน (ปี)" value={form.currentAge} field="currentAge" icon={User} />
+                <InputControl label="อายุที่ต้องการเกษียณ (ปี)" value={form.retireAge} field="retireAge" icon={Settings2} />
+                <InputControl label="จะอยู่ถึงอายุ (ปี)" value={form.lifeExpectancy} field="lifeExpectancy" icon={RotateCcw} />
             </div>
         </div>
     );
 
     const FinancialStep = () => (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="text-center pb-2">
-                <h2 className="text-xl font-bold text-slate-800">สถานะการเงิน</h2>
-                <p className="text-xs text-slate-400 font-medium mt-1">ระบุข้อมูลการเงินปัจจุบันของคุณ</p>
+            <div className="text-center pb-2 flex items-center justify-center gap-2">
+                <Briefcase className="text-slate-800" />
+                <h2 className="text-xl font-bold text-slate-800">ปัจจุบัน</h2>
             </div>
 
             <div className="space-y-6 px-1">
                 <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 space-y-6">
-                    <InputControl label="เงินออมที่มีอยู่แล้ว" value={form.currentSavings} field="currentSavings" suffix="บาท" icon={Briefcase} />
+                    <InputControl label="เงินออมปัจจุบัน (บาท)" value={form.currentSavings} field="currentSavings" icon={Briefcase} />
 
-                    <div className="pt-2 border-t border-slate-100/50">
-                        <InputControl label="ออมเพิ่มต่อเดือน" value={form.monthlySaving} field="monthlySaving" suffix="บาท/เดือน" icon={Plus} />
+                    <div className="pt-2 border-t border-slate-100/50 space-y-4">
+                        <InputControl label="การออมต่อเดือน (บาท)" value={form.monthlySaving} field="monthlySaving" icon={Plus} />
 
+                        <div className="flex items-center gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    checked={savingMode === 'flat'}
+                                    onChange={() => setSavingMode('flat')}
+                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                />
+                                <span className="text-sm font-medium text-slate-700">ออมเท่าเดิมทุกปี</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    checked={savingMode === 'step5'}
+                                    onChange={() => setSavingMode('step5')}
+                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                />
+                                <span className="text-sm font-medium text-slate-700">ปรับตามอายุทุกปีที่ 5</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -247,7 +273,6 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                             label="ผลตอบแทนที่คาดหวัง (% ต่อปี)"
                             value={form.expectedReturn}
                             field="expectedReturn"
-                            suffix="%"
                             icon={TrendingUp}
                             disabled={returnMode === 'custom'}
                         />
@@ -369,7 +394,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     </div>
 
                     <div className="pt-2 border-t border-slate-100/50">
-                        <InputControl label="อัตราเงินเฟ้อ" value={form.inflation} field="inflation" suffix="%" icon={TrendingUp} />
+                        <InputControl label="อัตราเงินเฟ้อ (% ต่อปี)" value={form.inflation} field="inflation" icon={TrendingUp} />
                     </div>
                 </div>
 
@@ -797,36 +822,52 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
     const GoalStep = () => (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="text-center pb-2">
-                <h2 className="text-xl font-bold text-slate-800">เป้าหมายเกษียณ</h2>
-                <p className="text-xs text-slate-400 font-medium mt-1">กำหนดไลฟ์สไตล์ที่คุณต้องการ</p>
+            <div className="text-center pb-2 flex items-center justify-center gap-2">
+                <Home className="text-slate-800" />
+                <h2 className="text-xl font-bold text-slate-800">เกษียณ</h2>
             </div>
 
             <div className="grid gap-6 px-1">
-                <InputControl label="เงินก้อนตอนเกษียณ (บำเหน็จ)" value={form.retireFundOther} field="retireFundOther" suffix="บาท" icon={DollarSign} />
-                <InputControl label="รายรับที่จะได้หลังเกษียณ" value={form.retirePension} field="retirePension" suffix="บาท/เดือน" icon={DollarSign} />
-                <InputControl label="ผลตอบแทนพอร์ตหลังเกษียณ" value={form.retireReturnAfter} field="retireReturnAfter" suffix="%" icon={TrendingUp} />
+                <InputControl label="เงินก้อนตอนเกษียณ (เช่น กบข., บำเหน็จ)" value={form.retireFundOther} field="retireFundOther" icon={DollarSign} />
+                <InputControl
+                    label="เงินเดือนหลังเกษียณ (ต่อเดือน)"
+                    value={form.retirePension}
+                    field="retirePension"
+                    icon={DollarSign}
+                />
+                <InputControl label="ผลตอบแทนหลังเกษียณ (% ต่อปี)" value={form.retireReturnAfter} field="retireReturnAfter" icon={TrendingUp} />
 
                 <div className="bg-amber-50/50 p-6 rounded-3xl border border-amber-100/50 space-y-4">
-                    <InputControl label="ค่าใช้จ่ายหลังเกษียณ" value={form.retireExtraExpense} field="retireExtraExpense" suffix="บาท/เดือน" icon={Home} subLabel="PV (ราคาวันนี้)" />
-                    <p className="text-[10px] text-amber-600/60 text-center font-medium bg-amber-100/50 py-1 rounded-lg">ระบบจะคำนวณเงินเฟ้อให้อัตโนมัติ</p>
+                    <InputControl
+                        label="ค่าใช้จ่ายหลังเกษียณ (ต่อเดือน ไม่คิดเงินเฟ้อ) โดยทั่วไปมักเป็น 80% ของค่าใช้จ่ายปัจจุบัน"
+                        value={form.retireExtraExpense}
+                        field="retireExtraExpense"
+                        icon={Home}
+                    />
                 </div>
 
 
 
-                <div className="pt-6 border-t border-slate-100">
-                    <InputControl label="มรดกที่ต้องการส่งต่อ" value={form.legacyFund} field="legacyFund" suffix="บาท" icon={Home} />
+                <div className="pt-2 border-t border-slate-100">
+                    <InputControl label="มรดก" value={form.legacyFund} field="legacyFund" icon={Home} />
                 </div>
 
                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
-                    <button onClick={() => setShowMonteCarlo(!showMonteCarlo)} className="flex items-center justify-between w-full text-slate-500 hover:text-slate-800 font-bold text-xs uppercase tracking-wide transition-colors">
-                        <span className="flex items-center gap-2"><Settings2 size={14} /> การตั้งค่าขั้นสูง (Monte Carlo)</span>
-                        <ChevronDown size={14} className={`transform transition-transform duration-300 ${showMonteCarlo ? 'rotate-180' : ''}`} />
+                    <button onClick={() => setShowMonteCarlo(!showMonteCarlo)} className="flex items-center justify-between w-full text-slate-500 hover:text-slate-800 font-bold text-sm transition-colors">
+                        <span className="flex items-center gap-2"><ChevronDown size={16} className={`transform transition-transform duration-300 ${showMonteCarlo ? '' : '-rotate-90'}`} /> Monte carlo</span>
                     </button>
                     {showMonteCarlo && (
-                        <div className="mt-5 grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 pt-2 border-t border-slate-200/50">
-                            <InputControl label="ความผันผวน (%)" value={form.monteCarloVolatility} field="monteCarloVolatility" />
-                            <InputControl label="จำนวนจำลอง" value={form.monteCarloSimulations} field="monteCarloSimulations" />
+                        <div className="mt-5 grid grid-cols-1 gap-4 animate-in slide-in-from-top-2 pt-2 border-t border-slate-200/50">
+                            <InputControl
+                                label="ความผันผวนของผลตอบแทน (%)"
+                                value={form.monteCarloVolatility}
+                                field="monteCarloVolatility"
+                            />
+                            <InputControl
+                                label="จำลองทั้งหมด"
+                                value={form.monteCarloSimulations}
+                                field="monteCarloSimulations"
+                            />
                         </div>
                     )}
                 </div>

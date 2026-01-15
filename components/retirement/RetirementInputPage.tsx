@@ -70,7 +70,7 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
                     </div>
                     <div>
                         <h1 className="text-lg font-black text-slate-800 tracking-tight leading-none">Financial Planner</h1>
-                        <p className="text-xs text-slate-500 font-medium">วางแผนเกษียณและภาษีครบวงจร</p>
+                        <p className="text-xs text-slate-500 font-medium">วางแผนการเงิน</p>
                     </div>
                 </div>
 

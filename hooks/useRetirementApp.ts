@@ -707,19 +707,29 @@ export function useRetirementApp() {
     };
 
     const handleExportCSV = () => {
-        const rows = [
-            ["Age", "Monthly Expense"],
-            ...(result.expenseSchedule || []).map((r) => [r.age, r.monthly])
-        ];
+        const { labels, actual, required, actualHistory } = buildProjectionSeries(inputs, result);
 
-        let csvContent = "data:text/csv;charset=utf-8,"
-            + rows.map(e => e.join(",")).join("\n");
+        // Header
+        const header = ["Age", "Projected Savings", "Target Goal", "Actual Savings (History)"];
+
+        // Rows
+        const rows = labels.map((age, i) => {
+            return [
+                age,
+                actual[i] || 0,
+                required[i] || 0,
+                actualHistory[i] !== undefined ? actualHistory[i] : ""
+            ];
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" // Add BOM for Excel utf-8 support
+            + [header, ...rows].map(e => e.join(",")).join("\n");
 
         if (typeof window !== "undefined") {
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "retirement_plan.csv");
+            link.setAttribute("download", "retirement_projection.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
