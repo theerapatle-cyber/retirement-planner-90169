@@ -23,6 +23,7 @@ interface RetirementInputPageProps {
     addAllocation: () => void;
     removeAllocation: (id: number) => void;
     updateAllocation: (id: number, field: keyof Allocation) => (e: any) => void;
+    onLogout?: () => void;
 }
 
 export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
@@ -44,20 +45,37 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
     allocations,
     addAllocation,
     removeAllocation,
-    updateAllocation
+    updateAllocation,
+    onLogout
 }) => {
     return (
         <div className="min-h-screen bg-[#F8F9FB] font-['Inter'] pb-32">
-            {/* Premium Header - Sticky & Glass */}
-            <div className="sticky top-0 z-30 bg-[#F8F9FB]/80 backdrop-blur-md border-b border-slate-100 px-6 py-4">
-                <div className="max-w-xl mx-auto flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
-                        <Calculator size={20} className="stroke-[2.5]" />
+            {/* TOP NAVIGATION BAR */}
+            <div className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 px-6 py-4 shadow-sm flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-slate-800 leading-tight">ข้อมูลแผนเกษียณ</h1>
-                        <p className="text-xs text-slate-500">กรอกข้อมูลให้ครบทั้ง 3 ส่วน</p>
+                        <h1 className="text-lg font-black text-slate-800 tracking-tight leading-none">Financial Planner</h1>
+                        <p className="text-xs text-slate-500 font-medium">วางแผนเกษียณและภาษีครบวงจร</p>
                     </div>
+                </div>
+
+                <div className="flex items-center gap-6">
+                    <div className="hidden sm:flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center border-2 border-white shadow-sm font-bold text-xs">
+                            {user?.name?.substring(0, 2).toUpperCase() || "U"}
+                        </div>
+                        <span className="text-sm font-bold text-slate-700 pr-2">{user?.name || "Guest User"}</span>
+                    </div>
+                    <button
+                        onClick={onLogout}
+                        className="text-slate-400 hover:text-red-500 transition-colors"
+                        title="ออกจากระบบ"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                    </button>
                 </div>
             </div>
 

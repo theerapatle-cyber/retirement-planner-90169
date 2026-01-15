@@ -1,31 +1,32 @@
 ---
-description: Steps to apply the "Playful Premium" UI redesign to the Retirement Planner
+description: Steps to apply the "Premium Dashboard" UI redesign to the Retirement Planner
 ---
 
-# UI Redesign Workflow
+# UI Redesign Workflow (Current Architecture)
 
-1.  **Global Background**:
-    -   Update the main container in `app/page.tsx` to use `bg-[#F8FAFC]`.
-    -   Add mesh gradient blobs (Blue, Green, Purple) with `mix-blend-multiply` and `animate-pulse`.
-    -   Add a subtle grid pattern overlay.
+1.  **Layout Structure**:
+    -   **Top Bar**: Full-width sticky header (`bg-white/80 backdrop-blur`) containing Logo, User Profile, and Logout.
+    -   **Main Container**: `min-h-screen bg-slate-50/50`.
+    -   **Dashboard Grid**: `grid-cols-1 lg:grid-cols-[450px_1fr]`.
+        -   **Left Column (450px)**: Dedicated to `RetirementInputSection` in `isEmbedded` mode.
+        -   **Right Column (1fr)**: Contains all result visualizations.
 
-2.  **Left Panel (Input Section)**:
-    -   Update the `<aside>` className to `bg-white/60 backdrop-blur-xl border-white/40`.
-    -   Ensure it has a shadow: `shadow-[20px_0_40px_-10px_rgba(0,0,0,0.05)]`.
+2.  **Input Section (`RetirementInputSection`)**:
+    -   Wrapper: `sticky top-6 max-h-[90vh] overflow-y-auto rounded-3xl`.
+    -   Style: Clean vertically stacked wizard steps if embedded.
+    -   Background: Inherits white card styling with shadow.
 
-3.  **Right Panel (Results Section)**:
-    -   Update the `<main>` className to `bg-slate-50/40 backdrop-blur-sm`.
-    -   Ensure it allows the global background to show through.
+3.  **Results Section (`Right Area`)**:
+    -   **Hero Summary Card**: Top-most element. Large green/red gradient card showing Status, Projected Fund, and Target.
+    -   **Key Metrics Grid**: 4-card grid (Projected, Target, Expense, Gap).
+    -   **Chart Area**: Full-width `ProjectionChart` container.
+    -   **Widgets Row**: `AllocationWidget` and `MonteCarloWidget` side-by-side.
 
-4.  **Header & Navigation**:
-    -   Update `<header>` and the Family Control Bar to `bg-white/60 backdrop-blur-xl`.
-    -   Maintain sticky positioning.
+4.  **Styling Guidelines**:
+    -   **Cards**: `bg-white rounded-[32px] shadow-2xl shadow-slate-200/50 border border-slate-100`.
+    -   **Gradients**: Use heavy use of gradients (Blue/Indigo, Emerald/Teal, Rose/Red) for status indicators.
+    -   **Typography**: `Inter` font, heavy use of `font-black` for numbers and `font-bold` for labels.
 
-5.  **Input Cards Styling**:
-    -   Apply the following class to all main input containers (Identity, Timeline, Wealth, Strategy, Insurance, Legacy):
-        `bg-white rounded-[24px] p-5 border border-slate-100 shadow-xl shadow-slate-200/50 relative overflow-hidden group`
-    -   Ensure internal elements (inputs, buttons) use consistent rounded styling (`rounded-xl` or `rounded-2xl`).
-
-6.  **Verify**:
-    -   Check that text remains readable against the semi-transparent backgrounds.
-    -   Ensure the "system" feel is cohesive across both panels.
+5.  **Responsiveness**:
+    -   Mobile: Stacked layout (Input -> Results).
+    -   Desktop: Split layout (Input Left / Results Right).

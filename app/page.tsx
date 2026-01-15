@@ -119,6 +119,7 @@ export default function HomePage() {
           addAllocation={addAllocation}
           removeAllocation={removeAllocation}
           updateAllocation={updateAllocation}
+          onLogout={() => setters.setUser(null)}
         />
         <InsuranceTableModal
           show={state.showInsuranceTable}
@@ -164,10 +165,11 @@ export default function HomePage() {
         returnMode={state.returnMode}
         setReturnMode={setters.setReturnMode}
         allocations={state.allocations}
+        setAllocations={setters.setAllocations}
         addAllocation={addAllocation}
         removeAllocation={removeAllocation}
         updateAllocation={updateAllocation}
-        onViewTable={() => setShowInsuranceTable(true)}
+        onLogout={() => setters.setUser(null)}
       />
     );
   }

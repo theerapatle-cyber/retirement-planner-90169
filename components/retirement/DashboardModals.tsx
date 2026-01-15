@@ -255,31 +255,66 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                                 if (policyYear > 0 && policyYear % freq === 0 && age < coverageAge) flow += cashBack;
                                             }
                                             if (plan.type === "บำนาญ") {
+                                                // Calculate Current Year Pension
                                                 let pAmt = Number(String(plan.pensionAmount || 0).replace(/,/g, ""));
                                                 if (Number(plan.pensionPercent) > 0) pAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
-                                                if (plan.unequalPension && plan.pensionTiers?.length > 0) {
+                                                if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
                                                     const tier = plan.pensionTiers.find(t => age >= Number(t.startAge) && age <= Number(t.endAge));
                                                     if (tier) pAmt = Number(String(tier.amount || 0).replace(/,/g, ""));
                                                     else pAmt = 0;
                                                 }
-                                                if (age >= Number(plan.pensionStartAge) && age <= (Number(plan.pensionEndAge) || 100)) flow += pAmt;
+
+                                                if (age >= Number(plan.pensionStartAge) && age <= (Number(plan.pensionEndAge) || 100)) {
+                                                    flow += pAmt;
+                                                }
                                             }
                                         }
 
                                         // Death Benefit Logic
                                         if (!planIsAfterSurrender && planIsWithinCoverage) {
                                             db += sumAssured;
-                                            if (plan.type === "บำนาญ" && age >= Number(plan.pensionStartAge)) db = Math.max(0, sumAssured - 0);
+                                            if (plan.type === "บำนาญ") {
+                                                if (age < Number(plan.pensionStartAge)) {
+                                                    // Before pension starts: Use Pre-Pension DB if available, else Sum Assured
+                                                    const prePensionDB = Number(String(plan.deathBenefitPrePension || 0).replace(/,/g, ""));
+                                                    db = prePensionDB > 0 ? prePensionDB : sumAssured;
+                                                } else {
+                                                    // After pension starts: Reducing DB
+                                                    // Calculate Cumulative Pension Received UP TO Last Year
+                                                    let cumulativePension = 0;
+                                                    const startAge = Number(plan.pensionStartAge);
+                                                    for (let a = startAge; a < age; a++) {
+                                                        let histAmt = Number(String(plan.pensionAmount || 0).replace(/,/g, ""));
+                                                        if (Number(plan.pensionPercent) > 0) histAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
+                                                        if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
+                                                            const tier = plan.pensionTiers.find(t => a >= Number(t.startAge) && a <= Number(t.endAge));
+                                                            if (tier) histAmt = Number(String(tier.amount || 0).replace(/,/g, ""));
+                                                            else histAmt = 0;
+                                                        }
+                                                        cumulativePension += histAmt;
+                                                    }
+
+                                                    // Base DB for reduction
+                                                    const baseDB = Number(String(plan.deathBenefitPrePension || 0).replace(/,/g, "")) || sumAssured;
+                                                    db = Math.max(0, baseDB - cumulativePension);
+                                                }
+                                            }
                                         }
 
                                         // Status & Styling Logic
-                                        const isDeathRow = plan.type !== "บำนาญ" && age === coverageAge && !useSurrender;
+                                        // Removed exclusion for Pension plans so they can be Red too
+                                        const isDeathRow = age === coverageAge && !useSurrender;
                                         const isPostDeathRow = age > coverageAge;
 
                                         let statusText = "-";
                                         if (isSurrenderYear) statusText = "เวนคืนกรมธรรม์";
                                         else if (isDeathRow) statusText = `เสียชีวิตที่อายุ ${age} → ได้รับเงินประกัน ${formatNumber(db)}`;
-                                        else if (hasActiveCoverage) statusText = "คุ้มครอง";
+                                        else if (hasActiveCoverage) {
+                                            statusText = "คุ้มครอง";
+                                            if (plan.type === "บำนาญ" && age >= Number(plan.pensionStartAge)) {
+                                                statusText = "เงินบำนาญ | คุ้มครอง";
+                                            }
+                                        }
                                         else if (isMaturityYear) statusText = "ครบสัญญา";
                                         else if (isPostDeathRow) statusText = "ตายแล้ว";
                                         else if (useSurrender && age > surrenderAge) statusText = "เวนคืนไปแล้ว";
