@@ -47,9 +47,15 @@ export type FormState = {
     retireExtraExpense: string;
     retireSpendTrendPercent: string;
     retireSpecialAnnual: string;
-    retirePension: string; // เงินเดือนหลังเกษียณ
+    retirePension: string;
+    retireSpendingMode: "inflation_adjusted" | "custom_trend";
+    retireSpendingTrend: string;
     legacyFund: string;
-    retireNote: string;
+    note: string;
+    retireNote: string; // Keep consistent
+
+    monteCarloVolatility: string;
+    monteCarloSimulations: string;
 
     insurancePlans: InsurancePlan[];
     selectedPlanId: string | null;

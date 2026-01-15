@@ -1,10 +1,10 @@
 import React from "react";
 import { RetirementInputSection } from "@/components/retirement/RetirementInputSection";
-import { FormState, InsurancePlan } from "@/types/retirement";
-import { Button } from "@/components/ui/button";
+import { FormState, InsurancePlan, Allocation } from "@/types/retirement";
 import { Calculator } from "lucide-react";
 
 interface RetirementInputPageProps {
+    user: { name: string } | null;
     form: FormState;
     handleChange: (key: keyof FormState) => (e: any) => void;
     changeBy: (key: keyof FormState, delta: number) => () => void;
@@ -17,9 +17,16 @@ interface RetirementInputPageProps {
     onViewTable: () => void;
     savingMode: "flat" | "step5";
     setSavingMode: (mode: "flat" | "step5") => void;
+    returnMode: "avg" | "custom";
+    setReturnMode: (mode: "avg" | "custom") => void;
+    allocations: Allocation[];
+    addAllocation: () => void;
+    removeAllocation: (id: number) => void;
+    updateAllocation: (id: number, field: keyof Allocation) => (e: any) => void;
 }
 
 export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
+    user,
     form,
     handleChange,
     changeBy,
@@ -31,7 +38,13 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
     updateInsurancePlan,
     onViewTable,
     savingMode,
-    setSavingMode
+    setSavingMode,
+    returnMode,
+    setReturnMode,
+    allocations,
+    addAllocation,
+    removeAllocation,
+    updateAllocation
 }) => {
     return (
         <div className="min-h-screen bg-[#F8F9FB] font-['Inter'] pb-32">
@@ -51,6 +64,7 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
             {/* Content Container */}
             <div className="max-w-xl mx-auto px-4 py-6 space-y-6">
                 <RetirementInputSection
+                    user={user}
                     form={form}
                     handleChange={handleChange}
                     changeBy={changeBy}
@@ -62,19 +76,14 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
                     onViewTable={onViewTable}
                     savingMode={savingMode}
                     setSavingMode={setSavingMode}
+                    returnMode={returnMode}
+                    setReturnMode={setReturnMode}
+                    allocations={allocations}
+                    addAllocation={addAllocation}
+                    removeAllocation={removeAllocation}
+                    updateAllocation={updateAllocation}
+                    onCalculate={() => setShowResult(true)}
                 />
-            </div>
-
-            {/* Calculate Button - Fixed Floating Bottom */}
-            <div className="fixed bottom-0 left-0 right-0 z-30 p-4 bg-white/80 backdrop-blur-xl border-t border-slate-100">
-                <div className="max-w-xl mx-auto">
-                    <Button
-                        className="w-full h-14 text-lg font-bold bg-[#5D5FEF] hover:bg-[#4B4DED] text-white rounded-2xl shadow-xl shadow-indigo-200 transition-all transform active:scale-[0.98]"
-                        onClick={() => setShowResult(true)}
-                    >
-                        คำนวณแผนเกษียณ
-                    </Button>
-                </div>
             </div>
         </div>
     );

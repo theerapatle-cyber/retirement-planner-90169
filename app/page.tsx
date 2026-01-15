@@ -1,4 +1,5 @@
-﻿"use client";
+﻿
+"use client";
 
 import * as React from "react";
 import { useRetirementApp } from "@/hooks/useRetirementApp";
@@ -21,13 +22,11 @@ export default function HomePage() {
     user, planType, familyMembers, currentMemberId, showFamilyResult,
     form, gender, inputStep, showResult,
     retireSpendMode,
-    mcVolatility, mcSimulations,
   } = state;
 
   const {
     setForm, setPlanType, setShowFamilyResult,
     setGender, setRetireSpendMode, setInputStep, setShowResult,
-    setMcVolatility, setMcSimulations,
     setShowInsuranceTable
   } = setters;
 
@@ -44,7 +43,10 @@ export default function HomePage() {
 
     // Dashboard / Insurance
     addInsurancePlan, removeInsurancePlan, updateInsurancePlan, updateSurrenderTable,
-    handleExportCSV, handlePrint, handleChange, changeBy
+    handleExportCSV, handlePrint, handleChange, changeBy,
+
+    // Allocations
+    addAllocation, removeAllocation, updateAllocation
   } = handlers;
 
   // 1. Unauthenticated -> Login Screen
@@ -95,6 +97,7 @@ export default function HomePage() {
     return (
       <>
         <RetirementInputPage
+          user={user}
           form={form}
           handleChange={handleChange}
           changeBy={changeBy}
@@ -107,6 +110,12 @@ export default function HomePage() {
           onViewTable={() => setShowInsuranceTable(true)}
           savingMode={state.savingMode}
           setSavingMode={setters.setSavingMode}
+          returnMode={state.returnMode}
+          setReturnMode={setters.setReturnMode}
+          allocations={state.allocations}
+          addAllocation={addAllocation}
+          removeAllocation={removeAllocation}
+          updateAllocation={updateAllocation}
         />
         <InsuranceTableModal
           show={state.showInsuranceTable}
@@ -142,14 +151,20 @@ export default function HomePage() {
         updateSurrenderTable={updateSurrenderTable}
         setRetireSpendMode={setRetireSpendMode}
         retireSpendMode={retireSpendMode}
-        setMcVolatility={setMcVolatility}
-        mcVolatility={mcVolatility}
-        setMcSimulations={setMcSimulations}
-        mcSimulations={mcSimulations}
         handleChange={handleChange}
         changeBy={changeBy}
         setGender={setGender}
         gender={gender}
+        // Extended Props
+        savingMode={state.savingMode}
+        setSavingMode={setters.setSavingMode}
+        returnMode={state.returnMode}
+        setReturnMode={setters.setReturnMode}
+        allocations={state.allocations}
+        addAllocation={addAllocation}
+        removeAllocation={removeAllocation}
+        updateAllocation={updateAllocation}
+        onViewTable={() => setShowInsuranceTable(true)}
       />
     );
   }

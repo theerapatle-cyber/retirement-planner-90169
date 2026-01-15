@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -65,9 +66,7 @@ export function useRetirementApp() {
     const [showActualSavingsInput, setShowActualSavingsInput] = React.useState(false);
     const [chartTickInterval, setChartTickInterval] = React.useState<number>(5);
 
-    // Monte Carlo Settings
-    const [mcVolatility, setMcVolatility] = React.useState(10);
-    const [mcSimulations, setMcSimulations] = React.useState(200);
+    // Monte Carlo Settings (Now Derived from Form)
     const [isMonteCarloOpen, setIsMonteCarloOpen] = React.useState(false);
 
     // Persistence
@@ -123,7 +122,8 @@ export function useRetirementApp() {
                 "currentSavings", "monthlySaving", "savingAt35", "savingAt40", "savingAt45",
                 "savingAt50", "savingAt55", "retireFundOther", "retireMonthlyIncome",
                 "retireReturnAfter", "retireExtraExpense", "retireSpendTrendPercent",
-                "retireSpecialAnnual", "legacyFund", "currentAge", "retireAge", "lifeExpectancy"
+                "retireSpecialAnnual", "legacyFund", "currentAge", "retireAge", "lifeExpectancy",
+                "retirePension", "monteCarloVolatility", "monteCarloSimulations"
             ];
             let changed = false;
             keys.forEach((k) => {
@@ -132,7 +132,10 @@ export function useRetirementApp() {
                 if (stripped === "") return;
                 const num = Number(stripped);
                 if (!Number.isNaN(num)) {
-                    const formatted = formatInputDisplay(String(num));
+                    // Monte Carlo Sims is integer, others formatted string
+                    let formatted = formatInputDisplay(String(num));
+                    if (k === "monteCarloSimulations") formatted = String(Math.floor(num));
+
                     if (formatted !== raw) {
                         mapping[k] = formatted as any;
                         changed = true;
@@ -141,8 +144,7 @@ export function useRetirementApp() {
             });
             return changed ? { ...prev, ...mapping } : prev;
         });
-    }, [form.currentSavings, form.monthlySaving, form.currentAge, form.retireAge, form.lifeExpectancy]); // Reduced dep list for performance, though exhaustive is better
-
+    }, [form.currentSavings, form.monthlySaving, form.currentAge, form.retireAge, form.lifeExpectancy, form.retirePension, form.monteCarloVolatility]);
 
     /* ---------- Calculations ---------- */
     const inputs = React.useMemo(() => buildRetirementInputs({
@@ -155,7 +157,11 @@ export function useRetirementApp() {
 
     const result = React.useMemo(() => calculateRetirement(inputs), [inputs]);
 
-    const mcResult = React.useMemo(() => runMonteCarlo(inputs, mcSimulations, mcVolatility), [inputs, mcSimulations, mcVolatility]);
+    const mcResult = React.useMemo(() => {
+        const sims = Number(String(form.monteCarloSimulations || "1500").replace(/,/g, ""));
+        const vol = Number(String(form.monteCarloVolatility || "6").replace(/,/g, ""));
+        return runMonteCarlo(inputs, sims, vol / 100);
+    }, [inputs, form.monteCarloSimulations, form.monteCarloVolatility]);
 
     /* ---------- Handlers ---------- */
     const handleChange = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement> | string) => {
@@ -172,12 +178,9 @@ export function useRetirementApp() {
         setForm((prev) => {
             let valStart = Number(String(prev[field] || "0").replace(/,/g, ""));
             if (Number.isNaN(valStart)) valStart = 0;
-            // Allow negative values for percentage fields, but use logic to check
             let newVal = valStart + delta;
 
-            // Enforce non-negative for age and amounts EXCEPT percent/inflation if desired 
-            const isPercent = ["expectedReturn", "inflation", "retireSpendTrendPercent"].includes(field);
-            // Let's assume most fields are non-negative, except percentage trends which can be negative
+            const isPercent = ["expectedReturn", "inflation", "retireSpendTrendPercent", "monteCarloVolatility"].includes(field);
             if (!isPercent && newVal < 0) newVal = 0;
 
             return { ...prev, [field]: formatInputDisplay(String(newVal)) };
@@ -316,16 +319,6 @@ export function useRetirementApp() {
         const targetMember = familyMembers.find(m => m.id === id);
         if (!targetMember) return;
 
-        // Sync current
-        syncCurrentToFamily();
-
-        // Load new (delayed slightly to allow sync? No sync is synchronous)
-        // Actually syncCurrentToFamily updates state via setter, so we need to wait or do it manually.
-        // The manual approach in page.tsx was better (updating list then loading).
-        // Let's copy manual approach logic inside here or use the helper if we trust it.
-        // I'll reimplement handleSwitch to be safe as per page.tsx
-
-        // Manual sync:
         const updatedList = familyMembers.map(m => {
             if (m.id === currentMemberId) {
                 return {
@@ -340,13 +333,11 @@ export function useRetirementApp() {
             window.localStorage.setItem(FAMILY_KEY, JSON.stringify(updatedList));
         }
 
-        // Load new
         const newM = updatedList.find(m => m.id === id);
         if (newM) loadMember(newM);
     };
 
     const handleAddMember = () => {
-        // Save current first
         const updatedList = familyMembers.map(m => {
             if (m.id === currentMemberId) {
                 return {
@@ -385,7 +376,7 @@ export function useRetirementApp() {
                 { id: 3, name: "เงินสด/ทอง", weight: "5", expectedReturn: "2", volatility: "2" },
             ],
             retireSpendMode: "flat"
-        } as any; // Cast to avoid strict type issues if MemberProfile is slightly diff
+        } as any;
 
         const newList = [...updatedList, newMember];
         setFamilyMembers(newList);
@@ -439,7 +430,6 @@ export function useRetirementApp() {
         setSavedPlans(updatedPlans);
         window.localStorage.setItem(SAVED_PLANS_KEY, JSON.stringify(updatedPlans));
 
-        // Also save family state
         syncCurrentToFamily();
 
         setPlanSaved(true);
@@ -535,11 +525,9 @@ export function useRetirementApp() {
     const projectionChart = React.useMemo(() => {
         const { labels, actual, required, actualHistory } = buildProjectionSeries(inputs, result);
 
-        // use series from mcResult
         const p5Series = mcResult.p5Series || labels.map(() => 0);
         const p95Series = mcResult.p95Series || labels.map(() => 0);
 
-        // Sum Assured Series
         const sumAssuredSeries = labels.map(ageStr => {
             const age = Number(ageStr);
             if (!insuranceChartData) return 0;
@@ -549,8 +537,6 @@ export function useRetirementApp() {
             }
             return 0;
         });
-
-        // Compute styling or max ticks if needed (logic can be in component, but data prep here)
 
         return {
             data: {
@@ -582,13 +568,7 @@ export function useRetirementApp() {
                         label: "เงินออมคาดว่าจะมี",
                         data: actual,
                         borderColor: "#10B981",
-                        // backgroundColor handled in component (gradient needs ctx) or simplistic string here
-                        // We'll pass simplistic string or handle component side. 
-                        // Actually, 'backgroundColor' as function implies it needs chart context.
-                        // We can't pass a function dependent on 'context' easily if we want pure data here, 
-                        // but we can pass the config object.
-                        // Ideally we pass DATA here and config in component.
-                        backgroundColor: "rgba(16, 185, 129, 0.2)", // Fallback
+                        backgroundColor: "rgba(16, 185, 129, 0.2)",
                         tension: 0.4,
                         fill: true,
                         pointRadius: 6,
@@ -651,8 +631,6 @@ export function useRetirementApp() {
                     },
                 ],
             },
-            // Options are largely static or depend on 'goalLabelPlugin' which we config in component
-            // We'll just return data for now, or minimal options
             options: {
                 responsive: true,
                 maintainAspectRatio: false
@@ -683,7 +661,6 @@ export function useRetirementApp() {
                     },
                 ],
             },
-            // Options can be handled in UI
         };
     }, [result.expenseSchedule]);
 
@@ -743,7 +720,7 @@ export function useRetirementApp() {
             showFinancialCard, showStrategyCard, showGoalCard, showInsuranceCard,
             isRelationOpen, showInsuranceTable, showExpenseModal, showTargetModal,
             showProjectedModal, showMonteCarloDetails, chartTickInterval, showActualSavingsInput,
-            mcVolatility, mcSimulations, isMonteCarloOpen,
+            isMonteCarloOpen, // Removed mcVolatility, mcSimulations
             planSaved, saveMessage, savedPlans
         },
         setters: {
@@ -754,7 +731,7 @@ export function useRetirementApp() {
             setShowFinancialCard, setShowStrategyCard, setShowGoalCard, setShowInsuranceCard,
             setIsRelationOpen, setShowInsuranceTable, setShowExpenseModal, setShowTargetModal,
             setShowProjectedModal, setShowMonteCarloDetails, setChartTickInterval, setShowActualSavingsInput,
-            setMcVolatility, setMcSimulations, setIsMonteCarloOpen,
+            setIsMonteCarloOpen, // Removed setMcVolatility, setMcSimulations
             setPlanSaved, setSaveMessage, setSavedPlans
         },
         calculations: {

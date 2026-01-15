@@ -27,14 +27,20 @@ export const initialForm: FormState = {
     savingAt55: "0",
 
     retireFundOther: "0",
-    retireMonthlyIncome: "6,000",
+    retireMonthlyIncome: "0",
     retireReturnAfter: "0",
     retireExtraExpense: "12,000",
     retireSpendTrendPercent: "0",
     retireSpecialAnnual: "0",
-    retirePension: "0",
+    retirePension: "6,000",
+    retireSpendingMode: "inflation_adjusted",
+    retireSpendingTrend: "0",
     legacyFund: "0",
     retireNote: "",
+    note: "",
+
+    monteCarloVolatility: "6",
+    monteCarloSimulations: "5",
 
     insurancePlans: [],
     selectedPlanId: null,
@@ -118,10 +124,13 @@ export function buildRetirementInputs(opts: {
         savingMode,
         stepIncrements,
         retireFundOther: num(form.retireFundOther),
-        retireMonthlyIncome: num(form.retireMonthlyIncome),
+
+        // Correct Mapping:
+        retireMonthlyIncome: num(form.retirePension), // Logic Income = Form Pension
+        retireExtraExpense: num(form.retireExtraExpense), // Logic Expense = Form Expense
+
         retireReturnAfter: num(form.retireReturnAfter),
-        retireExtraExpense: num(form.retireExtraExpense),
-        retireSpendTrendPercent: num(form.retireSpendTrendPercent),
+        retireSpendTrendPercent: num(form.retireSpendingTrend), // Use the new trend field
         retireSpecialAnnual: num(form.retireSpecialAnnual),
         legacyFund: num(form.legacyFund),
         returnMode,
@@ -133,7 +142,7 @@ export function buildRetirementInputs(opts: {
 /* ========================
    (CORE CALCULATION LOGIC)
    ======================== */
-export function calculateRetirement(inputs: RetirementInputs): CalculationResult {
+export function calculateRetirement(inputs: RetirementInputs & { retirePension?: number }): CalculationResult {
     const {
         currentAge,
         retireAge,
@@ -145,9 +154,9 @@ export function calculateRetirement(inputs: RetirementInputs): CalculationResult
         savingMode,
         stepIncrements,
         retireFundOther,
-        retireMonthlyIncome,
+        retireMonthlyIncome, // This acts as INCOME (Pension)
         retireReturnAfter,
-        retireExtraExpense,
+        retireExtraExpense, // This acts as EXPENSE (Lifestyle)
         legacyFund,
         insurancePlans
     } = inputs;

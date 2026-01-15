@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ProjectionChart } from "./DashboardCharts";
 import { RetirementInputSection } from "./RetirementInputSection";
@@ -21,6 +22,7 @@ import {
     CalculationResult,
     MonteCarloResult,
     InsurancePlan,
+    Allocation
 } from "@/types/retirement";
 import { Plus, X as CloseIcon, Table as TableIcon } from "lucide-react";
 
@@ -42,10 +44,17 @@ interface RetirementDashboardProps {
     updateSurrenderTable: (planIndex: number, age: number, value: string) => void;
     setRetireSpendMode: React.Dispatch<React.SetStateAction<"flat" | "step5">>;
     retireSpendMode: "flat" | "step5";
-    setMcVolatility: React.Dispatch<React.SetStateAction<number>>;
-    mcVolatility: number;
-    setMcSimulations: React.Dispatch<React.SetStateAction<number>>;
-    mcSimulations: number;
+
+    // Extended Props for RetirementInputSection compliance
+    savingMode: "flat" | "step5";
+    setSavingMode: React.Dispatch<React.SetStateAction<"flat" | "step5">>; // or generic dispatch
+    returnMode: "avg" | "custom";
+    setReturnMode: React.Dispatch<React.SetStateAction<"avg" | "custom">>;
+    allocations: Allocation[];
+    addAllocation: () => void;
+    removeAllocation: (id: number) => void;
+    updateAllocation: (id: number, field: keyof Allocation) => (e: any) => void;
+
     // Handlers for Inputs
     handleChange: (key: keyof FormState) => (e: any) => void;
     changeBy: (key: keyof FormState, delta: number) => () => void;
@@ -71,10 +80,14 @@ export const RetirementDashboard = ({
     updateSurrenderTable,
     setRetireSpendMode,
     retireSpendMode,
-    setMcVolatility,
-    mcVolatility,
-    setMcSimulations,
-    mcSimulations,
+    savingMode,
+    setSavingMode,
+    returnMode,
+    setReturnMode,
+    allocations,
+    addAllocation,
+    removeAllocation,
+    updateAllocation,
     handleChange,
     changeBy,
     setGender,
@@ -89,14 +102,11 @@ export const RetirementDashboard = ({
     const [showExpenseModal, setShowExpenseModal] = React.useState(false);
     const [showMonteCarloDetails, setShowMonteCarloDetails] = React.useState(false);
     const [isMonteCarloOpen, setIsMonteCarloOpen] = React.useState(false);
-    // const [showActualSavingsInput, setShowActualSavingsInput] = React.useState(false); // Deprecated or Moved
     const [chartTickInterval, setChartTickInterval] = React.useState<number>(5);
 
     const { insuranceChartData } = useInsuranceLogic(form);
 
-
-
-
+    const mcSimulations = Number(form.monteCarloSimulations) || 1500;
 
     return (
         <div className="relative p-6 lg:p-10 max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -262,12 +272,11 @@ export const RetirementDashboard = ({
 
                 {/* LEFT AREA: Inputs (Col 1) */}
                 <div className="xl:col-span-1 space-y-6">
-                    <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-200">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <span className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">📝</span>
-                            ข้อมูลแผนเกษียณ
-                        </h3>
+                    <div className="xl:sticky xl:top-6 z-20">
+                        {/* Header is now inside, or we can keep a small title above if needed, but visually cleaner without double headers */}
+                        {/* We'll remove the outer header "ข้อมูลแผนเกษียณ" since the Single Card has its own headers inside */}
                         <RetirementInputSection
+                            user={user}
                             form={form}
                             handleChange={handleChange}
                             changeBy={changeBy}
@@ -276,6 +285,16 @@ export const RetirementDashboard = ({
                             addInsurancePlan={addInsurancePlan}
                             removeInsurancePlan={removeInsurancePlan}
                             updateInsurancePlan={updateInsurancePlan}
+                            onViewTable={() => setShowInsuranceTable(true)}
+                            savingMode={savingMode}
+                            setSavingMode={setSavingMode}
+                            returnMode={returnMode}
+                            setReturnMode={setReturnMode}
+                            allocations={allocations}
+                            addAllocation={addAllocation}
+                            removeAllocation={removeAllocation}
+                            updateAllocation={updateAllocation}
+                            onCalculate={() => { }}
                         />
                     </div>
                 </div>
@@ -288,24 +307,24 @@ export const RetirementDashboard = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 break-inside-avoid px-2 relative z-10">
 
                             {/* Card 1: Projected Savings */}
-                            <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(16,185_129,0.15)]">
+                            <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-6 md:p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(16,185_129,0.15)]">
                                 <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-100/30 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-emerald-200/40 transition-colors duration-700"></div>
                                 <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-emerald-50/50 rounded-full blur-2xl opacity-60"></div>
-                                <div className="absolute top-8 right-8 text-emerald-100/80 group-hover:text-emerald-200/60 transition-colors duration-500 rotate-12 group-hover:rotate-0 transform origin-center transition-transform duration-700">
-                                    <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <div className="absolute top-6 right-6 text-emerald-100/80 group-hover:text-emerald-200/60 transition-colors duration-500 rotate-12 group-hover:rotate-0 transform origin-center transition-transform duration-700">
+                                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                                 </div>
                                 <div className="flex flex-col h-full justify-between relative z-10">
                                     <div>
-                                        <div className="flex justify-between items-start mb-8">
-                                            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-100 ring-4 ring-emerald-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-100 ring-4 ring-emerald-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
                                             </div>
-                                            <button onClick={() => setShowProjectedModal(true)} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all border border-slate-100 shadow-sm">
+                                            <button onClick={() => setShowProjectedModal(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all border border-slate-100 shadow-sm hover:scale-110">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
                                             </button>
                                         </div>
-                                        <p className="text-sm font-black text-slate-800 mb-1 tracking-tight">เงินออมที่มีตอนอายุเกษียณ</p>
-                                        <h4 className="text-5xl lg:text-5xl font-black text-emerald-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
+                                        <p className="text-sm font-black text-slate-600 mb-1 tracking-tight uppercase opacity-80">เงินออมที่จะมี (Projected)</p>
+                                        <h4 className="text-4xl md:text-5xl font-black text-emerald-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
                                             ฿{formatNumber(result.projectedFund)}
                                         </h4>
                                         <p className="text-sm font-bold text-slate-400 mt-2">จากการออมและการลงทุน</p>
@@ -323,70 +342,69 @@ export const RetirementDashboard = ({
                             </div>
 
                             {/* Card 2: Target Fund */}
-                            <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(59,130,246,0.15)]">
+                            <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-6 md:p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(59,130,246,0.15)]">
                                 <div className="absolute top-0 right-0 w-48 h-48 bg-blue-100/30 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-blue-200/40 transition-colors duration-700"></div>
                                 <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-blue-50/50 rounded-full blur-2xl opacity-60"></div>
-                                <div className="absolute top-8 right-8 text-blue-100/80 group-hover:text-blue-200/60 transition-colors duration-500 transform group-hover:scale-90 transition-transform duration-700">
-                                    <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                                <div className="absolute top-6 right-6 text-blue-100/80 group-hover:text-blue-200/60 transition-colors duration-500 transform group-hover:scale-90 transition-transform duration-700">
+                                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
                                 </div>
                                 <div className="flex flex-col h-full justify-between relative z-10">
                                     <div>
-                                        <div className="flex justify-between items-start mb-8">
-                                            <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm border border-blue-100 ring-4 ring-blue-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm border border-blue-100 ring-4 ring-blue-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
                                             </div>
-                                            <button onClick={() => setShowTargetModal(true)} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all border border-slate-100 shadow-sm">
+                                            <button onClick={() => setShowTargetModal(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all border border-slate-100 shadow-sm hover:scale-110">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
                                             </button>
                                         </div>
-                                        <p className="text-sm font-black text-slate-800 mb-1 tracking-tight">เงินที่ต้องการก่อนเกษียณ</p>
-                                        <h4 className="text-5xl lg:text-5xl font-black text-blue-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
+                                        <p className="text-sm font-black text-slate-600 mb-1 tracking-tight uppercase opacity-80">เงินที่ต้องการ (Target)</p>
+                                        <h4 className="text-4xl md:text-5xl font-black text-blue-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
                                             ฿{formatNumber(result.targetFund)}
                                         </h4>
                                         <p className="text-xs font-bold text-slate-400 mt-2 leading-relaxed">
-                                            สำหรับ {result.yearsInRetirement} ปีหลังเกษียณ (โดยไม่สร้างผลตอบแทนเพิ่มเติมเลย)<br />
-                                            หรือออมขั้นต่ำคร่าวๆ ฿{formatNumber(result.monthlyNeeded)} ต่อเดือน
+                                            สำหรับ {result.yearsInRetirement} ปีหลังเกษียณ <br className="hidden md:block" />
+                                            (ออมเพิ่ม ฿{formatNumber(result.monthlyNeeded)}/เดือน)
                                         </p>
                                     </div>
                                     <div className="mt-8 flex items-center justify-between">
                                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold border border-blue-100 shadow-sm group-hover:bg-blue-100 transition-colors">
-                                            Goal
+                                            Target Goal
                                         </div>
-                                        <div className="px-3 py-1.5 rounded-xl bg-slate-50/80 border border-slate-200/60 text-slate-500 group-hover:text-blue-600 group-hover:border-blue-100 transition-all duration-300">
-                                            <span className="text-[10px] font-bold tracking-tight opacity-70">~฿{formatNumber(result.monthlyNeeded)}/เดือน</span>
+                                        <div className="px-3 py-1.5 rounded-xl bg-slate-50/80 border border-slate-200/60 text-slate-500 group-hover:text-blue-600 group-hover:border-blue-100 transition-all duration-300 transform group-hover:scale-105 shadow-sm">
+                                            <span className="text-[10px] font-bold tracking-tight opacity-70">Gap: {formatNumber(Math.abs(result.gap))}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Card 3: Monthly Expense */}
-                            <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(168,85,247,0.15)]">
+                            <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-6 md:p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(168,85,247,0.15)]">
                                 <div className="absolute top-0 right-0 w-48 h-48 bg-purple-100/30 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-purple-200/40 transition-colors duration-700"></div>
                                 <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-purple-50/50 rounded-full blur-2xl opacity-60"></div>
                                 <div className="flex flex-col h-full justify-between relative z-10">
                                     <div>
-                                        <div className="flex justify-between items-start mb-8">
-                                            <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm border border-purple-100 ring-4 ring-purple-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm border border-purple-100 ring-4 ring-purple-50/50 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
                                             </div>
-                                            <button onClick={() => setShowExpenseModal(true)} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all border border-slate-100 shadow-sm">
+                                            <button onClick={() => setShowExpenseModal(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all border border-slate-100 shadow-sm hover:scale-110">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
                                             </button>
                                         </div>
-                                        <p className="text-sm font-black text-slate-800 mb-1 tracking-tight">ค่าใช้จ่าย/เดือน (ปีแรก)</p>
-                                        <h4 className="text-5xl lg:text-5xl font-black text-purple-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
+                                        <p className="text-sm font-black text-slate-600 mb-1 tracking-tight uppercase opacity-80">ค่าใช้จ่าย/เดือน (ปีแรก)</p>
+                                        <h4 className="text-4xl md:text-5xl font-black text-purple-600 leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
                                             ฿{formatNumber(result.fvExpenseMonthly)}
                                         </h4>
                                         <div className="flex justify-between items-end mt-2">
                                             <p className="text-sm font-bold text-slate-400">หลังเกษียณ (รวมเงินเฟ้อ)</p>
-                                            <p className="text-xs font-bold text-slate-400">รวม ฿{formatNumber(result.totalLifetimeExpense)}</p>
                                         </div>
                                     </div>
                                     <div className="mt-8 flex items-center justify-between">
                                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 text-purple-600 text-xs font-bold border border-purple-100 shadow-sm group-hover:bg-purple-100 transition-colors">
                                             Monthly
                                         </div>
-                                        <div className="px-3 py-1.5 rounded-xl bg-slate-50/80 border border-slate-200/60 text-slate-500 group-hover:text-purple-600 group-hover:border-purple-100 transition-all duration-300">
+                                        <div className="px-3 py-1.5 rounded-xl bg-slate-50/80 border border-slate-200/60 text-slate-500 group-hover:text-purple-600 group-hover:border-purple-100 transition-all duration-300 transform group-hover:scale-105 shadow-sm">
                                             <span className="text-[10px] font-bold tracking-tight opacity-70">Total {(result.totalLifetimeExpense / 1000000).toFixed(1)}M</span>
                                         </div>
                                     </div>
@@ -394,27 +412,24 @@ export const RetirementDashboard = ({
                             </div>
 
                             {/* Card 4: Status */}
-                            <div className={`bg-white/70 backdrop-blur-md rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 ${result.status === 'enough' ? 'hover:shadow-[0_30px_70px_-20px_rgba(16,185_129,0.15)]' : 'hover:shadow-[0_30px_70px_-20px_rgba(244,63,94,0.15)]'}`}>
+                            <div className={`bg-white/70 backdrop-blur-md rounded-[32px] p-6 md:p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 ${result.status === 'enough' ? 'hover:shadow-[0_30px_70px_-20px_rgba(16,185_129,0.15)]' : 'hover:shadow-[0_30px_70px_-20px_rgba(244,63,94,0.15)]'}`}>
                                 <div className={`absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl -mr-12 -mt-12 group-hover:opacity-60 transition-colors duration-700 ${result.status === 'enough' ? 'bg-emerald-100/30' : 'bg-rose-100/30'}`}></div>
                                 <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-slate-50/50 rounded-full blur-2xl opacity-60"></div>
                                 <div className="flex flex-col h-full justify-between relative z-10">
                                     <div>
-                                        <div className="flex justify-between items-start mb-8">
-                                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm border ring-4 ring-offset-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500 ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 ring-emerald-50/50' : 'bg-rose-50 text-rose-600 border-rose-100 ring-rose-50/50'}`}>
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm border ring-4 ring-offset-0 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500 ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 ring-emerald-50/50' : 'bg-rose-50 text-rose-600 border-rose-100 ring-rose-50/50'}`}>
                                                 {result.status === 'enough' ?
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg> :
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg> :
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                                                 }
                                             </div>
                                         </div>
-                                        <p className="text-sm font-black text-slate-800 mb-1 tracking-tight">สถานะแผน</p>
-                                        <h4 className={`text-5xl lg:text-5xl font-black leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left ${result.status === 'enough' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                        <p className="text-sm font-black text-slate-600 mb-1 tracking-tight uppercase opacity-80">สถานะแผน</p>
+                                        <h4 className={`text-4xl md:text-5xl font-black leading-none tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left ${result.status === 'enough' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                             {result.status === 'enough' ? "เพียงพอ" : "ไม่เพียงพอ"}
                                         </h4>
                                         <div className="mt-2 space-y-0.5">
-                                            <p className="text-sm font-bold text-slate-400">
-                                                {result.status === 'enough' ? `มีส่วนเกินประมาณ ฿${formatNumber(result.gap)}` : `ขาดอีก ฿${formatNumber(Math.abs(result.gap))}`}
-                                            </p>
                                             <p className={`text-sm font-bold ${result.status === 'enough' ? 'text-emerald-500/80' : 'text-rose-500/80'}`}>
                                                 เงินหมดที่อายุ {result.moneyOutAge >= inputs.lifeExpectancy ? inputs.lifeExpectancy + '+' : result.moneyOutAge}
                                             </p>
