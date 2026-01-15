@@ -119,7 +119,13 @@ export default function HomePage() {
           addAllocation={addAllocation}
           removeAllocation={removeAllocation}
           updateAllocation={updateAllocation}
-          onLogout={() => setters.setUser(null)}
+          onLogout={() => {
+            setters.setUser(null);
+            setters.setPlanType(null);
+            setters.setShowResult(false);
+            setters.setShowFamilyResult(false);
+            setters.setInputStep(1);
+          }}
         />
         <InsuranceTableModal
           show={state.showInsuranceTable}
@@ -169,7 +175,13 @@ export default function HomePage() {
         addAllocation={addAllocation}
         removeAllocation={removeAllocation}
         updateAllocation={updateAllocation}
-        onLogout={() => setters.setUser(null)}
+        onLogout={() => {
+          setters.setUser(null);
+          setters.setPlanType(null);
+          setters.setShowResult(false);
+          setters.setShowFamilyResult(false);
+          setters.setInputStep(1);
+        }}
       />
     );
   }

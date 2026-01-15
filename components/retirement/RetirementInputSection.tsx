@@ -124,12 +124,12 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         return (
             <div className="group space-y-2">
                 <div className="flex justify-between items-center">
-                    <Label className="text-slate-600 font-semibold text-sm flex items-center gap-2">
-                        {Icon && <div className="p-1 rounded bg-blue-50 text-blue-600"><Icon size={14} /></div>}
+                    <Label className="text-slate-600 font-semibold text-sm flex items-center gap-2 transition-colors group-hover:text-indigo-600">
+                        {Icon && <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors shadow-sm"><Icon size={14} /></div>}
                         {label}
                         {badge}
                     </Label>
-                    {subLabel && <span className="text-[10px] text-slate-400 font-medium bg-slate-50 px-2 py-0.5 rounded-full">{subLabel}</span>}
+                    {subLabel && <span className="text-[10px] text-slate-400 font-medium bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-full">{subLabel}</span>}
                 </div>
 
                 <div className="relative flex items-center gap-2">
@@ -137,26 +137,26 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         type="button"
                         onClick={field ? changeBy(field, -1) : undefined}
                         disabled={disabled}
-                        className="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-95 shadow-sm group-hover:border-slate-300"
+                        className="w-12 h-12 rounded-2xl bg-white/50 border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
                     >
                         <Minus size={18} strokeWidth={2.5} />
                     </button>
 
-                    <div className={`flex-1 relative bg-white border border-slate-200 rounded-xl h-11 flex items-center px-4 transition-all duration-300 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-50 shadow-sm ${disabled ? 'bg-slate-50' : ''}`}>
+                    <div className={`flex-1 relative bg-white/50 border border-slate-200 rounded-2xl h-12 flex items-center px-4 transition-all duration-300 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50/50 shadow-sm hover:shadow-md focus-within:bg-white backdrop-blur-sm ${disabled ? 'bg-slate-50/50 opacity-70' : ''}`}>
                         <NumericInput
                             value={value}
                             onChange={field ? handleChange(field) : undefined}
                             disabled={disabled}
-                            className={`w-full h-full text-lg font-bold bg-transparent border-none p-0 focus:ring-0 text-center text-slate-700 ${disabled ? 'text-slate-400' : ''}`}
+                            className={`flex-1 min-w-0 h-full text-lg font-bold bg-transparent border-none p-0 focus:ring-0 text-center text-slate-700 ${disabled ? 'text-slate-400' : ''}`}
                         />
-                        {suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 pointer-events-none">{suffix}</span>}
+                        {suffix && <span className="text-xs font-semibold text-slate-400 ml-2 select-none">{suffix}</span>}
                     </div>
 
                     <button
                         type="button"
                         onClick={field ? changeBy(field, 1) : undefined}
                         disabled={disabled}
-                        className="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-95 shadow-sm group-hover:border-slate-300"
+                        className="w-12 h-12 rounded-2xl bg-white/50 border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
                     >
                         <Plus size={18} strokeWidth={2.5} />
                     </button>
@@ -880,7 +880,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
             )}
 
             {/* MAIN CARD */}
-            <div className={`bg-white flex flex-col relative overflow-hidden ${isEmbedded ? 'p-5 rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100' : 'p-6 md:p-10 rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 min-h-[600px] mx-2'}`}>
+            <div className={`bg-white/95 backdrop-blur-xl flex flex-col relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-100/50 ${isEmbedded ? 'p-5 rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100/80 ring-1 ring-white/50' : 'p-6 md:p-10 rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 min-h-[600px] mx-2'}`}>
 
                 {/* Content */}
                 <div className="flex-1 relative z-10 pb-8 space-y-8">

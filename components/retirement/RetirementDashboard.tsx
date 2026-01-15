@@ -115,7 +115,17 @@ export const RetirementDashboard = ({
     const mcSimulations = Number(form.monteCarloSimulations) || 1500;
 
     return (
-        <div className="min-h-screen bg-slate-50/50 pb-20 font-sans overflow-x-hidden">
+        <div className="min-h-screen bg-white pb-20 font-sans overflow-x-hidden relative">
+            {/* Background Grid Pattern - Softened */}
+            <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                <div className="absolute inset-0 opacity-[0.2]"
+                    style={{
+                        backgroundImage: "linear-gradient(#cbd5e1 1px, transparent 1px), linear-gradient(90deg, #cbd5e1 1px, transparent 1px)",
+                        backgroundSize: "40px 40px"
+                    }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-90" />
+            </div>
             {/* TOP NAVIGATION BAR */}
             <div className="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4 shadow-sm flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
@@ -146,7 +156,7 @@ export const RetirementDashboard = ({
                 </div>
             </div>
 
-            <div className="w-full px-4 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="w-full px-4 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
 
                 {/* Print Summary Section */}
                 <div className="hidden print:block mb-4 font-sans">

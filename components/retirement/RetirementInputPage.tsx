@@ -49,7 +49,17 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
     onLogout
 }) => {
     return (
-        <div className="min-h-screen bg-[#F8F9FB] font-['Inter'] pb-32">
+        <div className="min-h-screen bg-white font-['Inter'] pb-32 relative">
+            {/* Background Grid Pattern - Softened */}
+            <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                <div className="absolute inset-0 opacity-[0.2]"
+                    style={{
+                        backgroundImage: "linear-gradient(#cbd5e1 1px, transparent 1px), linear-gradient(90deg, #cbd5e1 1px, transparent 1px)",
+                        backgroundSize: "40px 40px"
+                    }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-90" />
+            </div>
             {/* TOP NAVIGATION BAR */}
             <div className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 px-6 py-4 shadow-sm flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
@@ -80,7 +90,7 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
             </div>
 
             {/* Content Container */}
-            <div className="max-w-xl mx-auto px-4 py-6 space-y-6">
+            <div className="max-w-xl mx-auto px-4 py-6 space-y-6 relative z-10">
                 <RetirementInputSection
                     user={user}
                     form={form}
