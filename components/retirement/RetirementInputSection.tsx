@@ -143,12 +143,12 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         type="button"
                         onClick={field ? changeBy(field, -1) : undefined}
                         disabled={disabled}
-                        className="w-12 h-12 rounded-2xl bg-white/50 border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
+                        className="w-12 h-12 rounded-full bg-white/50 border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
                     >
                         <Minus size={18} strokeWidth={2.5} />
                     </button>
 
-                    <div className={`flex-1 relative bg-white/50 border border-slate-200 rounded-2xl h-12 flex items-center px-4 transition-all duration-300 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50/50 shadow-sm hover:shadow-md focus-within:bg-white backdrop-blur-sm ${disabled ? 'bg-slate-50/50 opacity-70' : ''}`}>
+                    <div className={`flex-1 relative bg-white/50 border border-slate-200 rounded-full h-12 flex items-center px-4 transition-all duration-300 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50/50 shadow-sm hover:shadow-md focus-within:bg-white backdrop-blur-sm ${disabled ? 'bg-slate-50/50 opacity-70' : ''}`}>
                         <NumericInput
                             value={value}
                             onChange={field ? handleChange(field) : () => { }}
@@ -162,7 +162,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         type="button"
                         onClick={field ? changeBy(field, 1) : undefined}
                         disabled={disabled}
-                        className="w-12 h-12 rounded-2xl bg-white/50 border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
+                        className="w-12 h-12 rounded-full bg-white/50 border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
                     >
                         <Plus size={18} strokeWidth={2.5} />
                     </button>
@@ -206,17 +206,20 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                 </div>
 
-                <div className="flex bg-slate-100 p-1.5 rounded-2xl shadow-inner">
+                <div className="flex bg-slate-100/80 p-1.5 rounded-full shadow-inner w-64 relative border border-slate-200/50 backdrop-blur-sm">
+                    {/* Sliding Background for animation effect could be added here, but simple conditional formatting works well too */}
                     <button
                         onClick={() => setGender('male')}
-                        className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${gender === 'male' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`flex-1 py-3 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 relative z-10 ${gender === 'male' ? 'bg-white text-indigo-600 shadow-md ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
                     >
+                        {gender === 'male' && <span className="w-2 h-2 rounded-full bg-indigo-500 absolute left-4 hidden sm:block"></span>}
                         ชาย
                     </button>
                     <button
                         onClick={() => setGender('female')}
-                        className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${gender === 'female' ? 'bg-white text-pink-500 shadow-sm ring-1 ring-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`flex-1 py-3 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 relative z-10 ${gender === 'female' ? 'bg-white text-pink-500 shadow-md ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
                     >
+                        {gender === 'female' && <span className="w-2 h-2 rounded-full bg-pink-500 absolute left-4 hidden sm:block"></span>}
                         หญิง
                     </button>
                 </div>
@@ -425,53 +428,37 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         </div>
                     </div>
 
-                    <div className="divide-y divide-slate-100">
+                    <div className="space-y-4 p-4">
                         {form.insurancePlans.map((plan, index) => {
                             const isExpanded = plan.expanded ?? true;
+                            const accentColor = "bg-blue-600";
 
                             return (
-                                <div key={plan.id} className={`p-4 transition-all ${!isExpanded ? 'bg-slate-50/50' : 'bg-white'}`}>
-                                    {/* Minimized Header */}
-                                    {!isExpanded && (
-                                        <div className="flex justify-between items-center cursor-pointer" onClick={() => updateInsurancePlan(index, "expanded", true)}>
-                                            <div className="flex gap-3 items-center">
-                                                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-xs border border-blue-100">
-                                                    #{index + 1}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-slate-700 text-sm">{plan.planName}</p>
-                                                    <p className="text-[10px] text-slate-400">{plan.type}</p>
-                                                </div>
-                                            </div>
-                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-slate-200">
-                                                <ChevronDown size={16} className="text-slate-400" />
-                                            </Button>
-                                        </div>
-                                    )}
+                                <div key={plan.id} className="bg-white border rounded-lg p-4 mb-4 shadow-sm animate-in fade-in relative">
 
-                                    {/* Expanded Content */}
-                                    {isExpanded && (
-                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-1">
+                                    {/* Expanded Body */}
+                                    {isExpanded ? (
+                                        <div className="space-y-4">
                                             {/* Plan Name */}
                                             <div className="space-y-1">
-                                                <Label className="text-slate-500 text-xs font-bold">ชื่อแผน</Label>
+                                                <Label className="text-slate-500 font-medium text-sm">ชื่อแผน</Label>
                                                 <input
                                                     type="text"
                                                     value={plan.planName}
                                                     onChange={(e) => updateInsurancePlan(index, "planName", e.target.value)}
-                                                    className="w-full text-sm font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg h-10 px-3 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all placeholder-slate-300"
-                                                    placeholder="เช่น เมืองไทย Smile..."
+                                                    className="w-full h-10 px-3 bg-white border border-slate-200 rounded text-slate-700 font-medium focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100"
+                                                    placeholder="ชื่อแผน..."
                                                 />
                                             </div>
 
                                             {/* Type */}
                                             <div className="space-y-1">
-                                                <Label className="text-slate-500 text-xs font-bold">ประเภท</Label>
+                                                <Label className="text-slate-500 font-medium text-sm">ประเภท</Label>
                                                 <div className="relative">
                                                     <select
                                                         value={plan.type}
                                                         onChange={(e) => updateInsurancePlan(index, "type", e.target.value)}
-                                                        className="w-full appearance-none bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg h-10 px-3 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all cursor-pointer text-sm"
+                                                        className="w-full h-10 px-3 bg-white border border-slate-200 rounded text-slate-700 font-medium appearance-none focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100"
                                                     >
                                                         <option value="ตลอดชีพ">ตลอดชีพ</option>
                                                         <option value="สะสมทรัพย์">สะสมทรัพย์</option>
@@ -483,334 +470,200 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                                 </div>
                                             </div>
 
-                                            {/* Common Fields: Age & Sum */}
+                                            {/* Coverage Age */}
                                             <div className="space-y-1">
-                                                <Label className="text-slate-500 text-xs font-bold">คุ้มครองถึงอายุ</Label>
+                                                <Label className="text-slate-500 font-medium text-sm">คุ้มครองถึงอายุ</Label>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="flex-1 bg-white border border-slate-200 rounded-lg h-10 flex items-center px-3">
+                                                    <div className="flex-1 bg-white border border-slate-200 rounded h-10 flex items-center px-3">
                                                         <NumericInput
                                                             value={plan.coverageAge || 85}
                                                             onChange={(v) => updateInsurancePlan(index, "coverageAge", v)}
-                                                            className="w-full font-bold text-slate-700 bg-transparent border-none p-0 focus:ring-0 text-sm"
+                                                            className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base"
                                                         />
                                                     </div>
-                                                    <button onClick={() => updateInsurancePlan(index, "coverageAge", (Number(plan.coverageAge) || 85) - 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Minus size={16} strokeWidth={2.5} /></button>
-                                                    <button onClick={() => updateInsurancePlan(index, "coverageAge", (Number(plan.coverageAge) || 85) + 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Plus size={16} strokeWidth={2.5} /></button>
+                                                    <button
+                                                        onClick={() => updateInsurancePlan(index, "coverageAge", (Number(plan.coverageAge) || 85) - 1)}
+                                                        className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors"
+                                                    >
+                                                        <Minus size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => updateInsurancePlan(index, "coverageAge", (Number(plan.coverageAge) || 85) + 1)}
+                                                        className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors"
+                                                    >
+                                                        <Plus size={16} />
+                                                    </button>
                                                 </div>
                                             </div>
 
+                                            {/* Sum Assured */}
                                             <div className="space-y-1">
-                                                <Label className="text-slate-500 text-xs font-bold">ทุนประกัน</Label>
+                                                <Label className="text-slate-500 font-medium text-sm">ทุนประกัน</Label>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="flex-1 bg-white border border-slate-200 rounded-lg h-10 flex items-center px-3">
+                                                    <div className="flex-1 bg-white border border-slate-200 rounded h-10 flex items-center px-3">
                                                         <NumericInput
                                                             value={plan.sumAssured}
                                                             onChange={(v) => updateInsurancePlan(index, "sumAssured", v)}
-                                                            className="w-full font-bold text-slate-700 bg-transparent border-none p-0 focus:ring-0 text-sm"
+                                                            className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base"
                                                         />
                                                     </div>
-                                                    <button onClick={() => changeInsuranceBy(index, 'sumAssured', -10000)()} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Minus size={16} strokeWidth={2.5} /></button>
-                                                    <button onClick={() => changeInsuranceBy(index, 'sumAssured', 10000)()} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Plus size={16} strokeWidth={2.5} /></button>
+                                                    <button
+                                                        onClick={() => changeInsuranceBy(index, 'sumAssured', -10000)()}
+                                                        className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors"
+                                                    >
+                                                        <Minus size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => changeInsuranceBy(index, 'sumAssured', 10000)()}
+                                                        className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors"
+                                                    >
+                                                        <Plus size={16} />
+                                                    </button>
                                                 </div>
                                             </div>
 
-                                            {/* CONDITIONAL: Surrender Checkbox & Configuration */}
+                                            {/* Surrender Box (Only allowed for valid types aka not term) */}
                                             {plan.type !== 'ประกันชั่วระยะเวลา' && (
-                                                <div className="pt-2 space-y-3">
-                                                    <label className="flex items-center gap-3 cursor-pointer select-none group/chk">
-                                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${plan.useSurrender ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 bg-white group-hover/chk:border-indigo-400'}`}>
-                                                            {plan.useSurrender && <Check size={12} className="text-white" />}
+                                                <div className="border border-slate-200 rounded-lg p-4 space-y-4 bg-slate-50/30">
+
+                                                    {/* Checkbox Header */}
+                                                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${plan.useSurrender ? 'bg-blue-600 border-blue-600' : 'bg-white border-slate-300'}`}>
+                                                            {plan.useSurrender && <Check size={14} className="text-white" strokeWidth={3} />}
                                                         </div>
                                                         <input type="checkbox" checked={plan.useSurrender} onChange={(e) => updateInsurancePlan(index, "useSurrender", e.target.checked)} className="hidden" />
-                                                        <span className={`text-sm font-bold ${plan.useSurrender ? 'text-indigo-600' : 'text-slate-600'}`}>เวนคืนประกัน</span>
+                                                        <span className="font-bold text-slate-700 text-sm">เวนคืนประกัน</span>
                                                     </label>
 
-                                                    {/* Surrender Details Panel */}
+                                                    {/* Surrender Content */}
                                                     {plan.useSurrender && (
-                                                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4 animate-in fade-in slide-in-from-top-2">
-                                                            {/* Mode Selection */}
+                                                        <div className="space-y-4 animate-in fade-in">
+
                                                             <div className="space-y-2">
-                                                                <Label className="text-slate-500 text-xs font-bold">รูปแบบมูลค่าเวนคืน</Label>
+                                                                <Label className="text-slate-500 font-medium text-sm">รูปแบบมูลค่าเวนคืน</Label>
                                                                 <div className="flex items-center gap-4">
                                                                     <label className="flex items-center gap-2 cursor-pointer">
-                                                                        <input
-                                                                            type="radio"
-                                                                            checked={plan.surrenderMode !== 'table'}
-                                                                            onChange={() => updateInsurancePlan(index, "surrenderMode", 'single')}
-                                                                            className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                                                        />
-                                                                        <span className="text-sm font-bold text-slate-700">กรอกค่าเดียว</span>
+                                                                        <input type="radio" checked={plan.surrenderMode !== 'table'} onChange={() => updateInsurancePlan(index, "surrenderMode", 'single')} className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
+                                                                        <span className="text-sm text-slate-700">กรอกค่าเดียว</span>
                                                                     </label>
                                                                     <label className="flex items-center gap-2 cursor-pointer">
-                                                                        <input
-                                                                            type="radio"
-                                                                            checked={plan.surrenderMode === 'table'}
-                                                                            onChange={() => updateInsurancePlan(index, "surrenderMode", 'table')}
-                                                                            className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                                                        />
-                                                                        <span className="text-sm font-bold text-slate-700">กรอกตารางเวนคืน</span>
+                                                                        <input type="radio" checked={plan.surrenderMode === 'table'} onChange={() => updateInsurancePlan(index, "surrenderMode", 'table')} className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
+                                                                        <span className="text-sm text-slate-700">กรอกตารางเวนคืน</span>
                                                                     </label>
                                                                 </div>
                                                             </div>
 
-                                                            {/* Surrender Age */}
-                                                            <div className="space-y-1">
-                                                                <Label className="text-slate-500 text-xs font-bold">อายุที่เวนคืน</Label>
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="flex-1 bg-white border border-slate-200 rounded-lg h-10 flex items-center px-3">
-                                                                        <NumericInput
-                                                                            value={plan.surrenderAge || 55}
-                                                                            onChange={(v) => updateInsurancePlan(index, "surrenderAge", v)}
-                                                                            className="w-full font-bold text-slate-700 bg-transparent border-none p-0 focus:ring-0 text-sm"
-                                                                        />
-                                                                    </div>
-                                                                    <button onClick={() => updateInsurancePlan(index, "surrenderAge", (Number(plan.surrenderAge) || 55) - 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Minus size={16} strokeWidth={2.5} /></button>
-                                                                    <button onClick={() => updateInsurancePlan(index, "surrenderAge", (Number(plan.surrenderAge) || 55) + 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Plus size={16} strokeWidth={2.5} /></button>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Single Value Input */}
-                                                            {plan.surrenderMode !== 'table' && (
-                                                                <div className="space-y-1 animate-in fade-in">
-                                                                    <Label className="text-slate-500 text-xs font-bold">มูลค่าที่เวนคืน</Label>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="flex-1 bg-white border border-slate-200 rounded-lg h-10 flex items-center px-3">
-                                                                            <NumericInput
-                                                                                value={plan.surrenderValue || 0}
-                                                                                onChange={(v) => updateInsurancePlan(index, "surrenderValue", v)}
-                                                                                className="w-full font-bold text-slate-700 bg-transparent border-none p-0 focus:ring-0 text-sm"
-                                                                            />
+                                                            {plan.surrenderMode !== 'table' ? (
+                                                                <>
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-slate-500 font-medium text-sm">อายุที่เวนคืน</Label>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="flex-1 bg-white border border-slate-200 rounded h-10 flex items-center px-3">
+                                                                                <NumericInput value={plan.surrenderAge || 55} onChange={(v) => updateInsurancePlan(index, "surrenderAge", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
+                                                                            </div>
+                                                                            <button onClick={() => updateInsurancePlan(index, "surrenderAge", (Number(plan.surrenderAge) || 55) - 1)} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Minus size={16} /></button>
+                                                                            <button onClick={() => updateInsurancePlan(index, "surrenderAge", (Number(plan.surrenderAge) || 55) + 1)} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Plus size={16} /></button>
                                                                         </div>
-                                                                        <button onClick={() => changeInsuranceBy(index, 'surrenderValue', -10000)()} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Minus size={16} strokeWidth={2.5} /></button>
-                                                                        <button onClick={() => changeInsuranceBy(index, 'surrenderValue', 10000)()} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Plus size={16} strokeWidth={2.5} /></button>
                                                                     </div>
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-slate-500 font-medium text-sm">มูลค่าที่เวนคืน</Label>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="flex-1 bg-white border border-slate-200 rounded h-10 flex items-center px-3">
+                                                                                <NumericInput value={plan.surrenderValue || 0} onChange={(v) => updateInsurancePlan(index, "surrenderValue", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
+                                                                            </div>
+                                                                            <button onClick={() => updateInsurancePlan(index, "surrenderValue", (Number(plan.surrenderValue) || 0) - 10000)} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Minus size={16} /></button>
+                                                                            <button onClick={() => updateInsurancePlan(index, "surrenderValue", (Number(plan.surrenderValue) || 0) + 10000)} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Plus size={16} /></button>
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+                                                            ) : (
+                                                                <div className="p-3 bg-blue-50 text-blue-700 rounded text-sm text-center">
+                                                                    ใช้ข้อมูลจากตารางมูลค่าเวนคืน
                                                                 </div>
                                                             )}
-
-                                                            {/* Table Mode Button */}
-                                                            {plan.surrenderMode === 'table' && (
-                                                                <div className="pt-1 animate-in fade-in">
-                                                                    <Label className="text-slate-500 text-xs font-bold block mb-2">ตารางเวนคืน</Label>
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        className="w-full justify-center gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-all font-bold"
-                                                                        onClick={() => onViewTable(plan.id)}
-                                                                    >
-                                                                        <TableIcon size={16} />
-                                                                        เปิดตารางเวนคืน (Open Table)
-                                                                    </Button>
-                                                                    <p className="text-[10px] text-slate-400 mt-2 text-center">คลิกเพื่อกรอกมูลค่าเวนคืนในแต่ละปี</p>
-                                                                </div>
-                                                            )}
-
-
                                                         </div>
                                                     )}
                                                 </div>
                                             )}
 
-                                            {/* CONDITIONAL: Endowment Fields */}
-                                            {plan.type === 'สะสมทรัพย์' && (
-                                                <div className="space-y-1 pt-2 animate-in fade-in slide-in-from-top-2">
-                                                    <Label className="text-slate-500 text-xs font-bold">ผลประโยชน์เมื่อครบกำหนด</Label>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex-1 bg-white border border-slate-200 rounded-lg h-10 flex items-center px-3">
-                                                            <NumericInput value={plan.maturityAmount || 0} onChange={(v) => updateInsurancePlan(index, "maturityAmount", v)} className="w-full font-bold text-slate-700 bg-transparent border-none p-0 focus:ring-0 text-sm" />
-                                                        </div>
-                                                        <button onClick={() => changeInsuranceBy(index, 'maturityAmount', -10000)()} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Minus size={16} strokeWidth={2.5} /></button>
-                                                        <button onClick={() => changeInsuranceBy(index, 'maturityAmount', 10000)()} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Plus size={16} strokeWidth={2.5} /></button>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* CONDITIONAL: Pension Fields */}
+                                            {/* Pension / Maturity Fields (Keep simple if needed, adhering to vertical stack) */}
                                             {plan.type === 'บำนาญ' && (
-                                                <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 border-t border-slate-100 mt-2">
+                                                <div className="space-y-4 pt-2 border-t border-slate-100">
                                                     <div className="space-y-1">
-                                                        <Label className="text-slate-500 text-xs font-bold">ผลประโยชน์เมื่อเสียชีวิต (ก่อนอายุรับบำนาญ)</Label>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="flex-1 bg-white border border-slate-200 rounded-lg h-10 flex items-center px-3">
-                                                                <NumericInput value={plan.deathBenefitPrePension || 0} onChange={(v) => updateInsurancePlan(index, "deathBenefitPrePension", v)} className="w-full font-bold text-slate-700 bg-transparent border-none p-0 focus:ring-0 text-sm" />
-                                                            </div>
-                                                            <button onClick={() => changeInsuranceBy(index, 'deathBenefitPrePension', -10000)()} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Minus size={16} strokeWidth={2.5} /></button>
-                                                            <button onClick={() => changeInsuranceBy(index, 'deathBenefitPrePension', 10000)()} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Plus size={16} strokeWidth={2.5} /></button>
+                                                        <Label className="text-slate-500 font-medium text-sm">เริ่มรับบำนาญ (อายุ)</Label>
+                                                        <div className="bg-white border border-slate-200 rounded h-10 flex items-center px-3">
+                                                            <NumericInput value={plan.pensionStartAge || 60} onChange={(v) => updateInsurancePlan(index, "pensionStartAge", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
                                                         </div>
                                                     </div>
-
-                                                    <div className="pt-2">
-                                                        <label className="flex items-center gap-3 cursor-pointer select-none group/chk mb-3">
-                                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${plan.unequalPension ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 bg-white group-hover/chk:border-indigo-400'}`}>
-                                                                {plan.unequalPension && <Check size={12} className="text-white" />}
-                                                            </div>
-                                                            <input type="checkbox" checked={plan.unequalPension || false} onChange={(e) => updateInsurancePlan(index, "unequalPension", e.target.checked)} className="hidden" />
-                                                            <span className="text-sm font-bold text-slate-600">ได้รับเงินเป็นช่วงไม่เท่ากัน</span>
-                                                        </label>
-
-                                                        {plan.unequalPension ? (
-                                                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                                                                {(plan.pensionTiers || []).map((tier, tIndex) => (
-                                                                    <div key={tIndex} className="p-4 border border-slate-200 rounded-xl bg-white shadow-sm space-y-3 relative group">
-                                                                        <div className="space-y-1">
-                                                                            <Label className="text-slate-700 text-xs font-bold">ช่วงอายุ</Label>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <div className="flex-1 bg-white border border-slate-200 rounded-lg h-10 flex items-center px-3">
-                                                                                    <NumericInput
-                                                                                        value={tier.startAge || "60"}
-                                                                                        onChange={(v) => {
-                                                                                            const newTiers = [...(plan.pensionTiers || [])];
-                                                                                            newTiers[tIndex] = { ...tier, startAge: String(v) };
-                                                                                            updateInsurancePlan(index, "pensionTiers", newTiers);
-                                                                                        }}
-                                                                                        className="w-full font-bold text-slate-700 bg-transparent border-none p-0 focus:ring-0 text-sm text-center"
-                                                                                    />
-                                                                                </div>
-                                                                                <span className="text-slate-400">-</span>
-                                                                                <div className="flex-1 bg-white border border-slate-200 rounded-lg h-10 flex items-center px-3">
-                                                                                    <NumericInput
-                                                                                        value={tier.endAge || "60"}
-                                                                                        onChange={(v) => {
-                                                                                            const newTiers = [...(plan.pensionTiers || [])];
-                                                                                            newTiers[tIndex] = { ...tier, endAge: String(v) };
-                                                                                            updateInsurancePlan(index, "pensionTiers", newTiers);
-                                                                                        }}
-                                                                                        className="w-full font-bold text-slate-700 bg-transparent border-none p-0 focus:ring-0 text-sm text-center"
-                                                                                    />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <div className="space-y-1">
-                                                                            <Label className="text-slate-700 text-xs font-bold">เงินบำนาญที่ได้รับ (ปีละ)</Label>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <div className="flex-1 bg-white border border-slate-200 rounded-lg h-10 flex items-center px-3">
-                                                                                    <NumericInput
-                                                                                        value={tier.amount || "0"}
-                                                                                        onChange={(v) => {
-                                                                                            const newTiers = [...(plan.pensionTiers || [])];
-                                                                                            newTiers[tIndex] = { ...tier, amount: String(v) };
-                                                                                            updateInsurancePlan(index, "pensionTiers", newTiers);
-                                                                                        }}
-                                                                                        className="w-full font-bold text-slate-700 bg-transparent border-none p-0 focus:ring-0 text-sm"
-                                                                                    />
-                                                                                </div>
-                                                                                <button
-                                                                                    onClick={() => {
-                                                                                        const newTiers = [...(plan.pensionTiers || [])];
-                                                                                        newTiers[tIndex] = { ...tier, amount: String(Math.max(0, (Number(tier.amount) || 0) - 10000)) };
-                                                                                        updateInsurancePlan(index, "pensionTiers", newTiers);
-                                                                                    }}
-                                                                                    className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"
-                                                                                >
-                                                                                    <Minus size={16} strokeWidth={2.5} />
-                                                                                </button>
-                                                                                <button
-                                                                                    onClick={() => {
-                                                                                        const newTiers = [...(plan.pensionTiers || [])];
-                                                                                        newTiers[tIndex] = { ...tier, amount: String((Number(tier.amount) || 0) + 10000) };
-                                                                                        updateInsurancePlan(index, "pensionTiers", newTiers);
-                                                                                    }}
-                                                                                    className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"
-                                                                                >
-                                                                                    <Plus size={16} strokeWidth={2.5} />
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <div>
-                                                                            <button
-                                                                                onClick={() => {
-                                                                                    const newTiers = (plan.pensionTiers || []).filter((_, i) => i !== tIndex);
-                                                                                    updateInsurancePlan(index, "pensionTiers", newTiers);
-                                                                                }}
-                                                                                className="px-3 py-1.5 bg-red-50 text-red-500 rounded-md text-sm font-bold hover:bg-red-100 hover:text-red-700 transition-colors"
-                                                                            >
-                                                                                ลบ
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const newTiers = [...(plan.pensionTiers || [])];
-                                                                        newTiers.push({ startAge: "60", endAge: "65", amount: "0" });
-                                                                        updateInsurancePlan(index, "pensionTiers", newTiers);
-                                                                    }}
-                                                                    className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-100 hover:text-blue-700 transition-all flex items-center gap-2"
-                                                                >
-                                                                    <Plus size={16} />
-                                                                    เพิ่มช่วง
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="space-y-4 animate-in fade-in">
-                                                                <div className="space-y-1">
-                                                                    <Label className="text-slate-500 text-xs font-bold">เริ่มรับบำนาญ</Label>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="flex-1 bg-white border border-slate-200 rounded-lg h-10 flex items-center px-3">
-                                                                            <NumericInput value={plan.pensionStartAge || 60} onChange={(v) => updateInsurancePlan(index, "pensionStartAge", v)} className="w-full font-bold text-slate-700 bg-transparent border-none p-0 focus:ring-0 text-sm" />
-                                                                        </div>
-                                                                        <button onClick={() => updateInsurancePlan(index, "pensionStartAge", (Number(plan.pensionStartAge) || 60) - 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Minus size={16} strokeWidth={2.5} /></button>
-                                                                        <button onClick={() => updateInsurancePlan(index, "pensionStartAge", (Number(plan.pensionStartAge) || 60) + 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Plus size={16} strokeWidth={2.5} /></button>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="space-y-1">
-                                                                    <Label className="text-slate-500 text-xs font-bold">บำนาญ % ของเงินทุน</Label>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="flex-1 bg-white border border-slate-200 rounded-lg h-10 flex items-center px-3">
-                                                                            <NumericInput value={plan.pensionPercent || 0} onChange={(v) => updateInsurancePlan(index, "pensionPercent", v)} className="w-full font-bold text-slate-700 bg-transparent border-none p-0 focus:ring-0 text-sm" />
-                                                                        </div>
-                                                                        <button onClick={() => updateInsurancePlan(index, "pensionPercent", (Number(plan.pensionPercent) || 0) - 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Minus size={16} strokeWidth={2.5} /></button>
-                                                                        <button onClick={() => updateInsurancePlan(index, "pensionPercent", (Number(plan.pensionPercent) || 0) + 1)} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 bg-white shadow-sm active:scale-95 transition-all"><Plus size={16} strokeWidth={2.5} /></button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
+                                                    <div className="space-y-1">
+                                                        <Label className="text-slate-500 font-medium text-sm">บำนาญปีละ (บาท)</Label>
+                                                        <div className="bg-white border border-slate-200 rounded h-10 flex items-center px-3">
+                                                            <NumericInput value={plan.pensionAmount || 0} onChange={(v) => updateInsurancePlan(index, "pensionAmount", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {plan.type === 'สะสมทรัพย์' && (
+                                                <div className="space-y-1 pt-2 border-t border-slate-100">
+                                                    <Label className="text-slate-500 font-medium text-sm">ผลประโยชน์เมื่อครบกำหนด</Label>
+                                                    <div className="bg-white border border-slate-200 rounded h-10 flex items-center px-3">
+                                                        <NumericInput value={plan.maturityAmount || 0} onChange={(v) => updateInsurancePlan(index, "maturityAmount", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
                                                     </div>
                                                 </div>
                                             )}
 
-                                            {/* Action Footer */}
-                                            <div className="flex justify-between items-center pt-4 mt-2">
-                                                <Button
+                                            {/* Footer Buttons */}
+                                            <div className="flex items-center justify-between pt-4 mt-2">
+                                                <button
                                                     onClick={() => removeInsurancePlan(plan.id)}
-                                                    variant="ghost"
-                                                    className="bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 font-bold text-xs h-9 px-4 rounded-lg"
+                                                    className="bg-red-100/80 hover:bg-red-100 text-red-500 font-bold text-xs px-4 py-2 rounded-lg transition-colors"
                                                 >
                                                     ลบ
-                                                </Button>
+                                                </button>
 
-                                                <div className="flex gap-2">
-                                                    <Button
+                                                <div className="flex items-center gap-3">
+                                                    <button
                                                         onClick={() => updateInsurancePlan(index, "expanded", false)}
-                                                        className="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 font-bold text-xs h-9 px-4 rounded-lg"
+                                                        className="bg-yellow-100/80 hover:bg-yellow-100 text-yellow-600 font-bold text-xs px-4 py-2 rounded-lg transition-colors"
                                                     >
                                                         ย่อ
-                                                    </Button>
-                                                    <Button
+                                                    </button>
+                                                    <button
                                                         onClick={() => onViewTable(plan.id)}
-                                                        className="bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold text-xs h-9 px-4 rounded-lg"
+                                                        className="bg-blue-100 hover:bg-blue-200 text-blue-600 font-bold text-xs px-4 py-2 rounded-lg transition-colors"
                                                     >
                                                         ดูตาราง
-                                                    </Button>
+                                                    </button>
                                                 </div>
                                             </div>
+
                                         </div>
-                                    )
-                                    }
+                                    ) : (
+                                        // Collapsed Header View
+                                        <div
+                                            className="flex items-center justify-between cursor-pointer"
+                                            onClick={() => updateInsurancePlan(index, "expanded", true)}
+                                        >
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-slate-700">{plan.planName || 'New Plan'}</span>
+                                                <span className="text-xs text-slate-400">{plan.type} • ทุน {Number(plan.sumAssured).toLocaleString()}</span>
+                                            </div>
+                                            <ChevronDown size={20} className="text-slate-400" />
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
 
+                        {/* Empty State */}
                         {form.insurancePlans.length === 0 && (
-                            <div className="p-8 flex flex-col items-center justify-center text-slate-400 gap-3">
-                                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
+                            <div className="p-8 flex flex-col items-center justify-center text-slate-400 gap-3 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
                                     <ShieldCheck size={24} className="text-slate-300" />
                                 </div>
                                 <span className="font-bold text-sm">ยังไม่มีแผนประกัน</span>
-                                <Button onClick={addInsurancePlan} variant="outline" size="sm" className="mt-2 text-blue-600 border-blue-200 hover:bg-blue-50">
-                                    + เพิ่มเลย
+                                <Button onClick={addInsurancePlan} variant="outline" size="sm" className="mt-1 text-blue-600 border-blue-200 hover:bg-blue-50">
+                                    + เพิ่มแผนใหม่
                                 </Button>
                             </div>
                         )}
@@ -985,11 +838,11 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         )}
 
                         {step < 3 ? (
-                            <Button type="button" onClick={nextStep} className="flex-1 h-14 text-base rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-xl shadow-blue-200 transition-all hover:translate-y-[-2px] flex items-center justify-center gap-2">
+                            <Button type="button" onClick={nextStep} className="flex-1 h-14 text-base rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-xl shadow-blue-200 transition-all hover:translate-y-[-2px] flex items-center justify-center gap-2">
                                 ถัดไป <ArrowRight size={20} />
                             </Button>
                         ) : (
-                            <Button type="button" onClick={onCalculate} className="flex-1 h-14 text-lg rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-xl shadow-blue-200 transition-all hover:translate-y-[-2px] flex items-center justify-center gap-2">
+                            <Button type="button" onClick={onCalculate} className="flex-1 h-14 text-lg rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-xl shadow-blue-200 transition-all hover:translate-y-[-2px] flex items-center justify-center gap-2">
                                 <Calculator size={20} /> คำนวณแผน
                             </Button>
                         )}

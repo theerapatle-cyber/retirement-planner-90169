@@ -90,21 +90,21 @@ export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) =>
 
                         <div className="space-y-8 relative z-10">
                             <div>
-                                <span className="text-xs font-bold tracking-wider text-indigo-600 uppercase bg-indigo-50 px-3 py-1 rounded-full">Welcome Back</span>
-                                <h2 className="text-3xl font-bold text-slate-900 mt-4 tracking-tight">เริ่มต้นใช้งาน</h2>
-                                <p className="text-sm text-slate-500 mt-2">กรอกชื่อของคุณเพื่อเข้าสู่ระบบจำลอง (Demo)</p>
+                                <span className="text-xs font-bold tracking-wider text-indigo-700 uppercase bg-indigo-100 px-3 py-1 rounded-full">ยินดีต้อนรับ</span>
+                                <h2 className="text-3xl font-bold text-slate-900 mt-4 tracking-tight">เข้าสู่ระบบ</h2>
+                                <p className="text-sm text-slate-500 mt-2">กรอกชื่อของคุณเพื่อเข้าใช้งานระบบวางแผนเกษียณ</p>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="space-y-2 group">
-                                    <Label className="text-xs font-bold text-slate-700 ml-1">ชื่อผู้ใช้งาน (User Name)</Label>
+                                    <Label className="text-xs font-bold text-slate-700 ml-1">ชื่อผู้ใช้งาน</Label>
                                     <div className="relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                                         </div>
                                         <Input
-                                            className="h-14 pl-12 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-base"
-                                            placeholder="Ex. Somchai"
+                                            className="h-14 pl-12 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-medium text-base placeholder:text-slate-300"
+                                            placeholder="กรอกชื่อของคุณ"
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
                                             onKeyDown={(e) => e.key === 'Enter' && onLogin(name || "User")}
@@ -113,14 +113,14 @@ export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) =>
                                 </div>
 
                                 <div className="space-y-2 group">
-                                    <Label className="text-xs font-bold text-slate-700 ml-1">รหัสผ่าน (Password)</Label>
+                                    <Label className="text-xs font-bold text-slate-700 ml-1">รหัสผ่าน</Label>
                                     <div className="relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                                         </div>
                                         <Input
                                             type="password"
-                                            className="h-14 pl-12 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-base"
+                                            className="h-14 pl-12 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-medium text-base placeholder:text-slate-300"
                                             placeholder="••••••••"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
@@ -131,16 +131,16 @@ export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) =>
 
                                 <Button
                                     onClick={() => onLogin(name || "User")}
-                                    className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold text-lg shadow-xl shadow-indigo-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                    className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold text-lg shadow-xl shadow-indigo-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
                                 >
-                                    เข้าสู่ระบบ
+                                    เริ่มต้นใช้งาน
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
                                 </Button>
                             </div>
 
-                            <div className="text-center">
+                            <div className="text-center pt-2">
                                 <button onClick={() => onLogin("Guest")} className="text-xs font-semibold text-slate-400 hover:text-indigo-600 hover:underline transition-all">
-                                    เข้าใช้งานแบบ Guest Mode (ไม่ต้องกรอกชื่อ)
+                                    เข้าใช้งานแบบ Guest Mode (ไม่ต้องกรอกข้อมูล)
                                 </button>
                             </div>
                         </div>

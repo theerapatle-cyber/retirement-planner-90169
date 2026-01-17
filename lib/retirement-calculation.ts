@@ -15,7 +15,7 @@ export const initialForm: FormState = {
     retireAge: "60",
     lifeExpectancy: "85",
 
-    currentSavings: "334,000",
+    currentSavings: "200,000",
     monthlySaving: "10,000",
     expectedReturn: "7",
     inflation: "3",
@@ -666,8 +666,8 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
 
     const startAge = Math.max(0, Math.floor(Number(currentAge) || 0));
     const endAge = Math.max(startAge, Math.floor(Number(lifeExpectancy) || startAge));
-    const totalYears = endAge - startAge;
 
+    // Rates
     let r_pre = expectedReturn / 100;
     if (returnMode === "custom" && allocations.length > 0) {
         const sumW = allocations.reduce((s, a) => s + (a.weight || 0), 0);
@@ -676,122 +676,149 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
             r_pre = r / 100;
         }
     }
-
     const r_post = retireReturnAfter / 100;
     const r_inf = (inflation || 0) / 100;
+
+    // Constants for Retirement
     const expenseAnnualAtRetire = (retireExtraExpense * 12) * Math.pow(1 + r_inf, Math.max(0, retireAge - startAge));
     const incomeAnnualAtRetire = (retireMonthlyIncome * 12);
     const specialAnnualAtRetire = (retireSpecialAnnual || 0) * Math.pow(1 + r_inf, Math.max(0, retireAge - startAge));
 
+    // Target total for reference line
+    const targetTotal = result.targetFund || 0;
+
+    // Arrays
     const labels: string[] = [];
     const actual: number[] = [];
     const required: number[] = [];
 
-    let balance = currentSavings || 0;
-    const targetTotal = result.targetFund || 0;
+    // History Tracking
+    const actualHistory: (number | null)[] = new Array((endAge - startAge) + 1).fill(null);
+    const historyMapping: Record<number, number> = {};
+    if (inputs.stepIncrements) {
+        inputs.stepIncrements.forEach((item) => historyMapping[item.age] = item.monthlySaving);
+    }
 
-    for (let y = 0; y <= totalYears; y++) {
-        const age = startAge + y;
-        labels.push(String(age));
-
-        // Insurance Inflow Check (Sum of all plans)
-        let insuranceInflow = 0;
+    // --- Helper to get Insurance Inflow for a specific Age ---
+    const getInsuranceInflow = (checkAge: number) => {
+        let flow = 0;
         insurancePlans.forEach((plan: InsurancePlanInput) => {
             if (!plan.active) return;
-
-            // 1. Surrender Logic
-            if (plan.useSurrender && plan.surrenderValue > 0 && age === plan.surrenderAge) {
-                insuranceInflow += plan.surrenderValue;
-            }
-
-            // 2. Maturity (Endowment)
-            if (plan.type === "สะสมทรัพย์" && age === plan.coverageAge) {
-                insuranceInflow += plan.maturityAmount;
-            }
-
-            // 3. Cash Back (Endowment)
+            // 1. Surrender
+            if (plan.useSurrender && plan.surrenderValue > 0 && checkAge === plan.surrenderAge) flow += plan.surrenderValue;
+            // 2. Maturity
+            if (plan.type === "สะสมทรัพย์" && checkAge === plan.coverageAge) flow += plan.maturityAmount;
+            // 3. Cash Back
             if (plan.type === "สะสมทรัพย์" && plan.cashBackAmount > 0) {
-                const policyYear = age - currentAge;
-                if (policyYear > 0 && policyYear % plan.cashBackFrequency === 0 && age <= plan.coverageAge) {
-                    insuranceInflow += plan.cashBackAmount;
-                }
+                const policyYear = checkAge - currentAge;
+                if (policyYear > 0 && policyYear % plan.cashBackFrequency === 0 && checkAge <= plan.coverageAge) flow += plan.cashBackAmount;
             }
-
-            // 4. Pension (Annuity)
+            // 4. Pension
             if (plan.type === "บำนาญ") {
                 if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
                     for (const tier of plan.pensionTiers) {
-                        if (age >= tier.startAge && age <= tier.endAge) {
-                            insuranceInflow += tier.amount;
-                        }
+                        if (checkAge >= tier.startAge && checkAge <= tier.endAge) flow += tier.amount;
                     }
                 } else {
                     let pensionAmt = plan.pensionAmount;
-                    if (plan.pensionPercent > 0) {
-                        pensionAmt = (plan.sumAssured * plan.pensionPercent) / 100;
-                    }
-                    if (age >= plan.pensionStartAge && age <= plan.pensionEndAge) {
-                        insuranceInflow += pensionAmt;
-                    }
+                    if (plan.pensionPercent > 0) pensionAmt = (plan.sumAssured * plan.pensionPercent) / 100;
+                    if (checkAge >= plan.pensionStartAge && checkAge <= plan.pensionEndAge) flow += pensionAmt;
                 }
             }
         });
+        return flow;
+    };
 
-        if (y > 0) {
-            if (age < retireAge) {
-                balance = balance * (1 + r_pre);
-                let monthly = monthlySaving || 0;
-                if (savingMode === "step5" && stepIncrements && stepIncrements.length > 0) {
-                    for (const step of stepIncrements) {
-                        if (age - 1 >= step.age && step.monthlySaving > 0) {
-                            monthly = step.monthlySaving;
-                        }
-                    }
+    // --- Simulation ---
+    let balance = currentSavings || 0;
+
+    // Push Initial Point (Start Age)
+    labels.push(String(startAge));
+    actual.push(balance);
+    required.push(targetTotal);
+    if (historyMapping[startAge] !== undefined) actualHistory[0] = historyMapping[startAge];
+
+    // Iterate through years to simulate movement from Age X -> Age X+1
+    for (let age = startAge; age < endAge; age++) {
+        // Insurance Inflow happening DURING 'age'
+        // EXCEPT if age === retireAge, we handled it in the transition logic? 
+        // No, let's stick to standard flow: Inflow accumulates at end of year.
+        // BUT, critical 'At Retirement' inflows are treated as Lump Sum available at START of Retirement (Age 60).
+        // This means End of Age 59 + Age 60 Inflows -> Start of Age 60.
+
+        const isPreRetire = age < retireAge;
+        const inflow = getInsuranceInflow(age); // Inflow for the current simulation year
+
+        if (isPreRetire) {
+            // Wealth Accumulation Phase
+            balance = balance * (1 + r_pre);
+
+            // Savings
+            let monthly = monthlySaving || 0;
+            if (savingMode === "step5" && stepIncrements && stepIncrements.length > 0) {
+                for (const step of stepIncrements) {
+                    if (age >= step.age && step.monthlySaving > 0) monthly = step.monthlySaving;
                 }
-                balance += monthly * 12;
-                balance += insuranceInflow;
+            }
+            balance += monthly * 12;
 
-                // Lump sum at retirement point (end of year before retireAge)
-                if (age === retireAge - 1) {
-                    balance += (retireFundOther || 0);
-                }
-            } else {
-                balance = balance * (1 + r_post);
-                const yearsInRetireSoFar = age - retireAge;
-                const expenseThisYear = expenseAnnualAtRetire * Math.pow(1 + r_inf, Math.max(0, yearsInRetireSoFar));
-                const specialThisYear = specialAnnualAtRetire * Math.pow(1 + r_inf, Math.max(0, yearsInRetireSoFar));
-                const incomeThisYear = incomeAnnualAtRetire;
-                const netWithdrawal = Math.max(0, expenseThisYear + specialThisYear - incomeThisYear);
+            // Insurance Inflow (Regular)
+            balance += inflow;
 
-                balance += insuranceInflow;
-                balance -= netWithdrawal;
-                if (!Number.isFinite(balance) || balance < 0) balance = Math.max(0, balance);
+            // SPECIAL TRANSITION: End of Age 59 (Start of Age 60)
+            if (age === retireAge - 1) {
+                balance += (retireFundOther || 0);
+
+                // Add Inflows explicitly scheduled for 'retireAge' (e.g. Maturity at 60)
+                // This ensures 'projectedFund' behavior is matched at the peak
+                const retireYearInflow = getInsuranceInflow(retireAge);
+                balance += retireYearInflow;
             }
         } else {
-            // Initial year inflow check (e.g. if surrender immediately? unlikely but consistent)
-            if (insuranceInflow > 0) {
-                balance += insuranceInflow;
+            // Decumulation Phase (Age >= RetireAge)
+            // Note: If age === retireAge, we already added its specific inflows in the transition step above.
+            // So we should NOT add inflow again if we consider it "consumed" or "added to pot".
+            // However, regular pension income during retirement should still flow.
+            // Let's assume 'retireYearInflow' added above covered Maturity/Surrender at 60.
+            // We should avoid double counting.
+
+            // Logic: 
+            // If age === retireAge, skip inflow addition (it was added at transition).
+            // Unless it's a recurring pension? 
+            // For safety and consistency with 'calculateRetirement' logic:
+            // The 'projectedFund' included 'retireYearInflow'.
+            // In post-calc, 'insuranceCashInflow' is checked inside loop.
+            // We need to be careful.
+
+            let currentInflow = inflow;
+            if (age === retireAge) {
+                // We already added 'getInsuranceInflow(retireAge)' at the end of (retireAge-1).
+                currentInflow = 0;
             }
+
+            balance = balance * (1 + r_post);
+
+            const yearsInRetireSoFar = age - retireAge;
+            const expenseThisYear = expenseAnnualAtRetire * Math.pow(1 + r_inf, yearsInRetireSoFar);
+            const specialThisYear = specialAnnualAtRetire * Math.pow(1 + r_inf, yearsInRetireSoFar);
+            const incomeThisYear = incomeAnnualAtRetire;
+
+            const netWithdrawal = Math.max(0, expenseThisYear + specialThisYear - incomeThisYear);
+
+            balance += currentInflow;
+            balance -= netWithdrawal;
         }
 
-        actual.push(Math.max(0, balance));
+        if (!Number.isFinite(balance) || balance < 0) balance = Math.max(0, balance);
+
+        // Push Result (Start of Age + 1)
+        labels.push(String(age + 1));
+        actual.push(balance);
         required.push(targetTotal);
-    }
 
-    const actualHistory: (number | null)[] = new Array(totalYears + 1).fill(null);
-    const historyMapping: Record<number, number> = {};
-    if (inputs.stepIncrements) {
-        inputs.stepIncrements.forEach((item) => {
-            historyMapping[item.age] = item.monthlySaving;
-        });
-    }
-
-    for (let y = 0; y <= totalYears; y++) {
-        const age = startAge + y;
-        if (historyMapping[age] !== undefined) {
-            const val = historyMapping[age];
-            if (val > 0) actualHistory[y] = val;
-        }
+        // History mapping
+        const idx = age + 1 - startAge;
+        if (historyMapping[age + 1] !== undefined) actualHistory[idx] = historyMapping[age + 1];
     }
 
     return { labels, actual, required, actualHistory };

@@ -27,6 +27,8 @@ import {
 import { Plus, X as CloseIcon, Table as TableIcon, PanelLeftOpen, PanelLeftClose } from "lucide-react";
 import { PlanManager } from "./PlanManager";
 
+import { buildProjectionSeries } from "@/lib/retirement-calculation";
+
 interface RetirementDashboardProps {
     user: { name: string } | null;
     form: FormState;
@@ -114,12 +116,75 @@ export const RetirementDashboard = ({
 
     const { insuranceChartData } = useInsuranceLogic(form);
 
+    // Compute data for Print Table
+    const printData = React.useMemo(() => {
+        const { labels, actual, required, actualHistory } = buildProjectionSeries(inputs, result);
+        return labels.map((label: string, i: number) => {
+            const age = Number(label);
+            const savings = actual[i];
+            const target = Number(label) <= Number(inputs.retireAge) ? required[i] : 0;
+
+            // Get Sum Assured for this age
+            let sumAssured = 0;
+            if (insuranceChartData) {
+                const idx = insuranceChartData.labels.indexOf(age);
+                if (idx !== -1) sumAssured = (insuranceChartData.datasets[0].data[idx] as number) || 0;
+            }
+
+            return { age, savings, target, sumAssured };
+        });
+    }, [inputs, result, insuranceChartData]);
+
     const mcSimulations = Number(form.monteCarloSimulations) || 1500;
 
     return (
-        <div className="min-h-screen bg-white pb-20 font-sans overflow-x-hidden relative">
-            {/* Background Grid Pattern - Softened */}
-            <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
+        <div className="min-h-screen bg-white pb-20 font-sans overflow-x-hidden relative print:overflow-visible print:bg-white print-no-padding print-reset-height">
+            {/* Print Styles */}
+            <style type="text/css" media="print">
+                {`
+                @page { size: landscape; margin: 4mm; }
+                body { 
+                    -webkit-print-color-adjust: exact; 
+                    print-color-adjust: exact; 
+                    background: white;
+                }
+                
+                /* Reset Main Layout for Print */
+                .print-no-padding { padding: 0 !important; margin: 0 !important; }
+                .print-reset-height { min-height: 0 !important; height: auto !important; overflow: visible !important; }
+                
+                /* Layout Grid for Single Page */
+                .print-layout-container {
+                    display: grid;
+                    grid-template-rows: auto 1fr auto;
+                    height: 98vh; /* Fit within page */
+                    width: 100%;
+                    gap: 10px;
+                }
+
+                /* Chart Specifics */
+                #printable-chart { 
+                    height: 320px !important; 
+                    border: 1px solid #dee2e6 !important;
+                    box-shadow: none !important;
+                    border-radius: 8px !important;
+                    break-inside: avoid;
+                }
+                
+                /* Data Table Specifics */
+                #print-data-table { 
+                    display: block !important; 
+                    margin-top: 10px !important;
+                    font-size: 9px;
+                }
+                
+                /* Hide everything else */
+                .print-hidden, header, nav, footer, .fixed, .sticky { display: none !important; }
+                `}
+            </style>
+
+            {/* Background Grid Pattern - Hide on Print */}
+            <div className="absolute inset-0 w-full h-full pointer-events-none z-0 print:hidden">
                 <div className="absolute inset-0 opacity-[0.2]"
                     style={{
                         backgroundImage: "linear-gradient(#cbd5e1 1px, transparent 1px), linear-gradient(90deg, #cbd5e1 1px, transparent 1px)",
@@ -128,8 +193,9 @@ export const RetirementDashboard = ({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-90" />
             </div>
-            {/* TOP NAVIGATION BAR */}
-            <div className="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4 shadow-sm flex items-center justify-between mb-8">
+            {/* TOP NAVIGATION BAR - Hide on Print */}
+            <div className="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4 shadow-sm flex items-center justify-between mb-8 print:hidden">
+                {/* ... existing header content ... */}
                 <div className="flex items-center gap-3">
 
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-200">
@@ -162,17 +228,29 @@ export const RetirementDashboard = ({
                 </div>
             </div>
 
-            <div className="w-full px-4 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
+            <div className="w-full px-4 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10 print:px-0 print:space-y-4">
 
-                {/* Print Summary Section */}
+                {/* Print Only Header */}
+                <div className="hidden print:block mb-8 border-b-2 border-slate-800 pb-4">
+                    <div className="flex justify-between items-end">
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-900 uppercase">Retirement Plan Report</h1>
+                            <p className="text-slate-500 text-sm mt-1 font-medium">รายงานวางแผนเกษียณอายุสำหรับ: {user?.name || "Guest User"}</p>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Date</div>
+                            <div className="text-lg font-bold text-slate-900">{new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                        </div>
+                    </div>
+                </div>
 
-
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 break-inside-avoid px-1">
+                {/* Header (Original - hide on print) */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 break-inside-avoid px-1 print:hidden">
                     <div>
                         <h2 className="text-2xl font-black text-slate-800 tracking-tight">สรุปผลลัพธ์ทางการเงิน</h2>
                         <p className="text-slate-500 text-sm font-medium mt-1">วางแผนการรับมือเกษียณด้วยเครื่องมือแบบเห็นภาพ</p>
                     </div>
+                    {/* ... buttons ... */}
                     <div className="flex flex-wrap items-center gap-3">
                         {planType === "family" && (
                             <Button
@@ -212,12 +290,12 @@ export const RetirementDashboard = ({
 
 
                 {/* Main Content Grid */}
-                <div className={`grid grid-cols-1 gap-8 transition-all duration-300 ${isSidebarOpen ? 'lg:grid-cols-[480px_1fr]' : 'lg:grid-cols-1'}`}>
+                <div className={`grid grid-cols-1 gap-8 transition-all duration-300 ${isSidebarOpen ? 'lg:grid-cols-[480px_1fr]' : 'lg:grid-cols-1'} print:grid-cols-1 print:gap-0`}>
 
-                    {/* LEFT AREA: Inputs (Col 1) */}
-                    <div className={`space-y-6 ${isSidebarOpen ? '' : 'hidden'} lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-2 custom-scrollbar`}>
+                    {/* LEFT AREA: Inputs (Col 1) - Hide on Print */}
+                    <div className={`space-y-6 ${isSidebarOpen ? '' : 'hidden'} lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-2 custom-scrollbar print:hidden`}>
                         <div>
-                            {/* Header is now inside, or we can keep a small title above if needed, but visually cleaner without double headers */}
+                            {/* ... Inputs ... */}
                             {/* We'll remove the outer header "ข้อมูลแผนเกษียณ" since the Single Card has its own headers inside */}
                             <RetirementInputSection
                                 user={user}
@@ -418,12 +496,15 @@ export const RetirementDashboard = ({
                                         <p className="text-sm text-slate-500 font-medium pl-4.5">Wealth Projection & Goal Analysis</p>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-3">
-                                        <div className="flex bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200 mr-2">
+                                        <div className="flex bg-slate-100 p-1 rounded-full border border-slate-200 shadow-inner mr-2">
                                             {[1, 5, 10].map((interval) => (
                                                 <button
                                                     key={interval}
                                                     onClick={() => setChartTickInterval(interval)}
-                                                    className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${chartTickInterval === interval ? "bg-white text-indigo-600 shadow-sm ring-1 ring-black/5" : "text-slate-400 hover:text-slate-600"}`}
+                                                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 ${chartTickInterval === interval
+                                                        ? "bg-white text-indigo-600 shadow-sm hover:shadow-md scale-105"
+                                                        : "text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50"
+                                                        }`}
                                                 >
                                                     {interval} ปี
                                                 </button>
@@ -438,7 +519,7 @@ export const RetirementDashboard = ({
                                         </button>
                                     </div>
                                 </div>
-                                <div id="printable-chart" className="w-full relative h-[500px] bg-gradient-to-b from-white to-slate-50/50 rounded-2xl border border-slate-100 p-4">
+                                <div id="printable-chart" className="w-full relative h-[500px] print:h-[300px] bg-gradient-to-b from-white to-slate-50/50 rounded-2xl border border-slate-100 p-4">
                                     <ProjectionChart
                                         inputs={inputs}
                                         result={result}
@@ -449,7 +530,7 @@ export const RetirementDashboard = ({
                                         chartTickInterval={chartTickInterval}
                                     />
                                 </div>
-                                <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-4 pt-6 border-t border-slate-100">
+                                <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-4 pt-6 border-t border-slate-100 print:hidden">
                                     <label className="flex items-center gap-3 cursor-pointer select-none group/toggle">
                                         <div className={`w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center ${showSumAssured ? "bg-orange-500 border-orange-500 shadow-sm" : "bg-white border-slate-300 group-hover/toggle:border-slate-400"}`}>
                                             {showSumAssured && <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
@@ -471,10 +552,91 @@ export const RetirementDashboard = ({
                                 </div>
                             </div>
 
+                            {/* PRINT ONLY: Chart Data Table */}
+                            <div id="print-data-table" className="hidden print:block mt-4">
+                                <h3 className="text-sm font-black text-slate-900 mb-2 border-l-4 border-indigo-600 pl-2">รายละเอียดข้อมูลรายปี (Data Table)</h3>
+                                <div className="grid grid-cols-3 gap-4 text-[8px] leading-tight">
+                                    {/* Column 1 */}
+                                    <div className="border border-slate-200 rounded-lg overflow-hidden">
+                                        <table className="w-full text-left">
+                                            <thead className="bg-slate-100 font-bold text-slate-700">
+                                                <tr>
+                                                    <th className="py-1 px-1 text-center">อายุ</th>
+                                                    <th className="py-1 px-1 text-right">เงินออม</th>
+                                                    <th className="py-1 px-1 text-right">เป้าหมาย</th>
+                                                    <th className="py-1 px-1 text-right">ทุนประกัน</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {printData.slice(0, Math.ceil(printData.length / 3)).map((row: any) => (
+                                                    <tr key={row.age} className="even:bg-slate-50">
+                                                        <td className="py-0.5 px-1 text-center font-bold">{row.age}</td>
+                                                        <td className="py-0.5 px-1 text-right text-emerald-600">{formatNumber(row.savings)}</td>
+                                                        <td className="py-0.5 px-1 text-right text-slate-500">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
+                                                        <td className="py-0.5 px-1 text-right text-orange-500">{row.sumAssured > 0 ? formatNumber(row.sumAssured) : "-"}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Column 2 */}
+                                    <div className="border border-slate-200 rounded-lg overflow-hidden">
+                                        <table className="w-full text-left">
+                                            <thead className="bg-slate-100 font-bold text-slate-700">
+                                                <tr>
+                                                    <th className="py-1 px-1 text-center">อายุ</th>
+                                                    <th className="py-1 px-1 text-right">เงินออม</th>
+                                                    <th className="py-1 px-1 text-right">เป้าหมาย</th>
+                                                    <th className="py-1 px-1 text-right">ทุนประกัน</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {printData.slice(Math.ceil(printData.length / 3), Math.ceil(printData.length * 2 / 3)).map((row: any) => (
+                                                    <tr key={row.age} className="even:bg-slate-50">
+                                                        <td className="py-0.5 px-1 text-center font-bold">{row.age}</td>
+                                                        <td className="py-0.5 px-1 text-right text-emerald-600">{formatNumber(row.savings)}</td>
+                                                        <td className="py-0.5 px-1 text-right text-slate-500">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
+                                                        <td className="py-0.5 px-1 text-right text-orange-500">{row.sumAssured > 0 ? formatNumber(row.sumAssured) : "-"}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Column 3 */}
+                                    <div className="border border-slate-200 rounded-lg overflow-hidden">
+                                        <table className="w-full text-left">
+                                            <thead className="bg-slate-100 font-bold text-slate-700">
+                                                <tr>
+                                                    <th className="py-1 px-1 text-center">อายุ</th>
+                                                    <th className="py-1 px-1 text-right">เงินออม</th>
+                                                    <th className="py-1 px-1 text-right">เป้าหมาย</th>
+                                                    <th className="py-1 px-1 text-right">ทุนประกัน</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {printData.slice(Math.ceil(printData.length * 2 / 3)).map((row: any) => (
+                                                    <tr key={row.age} className="even:bg-slate-50">
+                                                        <td className="py-0.5 px-1 text-center font-bold">{row.age}</td>
+                                                        <td className="py-0.5 px-1 text-right text-emerald-600">{formatNumber(row.savings)}</td>
+                                                        <td className="py-0.5 px-1 text-right text-slate-500">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
+                                                        <td className="py-0.5 px-1 text-right text-orange-500">{row.sumAssured > 0 ? formatNumber(row.sumAssured) : "-"}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div className="text-[8px] text-slate-400 mt-1 text-right">
+                                    *ตารางแสดงข้อมูลรายปีเพื่อประกอบการพิจารณา
+                                </div>
+                            </div>
+
 
 
                             {/* Side Column Widgets */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:hidden">
                                 <AllocationWidget inputs={inputs} />
                                 <MonteCarloWidget
                                     mcResult={mcResult}

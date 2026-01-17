@@ -165,10 +165,13 @@
 }
 
 @media print {
+
+  /* Hide everything by default */
   body * {
     visibility: hidden;
   }
 
+  /* Individual Chart Print View */
   #printable-chart,
   #printable-chart * {
     visibility: visible;
@@ -184,12 +187,30 @@
     padding: 20px;
     background: white;
     z-index: 9999;
-    border: none;
-    box-shadow: none;
   }
 
-  @page {
-    size: landscape;
+  /* Family Report Print View (Document Style) */
+  #family-print-report,
+  #family-print-report * {
+    visibility: visible;
+  }
+
+  #family-print-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    min-height: 100vh;
     margin: 0;
+    padding: 40px;
+    background: white;
+    color: black;
+    z-index: 9999;
+  }
+
+  /* Reset layout for printing functionality */
+  @page {
+    size: auto;
+    margin: 0mm;
   }
 }

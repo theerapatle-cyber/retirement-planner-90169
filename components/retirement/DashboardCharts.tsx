@@ -85,17 +85,13 @@ const goalLabelPlugin = {
         const { ctx, scales: { x, y } } = chart;
         const goalVal = options.goalValue;
         const retireAge = options.retireAge;
-        if (!goalVal) return;
+        if (!goalVal || goalVal <= 0) return;
 
         const yPos = y.getPixelForValue(goalVal);
         const xStart = x.left;
         let xEnd = x.right;
 
-        // Calculate limit based on retireAge? Example image shows line goes somewhat far.
-        // User previously asked to "reach the age".
-        // Let's use Full Width or Retire Age. 
-        // Example image shows line stops at green chart peak?
-        // Safest is to draw to Retire Age or Full Width.
+        // Limit line to retire age if possible
         if (retireAge) {
             const px = x.getPixelForValue(String(retireAge));
             if (px !== undefined && px !== null && !isNaN(px)) xEnd = px;
@@ -104,41 +100,101 @@ const goalLabelPlugin = {
         // Draw Blue Dashed Line
         ctx.save();
         ctx.beginPath();
-        ctx.strokeStyle = "#2563eb"; // Blue
-        ctx.lineWidth = 2; // Thicker as per image
-        ctx.setLineDash([8, 8]); // Wider dash
+        ctx.strokeStyle = "#3b82f6"; // Blue 500
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]); // Clean dash pattern
 
         ctx.moveTo(xStart, yPos);
         ctx.lineTo(xEnd, yPos);
         ctx.stroke();
         ctx.restore();
 
-        // Draw Label "เป้าหมายทางการเงิน" (Updated from "อิสรภาพทางการเงิน")
-        const text = "เป้าหมายทางการเงิน";
-        ctx.font = "bold 16px 'Inter', 'Prompt', sans-serif"; // Larger/Bold
-        const textWidth = ctx.measureText(text).width;
+        // Draw Label "เป้าหมายทางการเงิน" as a Badge
+        const text = options.labelText || "เป้าหมายทางการเงิน";
+        ctx.save();
+        ctx.font = "bold 12px 'Inter', 'Prompt', sans-serif";
+        const textMetrics = ctx.measureText(text);
 
-        // Position: Indented from left
-        const textX = xStart + 40;
-        const textY = yPos;
+        // Badge Dimensions
+        const paddingX = 12;
+        const paddingY = 6;
+        const badgeHeight = 26;
+        const badgeWidth = textMetrics.width + (paddingX * 2);
 
-        if (yPos > y.top && yPos < y.bottom) {
-            ctx.save();
-            // Optional: White background for text to mask line
-            ctx.fillStyle = "rgba(255,255,255,0.8)";
-            ctx.fillRect(textX - 4, textY - 10, textWidth + 8, 20);
+        // Position: 20px from left axis, centered vertically on line
+        const badgeX = xStart + 20;
+        const badgeY = yPos - (badgeHeight / 2);
 
-            ctx.fillStyle = "#000000"; // Black Text
-            ctx.textAlign = "left";
-            ctx.textBaseline = "middle";
-            ctx.fillText(text, textX, textY);
-            ctx.restore();
+        // Shadow
+        ctx.shadowColor = "rgba(37, 99, 235, 0.15)"; // Blue shadow
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 4;
+
+        // Background (Pill Shape)
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 100); // Max rounded
+        } else {
+            ctx.rect(badgeX, badgeY, badgeWidth, badgeHeight); // Fallback
         }
+        ctx.fill();
+
+        // Restoring shadow for border/text to be clean
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+
+        // Border
+        ctx.strokeStyle = "#bfdbfe"; // Blue 200
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Text
+        ctx.fillStyle = "#2563eb"; // Blue 600
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, badgeX + paddingX, yPos + 1); // +1 for visual centering in font
+
+        // Optional: Small dot indicator at start of badge? No, keep clean.
+        ctx.restore();
+    }
+};
+
+const agePeriodPlugin = {
+    id: "agePeriodPlugin",
+    beforeDatasetsDraw: (chart: any, args: any, options: any) => {
+        const { ctx, scales: { x, y } } = chart;
+        const interval = options.tickInterval || 10; // Default to 10
+
+        ctx.save();
+
+        const xMeta = chart.getDatasetMeta(0).data;
+        if (!xMeta || xMeta.length === 0) return;
+
+        chart.data.labels.forEach((label: string, index: number) => {
+            const age = parseInt(label);
+            if (isNaN(age)) return;
+
+            // Draw faint line if age matches interval
+            if (age % interval === 0) {
+                const xPos = x.getPixelForValue(label);
+
+                // Draw line
+                ctx.beginPath();
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.08)"; // Very faint grey
+                ctx.lineWidth = 1;
+                ctx.moveTo(xPos, y.bottom);
+                ctx.lineTo(xPos, y.top);
+                ctx.stroke();
+            }
+        });
+
+        ctx.restore();
     }
 };
 
 // Also register local plugins
-ChartJS.register(goalLabelPlugin, crosshairPlugin);
+ChartJS.register(goalLabelPlugin, crosshairPlugin, agePeriodPlugin);
 
 
 interface ProjectionChartProps {
@@ -267,6 +323,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         }, filter: (item: any) => item.dataset.label !== "P5" && item.dataset.label !== "P95",
                     },
                     goalLabelPlugin: { goalValue: result.targetFund, labelText: "เป้าหมายทางการเงิน", formatNumber, chartTickInterval, retireAge: Number(inputs.retireAge) },
+                    agePeriodPlugin: { tickInterval: chartTickInterval },
                 },
                 scales: {
                     x: {
