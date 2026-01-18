@@ -27,7 +27,7 @@ export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) =>
             <div className="w-full max-w-7xl relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
 
                 {/* --- Left Column: Value Proposition (Open Layout) --- */}
-                <div className="space-y-10 text-center lg:text-left lg:pl-8 order-2 lg:order-1 animate-in slide-in-from-left-8 fade-in duration-700">
+                <div className="space-y-10 text-center lg:text-left lg:pl-8 order-1 animate-in slide-in-from-top-8 fade-in duration-700">
 
                     {/* Brand Badge */}
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mx-auto lg:mx-0">
@@ -72,7 +72,7 @@ export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) =>
                 </div>
 
                 {/* --- Right Column: Floating Form Card --- */}
-                <div className="order-1 lg:order-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200">
+                <div className="order-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200">
                     <div className="relative w-full max-w-md mx-auto bg-white/95 backdrop-blur-2xl p-8 lg:p-10 rounded-[32px] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.3)] ring-1 ring-white/50">
 
                         {/* Decor */}

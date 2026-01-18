@@ -229,7 +229,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             <div className="w-full max-w-xs space-y-4">
                                 <div>
                                     <div className="flex justify-between items-end mb-2">
-                                        <span className="text-xs font-bold text-slate-500">ออมจริง</span>
+                                        <span className="text-xs font-bold text-slate-500">ออมจริง (ปัจจุบัน)</span>
                                         <span className="text-xs font-black text-slate-700">฿{formatNumber(summary.totalMonthlySavingsCurrent)}</span>
                                     </div>
                                     <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
@@ -238,12 +238,15 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-end mb-2">
-                                        <span className="text-xs font-bold text-indigo-500">เป้าหมาย</span>
+                                        <span className="text-xs font-bold text-indigo-500">เป้าหมาย (ที่ควรทำให้ได้)</span>
                                         <span className="text-xs font-black text-indigo-600">฿{formatNumber(summary.totalMonthlyNeeded)}</span>
                                     </div>
                                     <div className="h-2.5 w-full bg-indigo-100 rounded-full overflow-hidden">
                                         <div className="h-full bg-indigo-500 rounded-full w-full opacity-60"></div>
                                     </div>
+                                    <p className="text-[10px] text-slate-500 mt-3 text-center font-medium leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                                        ยอดออมต่อเดือนที่แนะนำ เพื่อให้ทุกคนบรรลุเป้าหมายเกษียณ
+                                    </p>
                                 </div>
                             </div>
                         </div>

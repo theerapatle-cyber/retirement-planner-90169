@@ -821,5 +821,71 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
         if (historyMapping[age + 1] !== undefined) actualHistory[idx] = historyMapping[age + 1];
     }
 
-    return { labels, actual, required, actualHistory };
+    // --- Post-Calculation: Recalculate Principal (No Growth) ---
+    // Why post-calc? Because the simplified `actualHistory` above is incomplete.
+    // We want "Total Principal Input" vs "Compound Growth".
+    const principal: number[] = [];
+    let cumPrincipal = currentSavings;
+    principal.push(cumPrincipal); // Age Start
+
+    for (let age = startAge; age < endAge; age++) {
+        let annualInput = 0;
+
+        // 1. Savings
+        if (age < retireAge) {
+            let monthly = monthlySaving || 0;
+            if (savingMode === "step5" && stepIncrements && stepIncrements.length > 0) {
+                for (const step of stepIncrements) {
+                    if (age >= step.age && step.monthlySaving > 0) monthly = step.monthlySaving;
+                }
+            }
+            annualInput += (monthly * 12);
+        }
+
+        // 2. Lump Sum (at 60)
+        if (age === retireAge - 1) {
+            annualInput += (retireFundOther || 0);
+        }
+
+        // 3. Insurance? Technically "Premium" is input, but here we only track Inflow. 
+        // If we track "Available Funds Source", Insurance Cash Inflow IS Principal (external source).
+        // Let's count Insurance Inflow as Principal addition.
+        const inflow = getInsuranceInflow(age);
+
+        // Handle precise timing for Age 60 transitions
+        if (age === retireAge - 1) {
+            // Include Age 60 inflows here
+            const inflow60 = getInsuranceInflow(retireAge);
+            annualInput += (inflow + inflow60);
+        } else if (age === retireAge) {
+            // Already added in prev step
+        } else {
+            annualInput += inflow;
+        }
+
+        // 4. Withdrawal? Principal doesn't shrink unless we track "Remaining Principal".
+        // But usually "Principal" line means "Total Money Put In". It stays flat or grows.
+        // It should NOT drop during retirement unless we are showing "Remaining Principal Component".
+        // Let's behave like "Total Accumulated Cost".
+
+        // BUT for the graph context: "Actual History" (Blue Line) usually drops if we withdraw?
+        // No, "Actual History" in this chart context seems to mimic "Money Stashed Under Mattress".
+        // So if you withdraw, it should drop.
+
+        if (age >= retireAge) {
+            const yearsInRetireSoFar = age - retireAge;
+            const expenseThisYear = expenseAnnualAtRetire * Math.pow(1 + r_inf, yearsInRetireSoFar);
+            const specialThisYear = specialAnnualAtRetire * Math.pow(1 + r_inf, yearsInRetireSoFar);
+            const incomeThisYear = incomeAnnualAtRetire;
+            const netWithdrawal = Math.max(0, expenseThisYear + specialThisYear - incomeThisYear);
+
+            annualInput -= netWithdrawal;
+        }
+
+        cumPrincipal += annualInput;
+        if (cumPrincipal < 0) cumPrincipal = 0;
+        principal.push(cumPrincipal);
+    }
+
+    return { labels, actual, required, actualHistory, principalStats: principal };
 }

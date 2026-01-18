@@ -118,10 +118,12 @@ export const RetirementDashboard = ({
 
     // Compute data for Print Table
     const printData = React.useMemo(() => {
-        const { labels, actual, required, actualHistory } = buildProjectionSeries(inputs, result);
+        // Use 'principalStats' for print table, keeping 'actualHistory' for graph
+        const { labels, actual, required, principalStats } = buildProjectionSeries(inputs, result) as any;
         return labels.map((label: string, i: number) => {
             const age = Number(label);
             const savings = actual[i];
+            const principal = principalStats ? principalStats[i] : 0;
             const target = Number(label) <= Number(inputs.retireAge) ? required[i] : 0;
 
             // Get Sum Assured for this age
@@ -131,7 +133,7 @@ export const RetirementDashboard = ({
                 if (idx !== -1) sumAssured = (insuranceChartData.datasets[0].data[idx] as number) || 0;
             }
 
-            return { age, savings, target, sumAssured };
+            return { age, savings, principal, target, sumAssured };
         });
     }, [inputs, result, insuranceChartData]);
 
@@ -290,7 +292,7 @@ export const RetirementDashboard = ({
 
 
                 {/* Main Content Grid */}
-                <div className={`grid grid-cols-1 gap-8 transition-all duration-300 ${isSidebarOpen ? 'lg:grid-cols-[480px_1fr]' : 'lg:grid-cols-1'} print:grid-cols-1 print:gap-0`}>
+                <div className={`grid grid-cols-1 gap-6 lg:gap-8 transition-all duration-300 ${isSidebarOpen ? 'lg:grid-cols-[480px_1fr]' : ''} print:grid-cols-1 print:gap-0`}>
 
                     {/* LEFT AREA: Inputs (Col 1) - Hide on Print */}
                     <div className={`space-y-6 ${isSidebarOpen ? '' : 'hidden'} lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-2 custom-scrollbar print:hidden`}>
@@ -324,157 +326,195 @@ export const RetirementDashboard = ({
 
                     {/* RIGHT AREA: Charts & Metrics (Col 2) */}
                     <div className="space-y-8">
-                        {/* Hero Summary Card (Moved here) */}
-                        <div className={`rounded-[32px] p-8 lg:p-8 relative overflow-hidden font-sans shadow-2xl transition-all duration-500 ${result.status === 'enough' ? 'bg-gradient-to-br from-[#025035] to-[#047556] text-white shadow-emerald-900/30' : 'bg-gradient-to-br from-[#7f1d1d] to-[#991b1b] text-white shadow-red-900/30'}`}>
-                            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none mix-blend-overlay"></div>
-                            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
-                                <div className="flex-1 space-y-4">
-                                    <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide ${result.status === 'enough' ? 'bg-white/20 text-white backdrop-blur-sm' : 'bg-white/20 text-white backdrop-blur-sm'}`}>
-                                        <span className={`w-2.5 h-2.5 rounded-full ${result.status === 'enough' ? 'bg-[#34D399]' : 'bg-red-400'}`}></span>
-                                        {result.status === 'enough' ? 'สถานะ : เป้าหมายสำเร็จ' : 'สถานะ : ต้องปรับปรุง'}
-                                    </span>
-                                    <div className="space-y-2">
-                                        <h1 className="text-3xl lg:text-4xl font-black tracking-tight leading-tight">
+                        {/* Hero Summary Card (Redesigned) */}
+                        <div className={`relative rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 xl:p-10 overflow-hidden font-sans shadow-xl lg:shadow-2xl transition-all duration-500 group ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981] shadow-emerald-900/40' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444] shadow-red-900/40'}`}>
+                            {/* Decorative Background Patterns */}
+                            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+                            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none mix-blend-overlay animate-pulse duration-3000"></div>
+                            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-black/10 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none"></div>
+
+                            {/* Content Container */}
+                            <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8 lg:gap-10">
+                                {/* Left Side: Status & Message */}
+                                <div className="flex-1 space-y-4 lg:space-y-6">
+                                    <div className={`inline-flex items-center gap-2.5 px-3 py-1.5 lg:px-4 lg:py-2 rounded-full border backdrop-blur-md shadow-sm ${result.status === 'enough' ? 'bg-emerald-500/20 border-emerald-400/30 text-emerald-50' : 'bg-red-500/20 border-red-400/30 text-red-50'}`}>
+                                        <span className={`relative flex h-2.5 w-2.5 lg:h-3 lg:w-3`}>
+                                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${result.status === 'enough' ? 'bg-emerald-300' : 'bg-red-300'}`}></span>
+                                            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 lg:h-3 lg:w-3 ${result.status === 'enough' ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+                                        </span>
+                                        <span className="text-xs lg:text-sm font-bold tracking-wide uppercase">{result.status === 'enough' ? 'สถานะ : เป้าหมายสำเร็จ' : 'สถานะ : ต้องปรับปรุงแผน'}</span>
+                                    </div>
+
+                                    <div className="space-y-2 lg:space-y-3">
+                                        <h1 className="text-3xl lg:text-4xl xl:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-md">
                                             {result.status === 'enough' ? 'แผนการเงินมั่นคง' : 'แผนการเงินยังมีความเสี่ยง'}
                                         </h1>
-                                        <h2 className="text-lg lg:text-xl font-bold text-white/90">
-                                            {result.status === 'enough' ? 'พร้อมเกษียณอย่างสบาย' : 'ควรเริ่มวางแผนเพิ่มเติมทันที'}
+                                        <h2 className="text-lg lg:text-xl xl:text-2xl font-bold text-white/90">
+                                            {result.status === 'enough' ? 'พร้อมเกษียณอย่างสบายตามที่ตั้งใจ' : 'ควรเริ่มวางแผนเก็บออมเพิ่มเติมทันที'}
                                         </h2>
                                     </div>
-                                    <p className="text-white/80 text-sm font-medium max-w-xl leading-relaxed">
-                                        {result.status === 'enough'
-                                            ? 'ยินดีด้วย! สินทรัพย์ของคุณเพียงพอสำหรับการเกษียณ'
-                                            : `ขาดเงินเกษียณอีก ฿${formatNumber(Math.abs(result.gap))}`}
-                                    </p>
+
+                                    <div className="p-3 lg:p-4 rounded-xl lg:rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm max-w-xl">
+                                        <p className="text-white/90 text-sm md:text-base font-medium leading-relaxed flex items-start gap-3">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 shrink-0 mt-0.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                                            {result.status === 'enough'
+                                                ? 'ยินดีด้วย! สินทรัพย์ของคุณเพียงพอสำหรับการเกษียณ คุณมีอิสรภาพทางการเงินแล้ว'
+                                                : `คุณยังขาดเงินเกษียณอีก ฿${formatNumber(Math.abs(result.gap))} ลองเพิ่มเงินออมหรือปรับเปลี่ยนแผนการลงทุน`}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="shrink-0 bg-white/10 backdrop-blur-sm rounded-[24px] p-6 min-w-[280px]">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-1">เงินออมที่จะมี (Projected)</p>
-                                            <p className="text-4xl font-black tracking-tighter text-white drop-shadow-sm">฿{formatNumber(result.projectedFund)}</p>
-                                        </div>
-                                        <div className="pt-4 border-t border-white/10 opacity-90">
-                                            <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-1">เงินต้นที่ควรมี (Target)</p>
-                                            <p className={`text-xl font-bold tracking-tight ${result.status === 'enough' ? 'text-white/90' : 'text-rose-200'}`}>฿{formatNumber(result.targetFund)}</p>
+
+                                {/* Right Side: Summary Stats Card */}
+                                <div className="shrink-0 relative group/stats cursor-default w-full lg:w-auto">
+                                    <div className="absolute inset-0 bg-white/20 blur-xl rounded-[24px] lg:rounded-[32px] transform rotate-1 lg:rotate-3 group-hover/stats:rotate-2 lg:group-hover/stats:rotate-6 transition-transform duration-500"></div>
+                                    <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 min-w-[280px] lg:min-w-[320px] shadow-2xl overflow-hidden">
+                                        {/* Shine Effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover/stats:translate-x-[100%] transition-transform duration-1000"></div>
+
+                                        <div className="flex flex-row lg:flex-col justify-between lg:justify-start gap-4 lg:gap-6">
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <p className="text-[10px] lg:text-[11px] font-bold text-white/70 uppercase tracking-widest">เงินออมที่จะมี (Projected)</p>
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]"></div>
+                                                </div>
+                                                <p className="text-2xl lg:text-4xl xl:text-[42px] font-black tracking-tighter text-white drop-shadow-sm leading-none">
+                                                    ฿{formatNumber(result.projectedFund)}
+                                                </p>
+                                            </div>
+
+                                            <div className="hidden lg:block h-px bg-gradient-to-r from-transparent via-white/30 to-transparent w-full"></div>
+                                            <div className="block lg:hidden w-px bg-gradient-to-b from-transparent via-white/30 to-transparent h-full mx-2"></div>
+
+                                            <div className="flex-1 text-right lg:text-left">
+                                                <div className="flex justify-end lg:justify-between items-center mb-1">
+                                                    <p className="text-[10px] lg:text-[11px] font-bold text-white/60 uppercase tracking-widest">เงินต้นที่ควรมี (Target)</p>
+                                                    <div className="hidden lg:block w-2 h-2 rounded-full bg-blue-200/50"></div>
+                                                </div>
+                                                <p className="text-xl lg:text-2xl font-bold tracking-tight text-white/90">
+                                                    ฿{formatNumber(result.targetFund)}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        {/* Key Metrics Grid */}
-                        <div className="relative group/grid">
-                            <div className="absolute inset-0 -m-4 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none"></div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 break-inside-avoid px-2 relative z-10">
 
+                        {/* Key Metrics Grid (Redesigned) */}
+                        <div className="relative">
+                            {/* Grid Background Decoration */}
+                            <div className="absolute inset-0 -m-8 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 relative z-10">
                                 {/* Card 1: Projected Savings */}
-                                <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-6 md:p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(16,185_129,0.15)]">
-                                    <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-100/30 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-emerald-200/40 transition-colors duration-700"></div>
-                                    <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-emerald-50/50 rounded-full blur-2xl opacity-60"></div>
-                                    <div className="flex flex-col h-full justify-between relative z-10">
+                                <div
+                                    onClick={() => setShowProjectedModal(true)}
+                                    className="bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
+                                >
+                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-emerald-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-emerald-100/80"></div>
+                                    <div className="relative flex flex-col h-full justify-between">
+                                        <div className="flex justify-between items-start mb-3 lg:mb-4">
+                                            <div>
+                                                <p className="text-sm lg:text-base font-bold text-slate-800 mb-1 group-hover:text-emerald-700 transition-colors">เงินออมที่มีอายุเกษียณ</p>
+                                                <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Projected Wealth</span>
+                                            </div>
+                                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm border border-emerald-100/50">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5a3.5 3.5 0 0 1-4.9-5.0L10.3 1.5" /><path d="M19 5a3 5 0 0 1 0 6h-6.7" /><path d="M12 11l-3 3" /><circle cx="5" cy="18" r="4" /><path d="M9 18l6-6" /></svg>
+                                            </div>
+                                        </div>
                                         <div>
-                                            <div className="flex justify-between items-start mb-4">
-                                                <p className="text-lg font-bold text-slate-800 tracking-tight">เงินออมที่มีตอนอายุเกษียณ</p>
-                                                <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 text-slate-800">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
-                                                </div>
-                                            </div>
-                                            <h4 className="text-3xl md:text-3xl font-black text-emerald-600 leading-none tracking-tight mb-2">
-                                                ฿{formatNumber(result.projectedFund)}
+                                            <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-emerald-600 transition-colors">
+                                                ฿{formatNumber2(result.projectedFund)}
                                             </h4>
-                                            <div className="flex items-center gap-1">
-                                                <p className="text-sm text-slate-400">จากการออมและการลงทุน</p>
-                                                <button onClick={() => setShowProjectedModal(true)} className="text-slate-300 hover:text-slate-500 transition-colors">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                                                </button>
-                                            </div>
+                                            <p className="text-xs font-medium text-slate-400 flex items-center gap-1">
+                                                จากการออมและการลงทุน
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-0 group-hover:opacity-100 transition-opacity"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Card 2: Target Fund */}
-                                <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-6 md:p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(59,130,246,0.15)]">
-                                    <div className="absolute top-0 right-0 w-48 h-48 bg-blue-100/30 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-blue-200/40 transition-colors duration-700"></div>
-                                    <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-blue-50/50 rounded-full blur-2xl opacity-60"></div>
-                                    <div className="flex flex-col h-full justify-between relative z-10">
-                                        <div>
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-lg font-bold text-slate-800 tracking-tight">เงินที่ต้องการก่อนเกษียณ</p>
-                                                    <button onClick={() => setShowTargetModal(true)} className="text-slate-300 hover:text-slate-500 transition-colors">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                                                    </button>
-                                                </div>
-                                                <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center text-slate-800 font-serif font-black text-xl">
-                                                    $
-                                                </div>
+                                <div
+                                    onClick={() => setShowTargetModal(true)}
+                                    className="bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(59,130,246,0.15)] hover:border-blue-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
+                                >
+                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-blue-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-blue-100/80"></div>
+                                    <div className="relative flex flex-col h-full justify-between">
+                                        <div className="flex justify-between items-start mb-3 lg:mb-4">
+                                            <div>
+                                                <p className="text-sm lg:text-base font-bold text-slate-800 mb-1 group-hover:text-blue-700 transition-colors">เงินที่ต้องการก่อนเกษียณ</p>
+                                                <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Retirement Goal</span>
                                             </div>
-                                            <h4 className="text-3xl md:text-3xl font-black text-blue-600 leading-none tracking-tight mb-2">
-                                                ฿{formatNumber(result.targetFund)}
+                                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-[-3deg] transition-transform duration-300 shadow-sm border border-blue-100/50">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-blue-600 transition-colors">
+                                                ฿{formatNumber2(result.targetFund)}
                                             </h4>
-                                            <p className="text-sm font-medium text-slate-500 leading-relaxed">
-                                                สำหรับ {result.yearsInRetirement} ปีหลังเกษียณ (โดยไม่สร้างผลตอบแทนเพิ่มเลย) <br className="hidden md:block" /> หรือออมขั้นต่ำคร่าวๆ ฿{formatNumber(result.monthlyNeeded)} ต่อเดือน <button onClick={() => setShowTargetModal(true)} className="inline-block text-slate-300 hover:text-slate-500 align-middle"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg></button>
+                                            <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors line-clamp-1">
+                                                สำหรับ {result.yearsInRetirement} ปีหลังเกษียณ (ออม ฿{formatNumber2(result.monthlyNeeded)}/เดือน)
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Card 3: Monthly Expense */}
-                                <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-6 md:p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(168,85,247,0.15)]">
-                                    <div className="absolute top-0 right-0 w-48 h-48 bg-purple-100/30 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-purple-200/40 transition-colors duration-700"></div>
-                                    <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-purple-50/50 rounded-full blur-2xl opacity-60"></div>
-                                    <div className="flex flex-col h-full justify-between relative z-10">
+                                <div
+                                    onClick={() => setShowExpenseModal(true)}
+                                    className="bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(168,85,247,0.15)] hover:border-purple-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
+                                >
+                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-purple-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-purple-100/80"></div>
+                                    <div className="relative flex flex-col h-full justify-between">
+                                        <div className="flex justify-between items-start mb-3 lg:mb-4">
+                                            <div>
+                                                <p className="text-sm lg:text-base font-bold text-slate-800 mb-1 group-hover:text-purple-700 transition-colors">ค่าใช้จ่าย/เดือน (ปีแรก)</p>
+                                                <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Future Expense</span>
+                                            </div>
+                                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm border border-purple-100/50">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                                            </div>
+                                        </div>
                                         <div>
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-lg font-bold text-slate-800 tracking-tight">ค่าใช้จ่าย/เดือน (ปีแรก)</p>
-                                                    <button onClick={() => setShowExpenseModal(true)} className="text-slate-300 hover:text-slate-500 transition-colors">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                                                    </button>
-                                                </div>
-                                                <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center text-slate-800">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-                                                </div>
-                                            </div>
-                                            <h4 className="text-3xl md:text-3xl font-black text-purple-600 leading-none tracking-tight mb-2">
-                                                ฿{formatNumber(result.fvExpenseMonthly)}
+                                            <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-purple-600 transition-colors">
+                                                ฿{formatNumber2(result.fvExpenseMonthly)}
                                             </h4>
-                                            <div className="flex justify-between items-end">
-                                                <p className="text-sm font-medium text-slate-500">
-                                                    หลังเกษียณ (รวมเงินเฟ้อ) <br /> รวม ฿{formatNumber(result.totalLifetimeExpense)}
-                                                </p>
-                                                <button onClick={() => setShowExpenseModal(true)} className="flex items-center gap-1 text-slate-400 hover:text-purple-600 transition-colors text-xs font-bold">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                                                    รายละเอียด
-                                                </button>
-                                            </div>
+                                            <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors">
+                                                รวมเงินเฟ้อแล้ว (ทั้งชีวิต ฿{formatNumber2(result.totalLifetimeExpense)})
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Card 4: Status */}
-                                <div className={`bg-white/70 backdrop-blur-md rounded-[32px] p-6 md:p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-200/60 relative overflow-hidden group hover:-translate-y-2 transition-all duration-500 ${result.status === 'enough' ? 'hover:shadow-[0_30px_70px_-20px_rgba(16,185_129,0.15)]' : 'hover:shadow-[0_30px_70px_-20px_rgba(244,63,94,0.15)]'}`}>
-                                    <div className={`absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl -mr-12 -mt-12 group-hover:opacity-60 transition-colors duration-700 ${result.status === 'enough' ? 'bg-emerald-100/30' : 'bg-rose-100/30'}`}></div>
-                                    <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-slate-50/50 rounded-full blur-2xl opacity-60"></div>
-                                    <div className="flex flex-col h-full justify-between relative z-10">
-                                        <div>
-                                            <div className="flex justify-between items-start mb-4">
-                                                <p className="text-lg font-bold text-slate-800 tracking-tight">สถานะแผน</p>
-                                                <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center text-emerald-500">
-                                                    {result.status === 'enough' ?
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
-                                                        :
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="22"></line><line x1="17" y1="7" x2="7" y2="17"></line></svg>
-                                                    }
-                                                </div>
+                                <div
+                                    className={`bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-default transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] ${result.status === 'enough' ? 'hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100' : 'hover:shadow-[0_20px_50px_-15px_rgba(244,63,94,0.15)] hover:border-rose-100'}`}
+                                >
+                                    <div className={`absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors ${result.status === 'enough' ? 'bg-emerald-50 group-hover:bg-emerald-100/80' : 'bg-rose-50 group-hover:bg-rose-100/80'}`}></div>
+                                    <div className="relative flex flex-col h-full justify-between">
+                                        <div className="flex justify-between items-start mb-3 lg:mb-4">
+                                            <div>
+                                                <p className={`text-sm lg:text-base font-bold mb-1 transition-colors ${result.status === 'enough' ? 'text-slate-800 group-hover:text-emerald-700' : 'text-slate-800 group-hover:text-rose-700'}`}>สถานะแผน</p>
+                                                <span className={`text-[9px] lg:text-[10px] px-2 py-0.5 rounded-full font-bold ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                                    Result Status
+                                                </span>
                                             </div>
-                                            <h4 className={`text-3xl md:text-3xl font-black leading-none tracking-tight mb-2 ${result.status === 'enough' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                {result.status === 'enough' ? "เพียงพอ" : "ไม่เพียงพอ"}
+                                            <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm border ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' : 'bg-rose-50 text-rose-600 border-rose-100/50'}`}>
+                                                {result.status === 'enough' ? (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                                ) : (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 className={`text-2xl lg:text-3xl xl:text-[40px] font-black tracking-tight leading-none mb-1 lg:mb-2 transition-colors ${result.status === 'enough' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                {result.status === 'enough' ? "เพียงพอ" : "ไม่พอ"}
                                             </h4>
-                                            <p className="text-sm font-medium text-slate-500 leading-relaxed mb-1">
-                                                {result.status === 'enough' ? "แผนการออมเพียงพอสำหรับเกษียณ" : "แผนการออมยังไม่ครอบคลุมเกษียณ"}
-                                            </p>
-                                            <p className={`text-sm font-bold ${result.status === 'enough' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                                {result.status === 'enough' ? "อิสรภาพทางการเงิน" : "ควรเริ่มวางแผนเพิ่มเติม"}
+                                            <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors">
+                                                {result.status === 'enough' ? "คุณทำได้ดีมาก แผนการออมยั่งยืน" : "สินทรัพย์ไม่เพียงพอ ต้องปรับแผนด่วน"}
                                             </p>
                                         </div>
                                     </div>
@@ -555,25 +595,27 @@ export const RetirementDashboard = ({
                             {/* PRINT ONLY: Chart Data Table */}
                             <div id="print-data-table" className="hidden print:block mt-4">
                                 <h3 className="text-sm font-black text-slate-900 mb-2 border-l-4 border-indigo-600 pl-2">รายละเอียดข้อมูลรายปี (Data Table)</h3>
-                                <div className="grid grid-cols-3 gap-4 text-[8px] leading-tight">
+                                <div className="grid grid-cols-2 gap-6 text-[9px] leading-tight">
                                     {/* Column 1 */}
                                     <div className="border border-slate-200 rounded-lg overflow-hidden">
                                         <table className="w-full text-left">
                                             <thead className="bg-slate-100 font-bold text-slate-700">
                                                 <tr>
-                                                    <th className="py-1 px-1 text-center">อายุ</th>
-                                                    <th className="py-1 px-1 text-right">เงินออม</th>
-                                                    <th className="py-1 px-1 text-right">เป้าหมาย</th>
-                                                    <th className="py-1 px-1 text-right">ทุนประกัน</th>
+                                                    <th className="py-1.5 px-2 text-center">อายุ</th>
+                                                    <th className="py-1.5 px-2 text-right">เงินต้นสะสม</th>
+                                                    <th className="py-1.5 px-2 text-right">เงินออมรวม</th>
+                                                    <th className="py-1.5 px-2 text-right">เป้าหมาย</th>
+                                                    <th className="py-1.5 px-2 text-right">ทุนประกัน</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
-                                                {printData.slice(0, Math.ceil(printData.length / 3)).map((row: any) => (
+                                                {printData.slice(0, Math.ceil(printData.length / 2)).map((row: any) => (
                                                     <tr key={row.age} className="even:bg-slate-50">
-                                                        <td className="py-0.5 px-1 text-center font-bold">{row.age}</td>
-                                                        <td className="py-0.5 px-1 text-right text-emerald-600">{formatNumber(row.savings)}</td>
-                                                        <td className="py-0.5 px-1 text-right text-slate-500">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
-                                                        <td className="py-0.5 px-1 text-right text-orange-500">{row.sumAssured > 0 ? formatNumber(row.sumAssured) : "-"}</td>
+                                                        <td className="py-1 px-2 text-center font-bold text-slate-900">{row.age}</td>
+                                                        <td className="py-1 px-2 text-right text-blue-600 font-medium">{formatNumber(row.principal)}</td>
+                                                        <td className="py-1 px-2 text-right text-emerald-600 font-bold">{formatNumber(row.savings)}</td>
+                                                        <td className="py-1 px-2 text-right text-slate-500">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
+                                                        <td className="py-1 px-2 text-right text-orange-500">{row.sumAssured > 0 ? formatNumber(row.sumAssured) : "-"}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -585,51 +627,33 @@ export const RetirementDashboard = ({
                                         <table className="w-full text-left">
                                             <thead className="bg-slate-100 font-bold text-slate-700">
                                                 <tr>
-                                                    <th className="py-1 px-1 text-center">อายุ</th>
-                                                    <th className="py-1 px-1 text-right">เงินออม</th>
-                                                    <th className="py-1 px-1 text-right">เป้าหมาย</th>
-                                                    <th className="py-1 px-1 text-right">ทุนประกัน</th>
+                                                    <th className="py-1.5 px-2 text-center">อายุ</th>
+                                                    <th className="py-1.5 px-2 text-right">เงินต้นสะสม</th>
+                                                    <th className="py-1.5 px-2 text-right">เงินออมรวม</th>
+                                                    <th className="py-1.5 px-2 text-right">เป้าหมาย</th>
+                                                    <th className="py-1.5 px-2 text-right">ทุนประกัน</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
-                                                {printData.slice(Math.ceil(printData.length / 3), Math.ceil(printData.length * 2 / 3)).map((row: any) => (
+                                                {printData.slice(Math.ceil(printData.length / 2)).map((row: any) => (
                                                     <tr key={row.age} className="even:bg-slate-50">
-                                                        <td className="py-0.5 px-1 text-center font-bold">{row.age}</td>
-                                                        <td className="py-0.5 px-1 text-right text-emerald-600">{formatNumber(row.savings)}</td>
-                                                        <td className="py-0.5 px-1 text-right text-slate-500">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
-                                                        <td className="py-0.5 px-1 text-right text-orange-500">{row.sumAssured > 0 ? formatNumber(row.sumAssured) : "-"}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    {/* Column 3 */}
-                                    <div className="border border-slate-200 rounded-lg overflow-hidden">
-                                        <table className="w-full text-left">
-                                            <thead className="bg-slate-100 font-bold text-slate-700">
-                                                <tr>
-                                                    <th className="py-1 px-1 text-center">อายุ</th>
-                                                    <th className="py-1 px-1 text-right">เงินออม</th>
-                                                    <th className="py-1 px-1 text-right">เป้าหมาย</th>
-                                                    <th className="py-1 px-1 text-right">ทุนประกัน</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {printData.slice(Math.ceil(printData.length * 2 / 3)).map((row: any) => (
-                                                    <tr key={row.age} className="even:bg-slate-50">
-                                                        <td className="py-0.5 px-1 text-center font-bold">{row.age}</td>
-                                                        <td className="py-0.5 px-1 text-right text-emerald-600">{formatNumber(row.savings)}</td>
-                                                        <td className="py-0.5 px-1 text-right text-slate-500">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
-                                                        <td className="py-0.5 px-1 text-right text-orange-500">{row.sumAssured > 0 ? formatNumber(row.sumAssured) : "-"}</td>
+                                                        <td className="py-1 px-2 text-center font-bold text-slate-900">{row.age}</td>
+                                                        <td className="py-1 px-2 text-right text-blue-600 font-medium">{formatNumber(row.principal)}</td>
+                                                        <td className="py-1 px-2 text-right text-emerald-600 font-bold">{formatNumber(row.savings)}</td>
+                                                        <td className="py-1 px-2 text-right text-slate-500">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
+                                                        <td className="py-1 px-2 text-right text-orange-500">{row.sumAssured > 0 ? formatNumber(row.sumAssured) : "-"}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
-                                <div className="text-[8px] text-slate-400 mt-1 text-right">
-                                    *ตารางแสดงข้อมูลรายปีเพื่อประกอบการพิจารณา
+                                <div className="text-[9px] text-slate-500 mt-2 flex justify-between items-center border-t border-slate-100 pt-2">
+                                    <div className="flex gap-4">
+                                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-600"></span> เงินต้นสะสม: เงินที่เก็บออมจริงไม่รวมผลตอบแทน</span>
+                                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> เงินออมรวม: เงินต้น + ผลตอบแทนสะสม</span>
+                                    </div>
+                                    <span>*ข้อมูลนี้ใช้เพื่อการวางแผนเบื้องต้นเท่านั้น</span>
                                 </div>
                             </div>
 

@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const nfNoDecimal = new Intl.NumberFormat("th-TH", { maximumFractionDigits: 0 });
-export const nf2 = (value: number, digits = 2) =>
+export const nf2 = (value: number, digits = 0) =>
   new Intl.NumberFormat("th-TH", { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
 
 export const nfInput = new Intl.NumberFormat("th-TH", { maximumFractionDigits: 2 });
@@ -16,7 +16,7 @@ export const formatNumber = (value: string | number) => {
   return isNaN(num) ? "0" : nfNoDecimal.format(num);
 };
 
-export const formatNumber2 = (value: number, digits = 2) => {
+export const formatNumber2 = (value: number, digits = 0) => {
   return isNaN(value) ? "0" : nf2(value, digits);
 };
 
