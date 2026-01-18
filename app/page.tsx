@@ -40,7 +40,7 @@ export default function HomePage() {
     handleLogin,
 
     // Family
-    handleSwitchMember, handleAddMember, getFamilySummary, syncCurrentToFamily,
+    handleSwitchMember, handleAddMember, handleRemoveMember, getFamilySummary, syncCurrentToFamily, handleConfirmDraft,
 
     // Dashboard / Insurance
     addInsurancePlan, removeInsurancePlan, updateInsurancePlan, updateSurrenderTable,
@@ -81,10 +81,11 @@ export default function HomePage() {
   }
 
   // 3. Family Dashboard (Full Page Overlay for Overview)
-  if (planType === "family" && showFamilyResult && familyMembers.length > 0) {
+  const activeFamilyMembers = familyMembers.filter(m => !m.isDraft);
+  if (planType === "family" && showFamilyResult && activeFamilyMembers.length > 0) {
     return (
       <FamilyDashboard
-        familyMembers={familyMembers}
+        familyMembers={activeFamilyMembers}
         currentMemberId={currentMemberId}
         form={form}
         gender={state.gender}
@@ -95,6 +96,7 @@ export default function HomePage() {
         setShowFamilyResult={setShowFamilyResult}
         handleSwitchMember={handleSwitchMember}
         handleAddMember={handleAddMember}
+        handleRemoveMember={handleRemoveMember}
         getFamilySummary={getFamilySummary}
       />
     );
@@ -111,7 +113,10 @@ export default function HomePage() {
           changeBy={changeBy}
           gender={gender}
           setGender={setGender}
-          setShowResult={setShowResult}
+          setShowResult={(val) => {
+            if (val) handleConfirmDraft();
+            setShowResult(val);
+          }}
           addInsurancePlan={addInsurancePlan}
           removeInsurancePlan={removeInsurancePlan}
           updateInsurancePlan={updateInsurancePlan}
@@ -136,6 +141,15 @@ export default function HomePage() {
             setters.setInputStep(1);
           }}
           onEditProfile={() => setters.setShowProfileSettings(true)}
+          relation={planType === 'family' ? state.relation : undefined}
+          setRelation={planType === 'family' && currentMemberId !== 'primary' ? (r) => setters.setRelation(r as any) : undefined}
+          onBack={() => {
+            if (planType === 'family' && familyMembers.length > 0) {
+              setShowFamilyResult(true);
+            } else {
+              setPlanType(null);
+            }
+          }}
         />
         <ProfileSettingsModal
           isOpen={state.showProfileSettings}
@@ -200,6 +214,7 @@ export default function HomePage() {
             setters.setInputStep(1);
           }}
           onEditProfile={() => setters.setShowProfileSettings(true)}
+          onBack={() => setters.setShowResult(false)}
         />
         <ProfileSettingsModal
           isOpen={state.showProfileSettings}

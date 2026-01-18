@@ -171,4 +171,5 @@ export type MemberProfile = {
     returnMode: "avg" | "custom";
     retireSpendMode: "flat" | "step5";
     allocations: Allocation[];
+    isDraft?: boolean;
 };

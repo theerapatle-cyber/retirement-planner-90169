@@ -25,6 +25,9 @@ interface RetirementInputPageProps {
     updateAllocation: (id: number, field: keyof Allocation) => (e: any) => void;
     onLogout?: () => void;
     onEditProfile?: () => void;
+    relation?: string;
+    setRelation?: (r: string) => void;
+    onBack?: () => void;
 }
 
 export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
@@ -48,7 +51,10 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
     removeAllocation,
     updateAllocation,
     onLogout,
-    onEditProfile
+    onEditProfile,
+    relation,
+    setRelation,
+    onBack
 }) => {
     return (
         <div className="min-h-screen bg-white font-['Inter'] pb-32 relative">
@@ -65,9 +71,18 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
             {/* TOP NAVIGATION BAR */}
             <div className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 px-6 py-4 shadow-sm flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
-                    </div>
+                    {onBack ? (
+                        <button
+                            onClick={onBack}
+                            className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        </button>
+                    ) : (
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                        </div>
+                    )}
                     <div>
                         <h1 className="text-lg font-black text-slate-800 tracking-tight leading-none">Financial Planner</h1>
                         <p className="text-xs text-slate-500 font-medium">วางแผนการเงิน</p>
@@ -117,6 +132,8 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
                     removeAllocation={removeAllocation}
                     updateAllocation={updateAllocation}
                     onCalculate={() => setShowResult(true)}
+                    relation={relation}
+                    setRelation={setRelation}
                 />
             </div>
         </div>

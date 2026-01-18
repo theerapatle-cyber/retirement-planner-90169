@@ -27,6 +27,8 @@ interface RetirementInputSectionProps {
     updateAllocation: (id: number, field: keyof Allocation) => (e: any) => void;
     onCalculate: () => void;
     isEmbedded?: boolean;
+    relation?: string;
+    setRelation?: (r: string) => void;
 }
 
 export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
@@ -49,7 +51,9 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
     removeAllocation,
     updateAllocation,
     onCalculate,
-    isEmbedded = false
+    isEmbedded = false,
+    relation,
+    setRelation
 }) => {
     const [step, setStep] = useState(1);
     const [expandedSections, setExpandedSections] = useState<{ [key: number]: boolean }>({ 1: true, 2: true, 3: true });
@@ -65,6 +69,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
     const [avatarImage, setAvatarImage] = useState<string | null>(null);
     const [showMonteCarlo, setShowMonteCarlo] = useState(false);
+    const [isRelationOpen, setIsRelationOpen] = useState(false);
     // Local state for spending mode just for UI toggling as per screenshot
 
 
@@ -223,6 +228,61 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         หญิง
                     </button>
                 </div>
+
+                {/* Relation Selector (Dropdown Style) - Only for Family Plan */}
+                {setRelation && relation && (
+                    <div className="w-64 relative z-20">
+                        <Label className="text-slate-500 font-bold text-xs mb-1.5 block text-center">ความสัมพันธ์</Label>
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsRelationOpen(!isRelationOpen)}
+                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center justify-between shadow-sm hover:border-indigo-300 transition-all text-slate-700 font-bold text-sm group"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg">
+                                        {{
+                                            self: "👨‍💼", spouse: "👩‍❤️‍👨", child: "👶",
+                                            father: "👴", mother: "👵", relative: "👥"
+                                        }[relation as any] || "👤"}
+                                    </span>
+                                    <span>
+                                        {{
+                                            self: "เจ้าของแผน", spouse: "คู่สมรส", child: "บุตร",
+                                            father: "บิดา", mother: "มารดา", relative: "ญาติ"
+                                        }[relation as any] || "เลือกความสัมพันธ์"}
+                                    </span>
+                                </div>
+                                <ChevronDown size={16} className={`text-slate-400 transition-transform ${isRelationOpen ? "rotate-180" : ""}`} />
+                            </button>
+
+                            {isRelationOpen && (
+                                <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 p-1 z-30">
+                                    {[
+                                        { id: "self", label: "เจ้าของแผน", icon: "👨‍💼" },
+                                        { id: "spouse", label: "คู่สมรส", icon: "👩‍❤️‍👨" },
+                                        { id: "child", label: "บุตร", icon: "👶" },
+                                        { id: "father", label: "บิดา", icon: "👴" },
+                                        { id: "mother", label: "มารดา", icon: "👵" },
+                                        { id: "relative", label: "ญาติ", icon: "👥" }
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => {
+                                                setRelation(opt.id);
+                                                setIsRelationOpen(false);
+                                            }}
+                                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-colors ${relation === opt.id ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"}`}
+                                        >
+                                            <span className="text-lg">{opt.icon}</span>
+                                            {opt.label}
+                                            {relation === opt.id && <Check size={14} className="ml-auto" />}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="grid gap-6 px-4">

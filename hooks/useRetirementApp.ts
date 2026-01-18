@@ -376,7 +376,8 @@ export function useRetirementApp() {
                 { id: 2, name: "ตราสารหนี้", weight: "25", expectedReturn: "4", volatility: "5" },
                 { id: 3, name: "เงินสด/ทอง", weight: "5", expectedReturn: "2", volatility: "2" },
             ],
-            retireSpendMode: "flat"
+            retireSpendMode: "flat",
+            isDraft: true
         } as any;
 
         const newList = [...updatedList, newMember];
@@ -389,6 +390,22 @@ export function useRetirementApp() {
         setInputStep(1);
         setShowFamilyResult(false);
         setShowResult(false);
+    };
+
+    const handleConfirmDraft = () => {
+        setFamilyMembers(prev => {
+            const idx = prev.findIndex(m => m.id === currentMemberId);
+            if (idx === -1) return prev;
+            // Only update if it is currently a draft
+            if (!prev[idx].isDraft) return prev;
+
+            const updated = [...prev];
+            updated[idx] = { ...updated[idx], isDraft: false };
+            if (typeof window !== "undefined") {
+                window.localStorage.setItem(FAMILY_KEY, JSON.stringify(updated));
+            }
+            return updated;
+        });
     };
 
     const handleRemoveMember = (id: string, e?: React.MouseEvent) => {
@@ -475,7 +492,7 @@ export function useRetirementApp() {
 
     /* ---------- Family Summary ---------- */
     const getFamilySummary = () => {
-        const relevantMembers = familyMembers;
+        const relevantMembers = familyMembers.filter(m => !m.isDraft); // Filter out drafts
         let totalTarget = 0;
         let totalProjected = 0;
         let totalGap = 0;
@@ -766,7 +783,7 @@ export function useRetirementApp() {
         handlers: {
             handleChange, changeBy, addAllocation, removeAllocation, updateAllocation,
             addInsurancePlan, removeInsurancePlan, updateInsurancePlan, changeInsuranceBy, updateSurrenderTable,
-            syncCurrentToFamily, loadMember, handleSwitchMember, handleAddMember, handleRemoveMember, getFamilySummary,
+            syncCurrentToFamily, loadMember, handleSwitchMember, handleAddMember, handleRemoveMember, getFamilySummary, handleConfirmDraft,
             handleSavePlan, handleLoadPlan, handleDeletePlan, resetRetirement, handleLogin, handleLogout,
             handleExportCSV, handlePrint, handleUpdateUser
         }

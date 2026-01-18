@@ -66,6 +66,7 @@ interface RetirementDashboardProps {
     gender: "male" | "female";
     onLogout?: () => void;
     onEditProfile?: () => void;
+    onBack?: () => void;
 }
 
 export const RetirementDashboard = ({
@@ -100,7 +101,8 @@ export const RetirementDashboard = ({
     setGender,
     gender,
     onLogout,
-    onEditProfile
+    onEditProfile,
+    onBack
 }: RetirementDashboardProps) => {
 
     const [showSumAssured, setShowSumAssured] = React.useState(true);
@@ -166,8 +168,8 @@ export const RetirementDashboard = ({
 
                 /* Chart Specifics */
                 #printable-chart { 
-                    height: 320px !important; 
-                    border: 1px solid #dee2e6 !important;
+                    height: 250px !important; 
+                    border: 1px solid #000 !important;
                     box-shadow: none !important;
                     border-radius: 8px !important;
                     break-inside: avoid;
@@ -200,9 +202,18 @@ export const RetirementDashboard = ({
                 {/* ... existing header content ... */}
                 <div className="flex items-center gap-3">
 
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
-                    </div>
+                    {onBack ? (
+                        <button
+                            onClick={onBack}
+                            className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        </button>
+                    ) : (
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                        </div>
+                    )}
                     <div>
                         <h1 className="text-lg font-black text-slate-800 tracking-tight leading-none">Financial Planner</h1>
                         <p className="text-xs text-slate-500 font-medium">วางแผนการเงิน</p>
@@ -327,7 +338,7 @@ export const RetirementDashboard = ({
                     {/* RIGHT AREA: Charts & Metrics (Col 2) */}
                     <div className="space-y-8">
                         {/* Hero Summary Card (Redesigned) */}
-                        <div className={`relative rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 xl:p-10 overflow-hidden font-sans shadow-xl lg:shadow-2xl transition-all duration-500 group ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981] shadow-emerald-900/40' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444] shadow-red-900/40'}`}>
+                        <div className={`relative rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 xl:p-10 overflow-hidden font-sans shadow-xl lg:shadow-2xl transition-all duration-500 group print:hidden ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981] shadow-emerald-900/40' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444] shadow-red-900/40'}`}>
                             {/* Decorative Background Patterns */}
                             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
                             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none mix-blend-overlay animate-pulse duration-3000"></div>
@@ -401,7 +412,7 @@ export const RetirementDashboard = ({
                         </div>
 
                         {/* Key Metrics Grid (Redesigned) */}
-                        <div className="relative">
+                        <div className="relative print:hidden">
                             {/* Grid Background Decoration */}
                             <div className="absolute inset-0 -m-8 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
 
@@ -526,8 +537,8 @@ export const RetirementDashboard = ({
                         <div className="flex flex-col gap-8 mb-8 break-inside-avoid">
                             {/* Main Chart Area */}
                             <div className="w-full bg-white rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-slate-100 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-blue-50/50 via-transparent to-transparent opacity-60 pointer-events-none -mr-20 -mt-20 rounded-full blur-3xl"></div>
-                                <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6">
+                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-blue-50/50 via-transparent to-transparent opacity-60 pointer-events-none -mr-20 -mt-20 rounded-full blur-3xl print:hidden"></div>
+                                <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6 print:hidden">
                                     <div>
                                         <div className="flex items-center gap-3 mb-1">
                                             <div className="w-1.5 h-8 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
@@ -559,7 +570,7 @@ export const RetirementDashboard = ({
                                         </button>
                                     </div>
                                 </div>
-                                <div id="printable-chart" className="w-full relative h-[500px] print:h-[300px] bg-gradient-to-b from-white to-slate-50/50 rounded-2xl border border-slate-100 p-4">
+                                <div id="printable-chart" className="w-full relative h-[500px] print:h-[250px] bg-gradient-to-b from-white to-slate-50/50 rounded-2xl border border-slate-100 p-4">
                                     <ProjectionChart
                                         inputs={inputs}
                                         result={result}
@@ -593,67 +604,49 @@ export const RetirementDashboard = ({
                             </div>
 
                             {/* PRINT ONLY: Chart Data Table */}
-                            <div id="print-data-table" className="hidden print:block mt-4">
-                                <h3 className="text-sm font-black text-slate-900 mb-2 border-l-4 border-indigo-600 pl-2">รายละเอียดข้อมูลรายปี (Data Table)</h3>
-                                <div className="grid grid-cols-2 gap-6 text-[9px] leading-tight">
-                                    {/* Column 1 */}
-                                    <div className="border border-slate-200 rounded-lg overflow-hidden">
-                                        <table className="w-full text-left">
-                                            <thead className="bg-slate-100 font-bold text-slate-700">
-                                                <tr>
-                                                    <th className="py-1.5 px-2 text-center">อายุ</th>
-                                                    <th className="py-1.5 px-2 text-right">เงินต้นสะสม</th>
-                                                    <th className="py-1.5 px-2 text-right">เงินออมรวม</th>
-                                                    <th className="py-1.5 px-2 text-right">เป้าหมาย</th>
-                                                    <th className="py-1.5 px-2 text-right">ทุนประกัน</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {printData.slice(0, Math.ceil(printData.length / 2)).map((row: any) => (
-                                                    <tr key={row.age} className="even:bg-slate-50">
-                                                        <td className="py-1 px-2 text-center font-bold text-slate-900">{row.age}</td>
-                                                        <td className="py-1 px-2 text-right text-blue-600 font-medium">{formatNumber(row.principal)}</td>
-                                                        <td className="py-1 px-2 text-right text-emerald-600 font-bold">{formatNumber(row.savings)}</td>
-                                                        <td className="py-1 px-2 text-right text-slate-500">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
-                                                        <td className="py-1 px-2 text-right text-orange-500">{row.sumAssured > 0 ? formatNumber(row.sumAssured) : "-"}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                            <div id="print-data-table" className="hidden print:block mt-6 font-mono text-black">
+                                <h3 className="text-[10px] font-bold uppercase tracking-widest mb-2 border-b border-black pb-1 inline-block">DATA TABLE (YEARLY ANALYSIS)</h3>
+                                <div className="grid grid-cols-3 gap-4 text-[8px] leading-tight">
+                                    {/* Generate 3 Columns */}
+                                    {Array.from({ length: 3 }).map((_, colIndex) => {
+                                        const chunkSize = Math.ceil(printData.length / 3);
+                                        const start = colIndex * chunkSize;
+                                        const end = start + chunkSize;
+                                        const dataSlice = printData.slice(start, end);
 
-                                    {/* Column 2 */}
-                                    <div className="border border-slate-200 rounded-lg overflow-hidden">
-                                        <table className="w-full text-left">
-                                            <thead className="bg-slate-100 font-bold text-slate-700">
-                                                <tr>
-                                                    <th className="py-1.5 px-2 text-center">อายุ</th>
-                                                    <th className="py-1.5 px-2 text-right">เงินต้นสะสม</th>
-                                                    <th className="py-1.5 px-2 text-right">เงินออมรวม</th>
-                                                    <th className="py-1.5 px-2 text-right">เป้าหมาย</th>
-                                                    <th className="py-1.5 px-2 text-right">ทุนประกัน</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {printData.slice(Math.ceil(printData.length / 2)).map((row: any) => (
-                                                    <tr key={row.age} className="even:bg-slate-50">
-                                                        <td className="py-1 px-2 text-center font-bold text-slate-900">{row.age}</td>
-                                                        <td className="py-1 px-2 text-right text-blue-600 font-medium">{formatNumber(row.principal)}</td>
-                                                        <td className="py-1 px-2 text-right text-emerald-600 font-bold">{formatNumber(row.savings)}</td>
-                                                        <td className="py-1 px-2 text-right text-slate-500">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
-                                                        <td className="py-1 px-2 text-right text-orange-500">{row.sumAssured > 0 ? formatNumber(row.sumAssured) : "-"}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                        return (
+                                            <div key={colIndex} className="border border-black">
+                                                <table className="w-full text-left table-fixed">
+                                                    <thead className="bg-gray-100 print:bg-gray-100 font-bold border-b border-black">
+                                                        <tr>
+                                                            <th className="py-1 px-1 text-center border-r border-black uppercase w-[15%]">Age</th>
+                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[25%]">Principal</th>
+                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[25%]">Savings</th>
+                                                            <th className="py-1 px-1 text-right uppercase w-[35%]">Target</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-black">
+                                                        {dataSlice.map((row: any) => (
+                                                            <tr key={row.age} className="border-b border-black last:border-0">
+                                                                <td className="py-0.5 px-1 text-center font-bold border-r border-black">{row.age}</td>
+                                                                <td className="py-0.5 px-1 text-right border-r border-black">{formatNumber(row.principal)}</td>
+                                                                <td className="py-0.5 px-1 text-right font-bold border-r border-black">{formatNumber(row.savings)}</td>
+                                                                <td className="py-0.5 px-1 text-right">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                <div className="text-[9px] text-slate-500 mt-2 flex justify-between items-center border-t border-slate-100 pt-2">
+                                <div className="text-[8px] mt-2 flex justify-between items-center border-t border-black pt-2 uppercase font-medium">
                                     <div className="flex gap-4">
-                                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-600"></span> เงินต้นสะสม: เงินที่เก็บออมจริงไม่รวมผลตอบแทน</span>
-                                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> เงินออมรวม: เงินต้น + ผลตอบแทนสะสม</span>
+                                        <span>* Principal: เงินต้นสะสม</span>
+                                        <span>* Savings: เงินออมรวม</span>
+                                        <span>* Target: เป้าหมาย</span>
                                     </div>
-                                    <span>*ข้อมูลนี้ใช้เพื่อการวางแผนเบื้องต้นเท่านั้น</span>
+                                    <span>Generated by Financial Planner App</span>
                                 </div>
                             </div>
 
