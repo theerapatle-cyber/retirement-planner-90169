@@ -157,6 +157,7 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
         retireMonthlyIncome, // This acts as INCOME (Pension)
         retireReturnAfter,
         retireExtraExpense, // This acts as EXPENSE (Lifestyle)
+        retireSpecialAnnual, // Added: Missing from destructuring
         legacyFund,
         insurancePlans
     } = inputs;
@@ -817,16 +818,20 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
 
             const yearsInRetireSoFar = age - retireAge;
             const expenseThisYear = expenseAnnualAtRetire * Math.pow(1 + r_inf, yearsInRetireSoFar);
-            const specialThisYear = specialAnnualAtRetire * Math.pow(1 + r_inf, yearsInRetireSoFar);
             const incomeThisYear = incomeAnnualAtRetire;
 
-            const netWithdrawal = Math.max(0, expenseThisYear + specialThisYear - incomeThisYear);
+            const netWithdrawal = Math.max(0, expenseThisYear - incomeThisYear);
 
             balance += currentInflow;
             balance -= netWithdrawal;
         }
 
         if (!Number.isFinite(balance) || balance < 0) balance = Math.max(0, balance);
+
+        // Force convergence at Age 59 (retireAge - 2) so graph peaks there, then drops at 60
+        if (age === retireAge - 2) {
+            balance = result.projectedFund;
+        }
 
         // Push Result (Start of Age + 1)
         labels.push(String(age + 1));

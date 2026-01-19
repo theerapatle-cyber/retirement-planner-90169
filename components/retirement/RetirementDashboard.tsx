@@ -629,25 +629,26 @@ export const RetirementDashboard = ({
                         {/* Main Dashboard Grid */}
                         <div className="flex flex-col gap-8 mb-8 break-inside-avoid">
                             {/* Main Chart Area */}
-                            <div className="w-full bg-white rounded-[32px] p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-slate-100 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-blue-50/50 via-transparent to-transparent opacity-60 pointer-events-none -mr-20 -mt-20 rounded-full blur-3xl print:hidden"></div>
+                            <div className="w-full bg-white rounded-[32px] p-8 shadow-xl border border-slate-100 relative overflow-hidden">
                                 <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6 print:hidden">
                                     <div>
-                                        <div className="flex items-center gap-3 mb-1">
-                                            <div className="w-1.5 h-8 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
-                                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">กราฟการเงินออม</h3>
+                                        <div className="flex items-center gap-4 mb-1">
+                                            <div className="w-1.5 h-8 bg-slate-800 rounded-full"></div>
+                                            <div>
+                                                <h3 className="text-3xl font-black text-slate-900 tracking-tight">กราฟการเงินออม</h3>
+                                            </div>
                                         </div>
                                         <p className="text-sm text-slate-500 font-medium pl-4.5">Wealth Projection & Goal Analysis</p>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-3">
-                                        <div className="flex bg-slate-100 p-1 rounded-full border border-slate-200 shadow-inner mr-2">
+                                        <div className="flex bg-slate-100/80 p-1.5 rounded-2xl backdrop-blur-sm mr-4">
                                             {[1, 5, 10].map((interval) => (
                                                 <button
                                                     key={interval}
                                                     onClick={() => setChartTickInterval(interval)}
-                                                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 ${chartTickInterval === interval
-                                                        ? "bg-white text-indigo-600 shadow-sm hover:shadow-md scale-105"
-                                                        : "text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50"
+                                                    className={`px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${chartTickInterval === interval
+                                                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                                                        : "text-slate-500 hover:bg-white hover:shadow-sm"
                                                         }`}
                                                 >
                                                     {interval} ปี
@@ -663,7 +664,7 @@ export const RetirementDashboard = ({
                                         </button>
                                     </div>
                                 </div>
-                                <div id="printable-chart" className="w-full relative h-[500px] print:h-[250px] bg-gradient-to-b from-white to-slate-50/50 rounded-2xl border border-slate-100 p-4">
+                                <div id="printable-chart" className="w-full relative h-[500px] print:h-[250px] bg-white/40 backdrop-blur-sm rounded-3xl border border-white/60 shadow-[inset_0_2px_15px_rgba(0,0,0,0.02)] p-6">
                                     <ProjectionChart
                                         inputs={inputs}
                                         result={result}
@@ -674,24 +675,32 @@ export const RetirementDashboard = ({
                                         chartTickInterval={chartTickInterval}
                                     />
                                 </div>
-                                <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-4 pt-6 border-t border-slate-100 print:hidden">
-                                    <label className="flex items-center gap-3 cursor-pointer select-none group/toggle">
-                                        <div className={`w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center ${showSumAssured ? "bg-orange-500 border-orange-500 shadow-sm" : "bg-white border-slate-300 group-hover/toggle:border-slate-400"}`}>
-                                            {showSumAssured && <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={showSumAssured} onChange={(e) => setShowSumAssured(e.target.checked)} />
-                                        <span className="text-sm font-bold text-slate-700">แสดงทุนประกัน</span>
-                                    </label>
-                                    <label className="flex items-center gap-3 cursor-pointer select-none group/toggle">
-                                        <div className={`w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center ${showActualSavings ? "bg-blue-600 border-blue-600 shadow-sm" : "bg-white border-slate-300 group-hover/toggle:border-slate-400"}`}>
-                                            {showActualSavings && <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
-                                        </div>
-                                        <input type="checkbox" className="hidden" checked={showActualSavings} onChange={(e) => setShowActualSavings(e.target.checked)} />
-                                        <span className="text-sm font-bold text-slate-700">แสดงเงินที่เก็บได้จริง</span>
-                                    </label>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-4 bg-emerald-100 border border-emerald-200 rounded"></div>
-                                        <span className="text-sm font-bold text-slate-700">Monte Carlo Simulation P5-P95</span>
+                                <div className="mt-8 flex flex-wrap items-center justify-center gap-4 pt-6 print:hidden">
+                                    <button
+                                        onClick={() => setShowSumAssured(!showSumAssured)}
+                                        className={`px-5 py-2.5 rounded-full text-sm font-bold border-2 transition-all duration-300 flex items-center gap-2 ${showSumAssured
+                                            ? "bg-orange-50 border-orange-200 text-orange-600 shadow-sm hover:bg-orange-100"
+                                            : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
+                                            }`}
+                                    >
+                                        <div className={`w-2.5 h-2.5 rounded-full ${showSumAssured ? "bg-orange-500" : "bg-slate-300"}`}></div>
+                                        แสดงทุนประกัน
+                                    </button>
+
+                                    <button
+                                        onClick={() => setShowActualSavings(!showActualSavings)}
+                                        className={`px-5 py-2.5 rounded-full text-sm font-bold border-2 transition-all duration-300 flex items-center gap-2 ${showActualSavings
+                                            ? "bg-blue-50 border-blue-200 text-blue-600 shadow-sm hover:bg-blue-100"
+                                            : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
+                                            }`}
+                                    >
+                                        <div className={`w-2.5 h-2.5 rounded-full ${showActualSavings ? "bg-blue-600" : "bg-slate-300"}`}></div>
+                                        แสดงเงินที่เก็บได้จริง
+                                    </button>
+
+                                    <div className="px-5 py-2.5 rounded-full text-sm font-bold border-2 border-emerald-100 bg-emerald-50/50 text-emerald-600 flex items-center gap-2 cursor-default">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
+                                        Monte Carlo Simulation P5-P95
                                     </div>
                                 </div>
                             </div>
