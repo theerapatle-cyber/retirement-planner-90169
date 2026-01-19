@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { X, Camera, User, Lock, Save } from "lucide-react";
+import { X, Camera, User, Lock, Save, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ interface ProfileSettingsModalProps {
 export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onClose, user, onSave }) => {
     const [name, setName] = useState(user?.name || "");
     const [password, setPassword] = useState(user?.password || "");
+    const [showPassword, setShowPassword] = useState(false);
     const [avatar, setAvatar] = useState<string | undefined>(user?.avatar);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -99,10 +100,17 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOp
                                 <Input
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
-                                    type="password"
-                                    className="pl-11 h-12 bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl"
-                                    placeholder="ตั้งรหัสผ่าน"
+                                    type={showPassword ? "text" : "password"}
+                                    className="pl-11 pr-10 h-12 bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl"
+                                    placeholder="เปลี่ยนรหัสผ่าน (ระบุเพื่อเปลี่ยน)"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </div>
                         </div>
                     </div>

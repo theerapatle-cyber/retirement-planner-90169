@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import * as XLSX from "xlsx";
 import {
     FormState,
     InsurancePlan,
@@ -27,6 +28,9 @@ export function useRetirementApp() {
     const [familyMembers, setFamilyMembers] = React.useState<MemberProfile[]>([]);
     const [currentMemberId, setCurrentMemberId] = React.useState<string>("primary");
     const [showFamilyPanel, setShowFamilyPanel] = React.useState(false);
+
+    /* ---------- Individual State (Separated) ---------- */
+    const [individualMember, setIndividualMember] = React.useState<MemberProfile | null>(null);
 
     /* ---------- Main Form State ---------- */
     const [form, setForm] = React.useState<FormState>(initialForm);
@@ -89,7 +93,6 @@ export function useRetirementApp() {
             gender: "male",
             savingMode: "flat",
             returnMode: "avg",
-            totalTarget: 0,
             retireSpendMode: "flat",
             allocations: [
                 { id: 1, name: "หุ้น", weight: "70", expectedReturn: "8", volatility: "15" },
@@ -99,6 +102,7 @@ export function useRetirementApp() {
         } as any;
 
         setFamilyMembers([defaultMember]);
+        setIndividualMember(defaultMember); // Initialize Individual with same default
         setCurrentMemberId("primary");
         setForm(initialForm);
 
@@ -303,6 +307,34 @@ export function useRetirementApp() {
             return updated;
         });
     }, [currentMemberId, form, gender, relation, savingMode, returnMode, retireSpendMode, allocations]);
+
+    // Sync to Individual State
+    React.useEffect(() => {
+        if (planType === "individual" && individualMember) {
+            setIndividualMember(prev => ({
+                ...prev!,
+                form, gender, relation, savingMode, returnMode, retireSpendMode, allocations
+            }));
+        } else if (planType === "family") {
+            syncCurrentToFamily(); // Auto-sync to Family State
+        }
+    }, [form, gender, relation, savingMode, returnMode, retireSpendMode, allocations, planType]);
+
+    const handleSetPlanType = (type: "individual" | "family" | null) => {
+        // If switching TO a type, load its data
+        if (type === "individual") {
+            if (individualMember) {
+                loadMember(individualMember);
+            }
+        } else if (type === "family") {
+            // Load primary family member (or current if we tracked it separately, but sticking to 0/primary for now)
+            // If familyMembers is empty, it re-inits, but it shouldn't be empty due to init effect.
+            const target = familyMembers.find(m => m.id === currentMemberId) || familyMembers[0];
+            if (target) loadMember(target);
+        }
+
+        setPlanType(type);
+    };
 
     const loadMember = (member: MemberProfile) => {
         setForm(member.form);
@@ -736,34 +768,58 @@ export function useRetirementApp() {
         if (typeof window !== "undefined") window.print();
     };
 
-    const handleExportCSV = () => {
-        const { labels, actual, required, actualHistory } = buildProjectionSeries(inputs, result);
-
-        // Header
-        const header = ["Age", "Projected Savings", "Target Goal", "Actual Savings (History)"];
+    const handleExportExcel = () => {
+        // Cast result to any to access new properties if TS complains, or rely on inference
+        const calculationData = buildProjectionSeries(inputs, result) as any;
+        const { labels, actual, required, insuranceInflows, sumAssuredSeries } = calculationData;
+        const retireAge = Number(inputs.retireAge);
+        const legacyFund = Number(inputs.legacyFund) || 0;
 
         // Rows
-        const rows = labels.map((age, i) => {
-            return [
-                age,
-                actual[i] || 0,
-                required[i] || 0,
-                actualHistory[i] !== undefined ? actualHistory[i] : ""
-            ];
+        const rows = labels.map((ageStr: string, i: number) => {
+            const age = Number(ageStr);
+            const rowData: any = {
+                "อายุ": age,
+                "เงินออมสะสม": Number((actual[i] || 0).toFixed(2)),
+            };
+
+            // Target Goal: Show only up to Retire Age OR until Goal is met
+            const isGoalMetPreviously = i > 0 && (actual[i - 1] || 0) >= (required[i - 1] || 0);
+            if (age <= retireAge && !isGoalMetPreviously) {
+                rowData["เป้าหมายเกษียณ"] = Number((required[i] || 0).toFixed(2));
+            } else {
+                rowData["เป้าหมายเกษียณ"] = "";
+            }
+
+            // Insurance Data
+            rowData["ทุนประกันรวม"] = Number((sumAssuredSeries[i] || 0).toFixed(2));
+            rowData["กระแสเงินสดจากประกัน"] = Number((insuranceInflows[i] || 0).toFixed(2));
+
+            // Legacy: Start showing from Retire Age onwards
+            if (legacyFund > 0 && age >= retireAge) {
+                rowData["เป้าหมายมรดก"] = Number(legacyFund.toFixed(2));
+            }
+
+            return rowData;
         });
 
-        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" // Add BOM for Excel utf-8 support
-            + [header, ...rows].map(e => e.join(",")).join("\n");
+        const worksheet = XLSX.utils.json_to_sheet(rows);
 
-        if (typeof window !== "undefined") {
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "retirement_projection.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+        // Auto-width columns (simple heuristic)
+        const wscols = [
+            { wch: 10 }, // Age
+            { wch: 20 }, // Savings
+            { wch: 20 }, // Target
+            { wch: 20 }, // Sum Assured
+            { wch: 25 }, // Income
+            { wch: 20 }, // Legacy
+        ];
+        worksheet['!cols'] = wscols;
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Retirement Plan");
+
+        XLSX.writeFile(workbook, "Retirement_Plan_Export.xlsx");
     };
 
 
@@ -780,7 +836,7 @@ export function useRetirementApp() {
             planSaved, saveMessage, savedPlans, showProfileSettings
         },
         setters: {
-            setUser, setPlanType, setFamilyMembers, setCurrentMemberId, setShowFamilyPanel,
+            setUser, setPlanType: handleSetPlanType, setFamilyMembers, setCurrentMemberId, setShowFamilyPanel,
             setForm, setInputStep, setShowResult, setShowFamilyResult,
             setGender, setRelation, setSavingMode, setReturnMode, setRetireSpendMode, setAllocations,
             setShowSumAssured, setShowActualSavings, setShowProfileCard, setShowAgeCard,
@@ -798,7 +854,7 @@ export function useRetirementApp() {
             addInsurancePlan, removeInsurancePlan, updateInsurancePlan, changeInsuranceBy, updateSurrenderTable,
             syncCurrentToFamily, loadMember, handleSwitchMember, handleAddMember, handleRemoveMember, getFamilySummary, handleConfirmDraft,
             handleSavePlan, handleLoadPlan, handleDeletePlan, resetRetirement, handleLogin, handleLogout,
-            handleExportCSV, handlePrint, handleUpdateUser
+            handleExportExcel, handlePrint, handleUpdateUser
         }
     };
 }

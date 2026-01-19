@@ -44,7 +44,7 @@ export default function HomePage() {
 
     // Dashboard / Insurance
     addInsurancePlan, removeInsurancePlan, updateInsurancePlan, updateSurrenderTable,
-    handleExportCSV, handlePrint, handleChange, changeBy,
+    handleExportExcel, handlePrint, handleChange, changeBy,
 
     // Allocations
     addAllocation, removeAllocation, updateAllocation
@@ -98,6 +98,7 @@ export default function HomePage() {
         handleAddMember={handleAddMember}
         handleRemoveMember={handleRemoveMember}
         getFamilySummary={getFamilySummary}
+        setShowResult={setters.setShowResult}
       />
     );
   }
@@ -184,7 +185,7 @@ export default function HomePage() {
           planType={planType}
           syncCurrentToFamily={syncCurrentToFamily}
           setShowFamilyResult={setShowFamilyResult}
-          handleExportCSV={handleExportCSV}
+          handleExportExcel={handleExportExcel}
           handlePrint={handlePrint}
           addInsurancePlan={addInsurancePlan}
           removeInsurancePlan={removeInsurancePlan}

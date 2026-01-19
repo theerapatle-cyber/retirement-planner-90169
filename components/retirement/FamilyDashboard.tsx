@@ -26,6 +26,7 @@ interface FamilyDashboardProps {
         totalMonthlySavingsCurrent: number;
         totalMonthlyNeeded: number;
     };
+    setShowResult: (show: boolean) => void;
 }
 
 export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
@@ -41,7 +42,8 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
     handleSwitchMember,
     handleAddMember,
     handleRemoveMember,
-    getFamilySummary
+    getFamilySummary,
+    setShowResult
 }) => {
     const summary = getFamilySummary();
     const totalProgress = Math.min(100, (summary.totalMonthlySavingsCurrent / (summary.totalMonthlyNeeded || 1)) * 100);
@@ -221,15 +223,15 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
 
                             <div className="relative w-72 h-72 flex items-center justify-center mb-12">
                                 {/* Background Ring */}
-                                <svg className="w-full h-full transform -rotate-90 drop-shadow-lg">
-                                    <circle cx="50%" cy="50%" r="42%" stroke="white" strokeWidth="28" fill="none" />
-                                    <circle cx="50%" cy="50%" r="42%" stroke="#e2e8f0" strokeWidth="28" fill="none" className="opacity-40" />
-                                    <circle cx="50%" cy="50%" r="42%"
+                                <svg className="w-full h-full transform -rotate-90 drop-shadow-lg" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="10" fill="none" />
+                                    <circle cx="50" cy="50" r="40" stroke="#e2e8f0" strokeWidth="10" fill="none" className="opacity-40" />
+                                    <circle cx="50" cy="50" r="40"
                                         stroke={summary.totalGap >= 0 ? "#00c49f" : "#f59e0b"}
-                                        strokeWidth="28"
+                                        strokeWidth="10"
                                         fill="none"
-                                        strokeDasharray="300"
-                                        strokeDashoffset={300 - (300 * (totalProgress / 100))}
+                                        strokeDasharray="251.2"
+                                        strokeDashoffset={251.2 - (251.2 * (totalProgress / 100))}
                                         strokeLinecap="round"
                                         className="transition-all duration-1000 ease-out" />
                                 </svg>
@@ -318,16 +320,17 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                                 onClick={() => {
                                                     handleSwitchMember(m.id);
                                                     setShowFamilyResult(false);
+                                                    setShowResult(true);
                                                 }}
                                             >
                                                 <td className="py-6 px-8">
                                                     <div className="flex items-center gap-5">
                                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-base font-black shadow-sm transition-transform group-hover/row:scale-105 group-hover/row:rotate-3 ${res.status === "enough" ? "bg-emerald-100 text-emerald-600" : "bg-red-50 text-red-500"}`}>
-                                                            {m.name.charAt(0)}
+                                                            {(m.form.planName || m.name).charAt(0)}
                                                         </div>
                                                         <div>
                                                             <div className="font-bold text-slate-800 flex items-center gap-2 text-sm group-hover/row:text-indigo-600 transition-colors">
-                                                                {m.name}
+                                                                {m.form.planName || m.name}
                                                             </div>
                                                             <div className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg inline-block mt-1.5">{relationMap[m.relation] || m.relation}</div>
                                                         </div>

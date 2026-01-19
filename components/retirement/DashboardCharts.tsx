@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import * as XLSX from 'xlsx';
 import {
     Chart as ChartJS,
     CategoryScale,

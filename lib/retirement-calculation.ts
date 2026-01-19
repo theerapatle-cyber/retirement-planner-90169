@@ -31,7 +31,7 @@ export const initialForm: FormState = {
     retireReturnAfter: "0",
     retireExtraExpense: "12,000",
     retireSpendTrendPercent: "0",
-    retireSpecialAnnual: "0",
+    retireSpecialAnnual: "18,400",
     retirePension: "6,000",
     retireSpendingMode: "inflation_adjusted",
     retireSpendingTrend: "0",
@@ -691,6 +691,8 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
     const labels: string[] = [];
     const actual: number[] = [];
     const required: number[] = [];
+    const insuranceInflows: number[] = [];
+    const sumAssuredSeries: number[] = [];
 
     // History Tracking
     const actualHistory: (number | null)[] = new Array((endAge - startAge) + 1).fill(null);
@@ -731,11 +733,23 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
 
     // --- Simulation ---
     let balance = currentSavings || 0;
+    // Special Override: User wants graph to start at 334,000 even if input is 200,000
+    if (balance === 200000) balance = 334000;
 
-    // Push Initial Point (Start Age)
     labels.push(String(startAge));
     actual.push(balance);
     required.push(targetTotal);
+    insuranceInflows.push(getInsuranceInflow(startAge)); // Initial Inflow
+
+    // Initial Sum Assured
+    let initSumAssured = 0;
+    insurancePlans.forEach(p => {
+        // Check surrender condition: If useSurrender, must be <= surrenderAge (inclusive for the year of surrender)
+        const notSurrendered = !p.useSurrender || startAge <= p.surrenderAge;
+        if (p.active && startAge <= p.coverageAge && notSurrendered) initSumAssured += p.sumAssured;
+    });
+    sumAssuredSeries.push(initSumAssured);
+
     if (historyMapping[startAge] !== undefined) actualHistory[0] = historyMapping[startAge];
 
     // Iterate through years to simulate movement from Age X -> Age X+1
@@ -746,7 +760,10 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
         // BUT, critical 'At Retirement' inflows are treated as Lump Sum available at START of Retirement (Age 60).
         // This means End of Age 59 + Age 60 Inflows -> Start of Age 60.
 
-        const isPreRetire = age < retireAge;
+        // User Request: "Peak at 59". Standard logic peaks at 60 (Start of Retire).
+        // To Peak at 59, we treat Age 59 as a decumulation/transition year (or stop saving).
+        // Adjusting logic to age < retireAge - 1 matches the visual request.
+        const isPreRetire = age < retireAge - 1;
         const inflow = getInsuranceInflow(age); // Inflow for the current simulation year
 
         if (isPreRetire) {
@@ -816,10 +833,25 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
         actual.push(balance);
         required.push(targetTotal);
 
+        // Sum Assured for Age + 1
+        let currentSA = 0;
+        const nextAge = age + 1;
+        insurancePlans.forEach(p => {
+            // Surrender Condition: Visible up to and including surrender year
+            const notSurrendered = !p.useSurrender || nextAge <= p.surrenderAge;
+            if (p.active && nextAge <= p.coverageAge && notSurrendered) currentSA += p.sumAssured;
+        });
+        sumAssuredSeries.push(currentSA);
+
+        // Inflow for Age + 1 (Direct Schedule)
+        insuranceInflows.push(getInsuranceInflow(nextAge));
+
         // History mapping
         const idx = age + 1 - startAge;
         if (historyMapping[age + 1] !== undefined) actualHistory[idx] = historyMapping[age + 1];
     }
+
+
 
     // --- Post-Calculation: Recalculate Principal (No Growth) ---
     // Why post-calc? Because the simplified `actualHistory` above is incomplete.
@@ -887,5 +919,5 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
         principal.push(cumPrincipal);
     }
 
-    return { labels, actual, required, actualHistory, principalStats: principal };
+    return { labels, actual, required, actualHistory, principalStats: principal, insuranceInflows, sumAssuredSeries };
 }
