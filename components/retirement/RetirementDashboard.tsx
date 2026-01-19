@@ -106,7 +106,7 @@ export const RetirementDashboard = ({
 }: RetirementDashboardProps) => {
 
     const [showSumAssured, setShowSumAssured] = React.useState(true);
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
     const [showActualSavings, setShowActualSavings] = React.useState(true);
     const [showInsuranceTable, setShowInsuranceTable] = React.useState(false);
     const [showProjectedModal, setShowProjectedModal] = React.useState(false);
@@ -115,6 +115,18 @@ export const RetirementDashboard = ({
     const [showMonteCarloDetails, setShowMonteCarloDetails] = React.useState(false);
     const [isMonteCarloOpen, setIsMonteCarloOpen] = React.useState(false);
     const [chartTickInterval, setChartTickInterval] = React.useState<number>(5);
+
+    // Scroll to results on mobile/tablet when entering dashboard
+    React.useEffect(() => {
+        if (window.innerWidth < 1024) {
+            const resultsElement = document.getElementById("results-section");
+            if (resultsElement) {
+                setTimeout(() => {
+                    resultsElement.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 100);
+            }
+        }
+    }, []);
 
     const { insuranceChartData } = useInsuranceLogic(form);
 
@@ -265,6 +277,25 @@ export const RetirementDashboard = ({
                     </div>
                     {/* ... buttons ... */}
                     <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                            variant={isSidebarOpen ? "secondary" : "default"}
+                            size="sm"
+                            className={`h-9 px-4 rounded-xl font-bold text-xs shadow-sm transition-all gap-2 ${isSidebarOpen ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200'}`}
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        >
+                            {isSidebarOpen ? (
+                                <>
+                                    <PanelLeftClose className="w-4 h-4" />
+                                    ดูผลลัพธ์ (View Result)
+                                </>
+                            ) : (
+                                <>
+                                    <PanelLeftOpen className="w-4 h-4" />
+                                    ปรับแผน (Adjust Plan)
+                                </>
+                            )}
+                        </Button>
+
                         {planType === "family" && (
                             <Button
                                 variant="default"
@@ -302,14 +333,21 @@ export const RetirementDashboard = ({
 
 
 
-                {/* Main Content Grid */}
-                <div className={`grid grid-cols-1 gap-6 lg:gap-8 transition-all duration-300 ${isSidebarOpen ? 'lg:grid-cols-[480px_1fr]' : ''} print:grid-cols-1 print:gap-0`}>
+                {/* Main Content Flex Container */}
+                <div className="flex items-start gap-0 relative xl:h-[calc(100vh-80px)] xl:overflow-hidden">
 
-                    {/* LEFT AREA: Inputs (Col 1) - Hide on Print */}
-                    <div className={`space-y-6 ${isSidebarOpen ? '' : 'hidden'} lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-2 custom-scrollbar print:hidden`}>
-                        <div>
-                            {/* ... Inputs ... */}
-                            {/* We'll remove the outer header "ข้อมูลแผนเกษียณ" since the Single Card has its own headers inside */}
+                    {/* LEFT AREA: Sidebar (Fixed Width, Height 100%) */}
+                    <div className={`
+                        shrink-0 transition-all duration-300 ease-in-out border-r border-slate-200 bg-white/50 backdrop-blur-sm
+                        ${isSidebarOpen
+                            ? 'w-[360px] opacity-100 translate-x-0 mr-8'
+                            : 'w-0 opacity-0 -translate-x-4 border-none mr-0 overflow-hidden'}
+                        hidden xl:block xl:h-full xl:overflow-y-auto pr-1
+                        print:hidden
+                        [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden
+                    `}>
+                        <div className="pb-10 pl-1">
+                            {/* Inputs Component */}
                             <RetirementInputSection
                                 user={user}
                                 form={form}
@@ -335,8 +373,34 @@ export const RetirementDashboard = ({
                         </div>
                     </div>
 
-                    {/* RIGHT AREA: Charts & Metrics (Col 2) */}
-                    <div className="space-y-8">
+                    {/* LEFT AREA: Mobile/Tablet Stacked (Only visible when sidebar open on small screens) */}
+                    <div className={`xl:hidden space-y-6 mb-8 ${isSidebarOpen ? 'block' : 'hidden'} print:hidden`}>
+                        <RetirementInputSection
+                            user={user}
+                            form={form}
+                            handleChange={handleChange}
+                            changeBy={changeBy}
+                            gender={gender}
+                            setGender={setGender}
+                            addInsurancePlan={addInsurancePlan}
+                            removeInsurancePlan={removeInsurancePlan}
+                            updateInsurancePlan={updateInsurancePlan}
+                            onViewTable={() => setShowInsuranceTable(true)}
+                            savingMode={savingMode}
+                            setSavingMode={setSavingMode}
+                            returnMode={returnMode}
+                            setReturnMode={setReturnMode}
+                            allocations={allocations}
+                            addAllocation={addAllocation}
+                            removeAllocation={removeAllocation}
+                            updateAllocation={updateAllocation}
+                            onCalculate={() => { }}
+                            isEmbedded={true}
+                        />
+                    </div>
+
+                    {/* RIGHT AREA: Charts & Metrics (Flex Grow, Scrollable) */}
+                    <div id="results-section" className={`flex-1 min-w-0 space-y-8 transition-all duration-300 xl:h-full xl:overflow-y-auto xl:overflow-x-hidden xl:pr-4 custom-scrollbar pb-20 ${isSidebarOpen ? 'max-w-[100vw] xl:max-w-none' : ''}`}>
                         {/* Hero Summary Card (Redesigned) */}
                         <div className={`relative rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 xl:p-10 overflow-hidden font-sans shadow-xl lg:shadow-2xl transition-all duration-500 group print:hidden ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981] shadow-emerald-900/40' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444] shadow-red-900/40'}`}>
                             {/* Decorative Background Patterns */}
@@ -345,7 +409,7 @@ export const RetirementDashboard = ({
                             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-black/10 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none"></div>
 
                             {/* Content Container */}
-                            <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8 lg:gap-10">
+                            <div className={`relative z-10 flex flex-col ${isSidebarOpen ? '2xl:flex-row' : 'xl:flex-row'} xl:items-center justify-between gap-8 lg:gap-10`}>
                                 {/* Left Side: Status & Message */}
                                 <div className="flex-1 space-y-4 lg:space-y-6">
                                     <div className={`inline-flex items-center gap-2.5 px-3 py-1.5 lg:px-4 lg:py-2 rounded-full border backdrop-blur-md shadow-sm ${result.status === 'enough' ? 'bg-emerald-500/20 border-emerald-400/30 text-emerald-50' : 'bg-red-500/20 border-red-400/30 text-red-50'}`}>
@@ -416,13 +480,16 @@ export const RetirementDashboard = ({
                             {/* Grid Background Decoration */}
                             <div className="absolute inset-0 -m-8 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 relative z-10">
+                            <div className={`grid grid-cols-1 gap-4 lg:gap-6 relative z-10 ${isSidebarOpen ? 'xl:grid-cols-1 2xl:grid-cols-2' : 'md:grid-cols-2'}`}>
                                 {/* Card 1: Projected Savings */}
                                 <div
                                     onClick={() => setShowProjectedModal(true)}
                                     className="bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
                                 >
-                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-emerald-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-emerald-100/80"></div>
+                                    <div className="absolute -right-8 -top-8 text-emerald-100/50 group-hover:text-emerald-200/50 transition-colors pointer-events-none z-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5a3.5 3.5 0 0 1-4.9-5.0L10.3 1.5" /><path d="M19 5a3 5 0 0 1 0 6h-6.7" /><path d="M12 11l-3 3" /><circle cx="5" cy="18" r="4" /><path d="M9 18l6-6" /></svg>
+                                    </div>
+                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-emerald-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-emerald-100/80 -z-10"></div>
                                     <div className="relative flex flex-col h-full justify-between">
                                         <div className="flex justify-between items-start mb-3 lg:mb-4">
                                             <div>
@@ -450,11 +517,17 @@ export const RetirementDashboard = ({
                                     onClick={() => setShowTargetModal(true)}
                                     className="bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(59,130,246,0.15)] hover:border-blue-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
                                 >
-                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-blue-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-blue-100/80"></div>
+                                    <div className="absolute -right-8 -top-8 text-blue-100/50 group-hover:text-blue-200/50 transition-colors pointer-events-none z-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
+                                    </div>
+                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-blue-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-blue-100/80 -z-10"></div>
                                     <div className="relative flex flex-col h-full justify-between">
                                         <div className="flex justify-between items-start mb-3 lg:mb-4">
                                             <div>
-                                                <p className="text-sm lg:text-base font-bold text-slate-800 mb-1 group-hover:text-blue-700 transition-colors">เงินที่ต้องการก่อนเกษียณ</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm lg:text-base font-bold text-slate-800 mb-1 group-hover:text-blue-700 transition-colors">เงินที่ต้องการก่อนเกษียณ</p>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-slate-300 mb-1"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                                                </div>
                                                 <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Retirement Goal</span>
                                             </div>
                                             <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-[-3deg] transition-transform duration-300 shadow-sm border border-blue-100/50">
@@ -462,12 +535,21 @@ export const RetirementDashboard = ({
                                             </div>
                                         </div>
                                         <div>
-                                            <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-blue-600 transition-colors">
-                                                ฿{formatNumber2(result.targetFund)}
-                                            </h4>
-                                            <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors line-clamp-1">
-                                                สำหรับ {result.yearsInRetirement} ปีหลังเกษียณ (ออม ฿{formatNumber2(result.monthlyNeeded)}/เดือน)
-                                            </p>
+                                            <div>
+                                                <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-2 group-hover:text-blue-600 transition-colors">
+                                                    ฿{formatNumber2(result.targetFund)}
+                                                </h4>
+
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors line-clamp-1">
+                                                        สำหรับ {result.yearsInRetirement} ปีหลังเกษียณ (โดยไม่สร้างผลตอบแทนเพิ่มเลย)
+                                                    </p>
+                                                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors">
+                                                        <span>หรือออมขั้นต่ำคร่าวๆ ฿{formatNumber2(result.monthlyNeeded)} ต่อเดือน</span>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-slate-300"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -477,7 +559,10 @@ export const RetirementDashboard = ({
                                     onClick={() => setShowExpenseModal(true)}
                                     className="bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(168,85,247,0.15)] hover:border-purple-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
                                 >
-                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-purple-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-purple-100/80"></div>
+                                    <div className="absolute -right-8 -top-8 text-purple-100/50 group-hover:text-purple-200/50 transition-colors pointer-events-none z-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                                    </div>
+                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-purple-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-purple-100/80 -z-10"></div>
                                     <div className="relative flex flex-col h-full justify-between">
                                         <div className="flex justify-between items-start mb-3 lg:mb-4">
                                             <div>
@@ -503,7 +588,14 @@ export const RetirementDashboard = ({
                                 <div
                                     className={`bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-default transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] ${result.status === 'enough' ? 'hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100' : 'hover:shadow-[0_20px_50px_-15px_rgba(244,63,94,0.15)] hover:border-rose-100'}`}
                                 >
-                                    <div className={`absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors ${result.status === 'enough' ? 'bg-emerald-50 group-hover:bg-emerald-100/80' : 'bg-rose-50 group-hover:bg-rose-100/80'}`}></div>
+                                    <div className={`absolute -right-8 -top-8 transition-colors pointer-events-none z-0 ${result.status === 'enough' ? 'text-emerald-100/50 group-hover:text-emerald-200/50' : 'text-rose-100/50 group-hover:text-rose-200/50'}`}>
+                                        {result.status === 'enough' ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                        )}
+                                    </div>
+                                    <div className={`absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors -z-10 ${result.status === 'enough' ? 'bg-emerald-50 group-hover:bg-emerald-100/80' : 'bg-rose-50 group-hover:bg-rose-100/80'}`}></div>
                                     <div className="relative flex flex-col h-full justify-between">
                                         <div className="flex justify-between items-start mb-3 lg:mb-4">
                                             <div>

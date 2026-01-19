@@ -193,8 +193,69 @@ const agePeriodPlugin = {
     }
 };
 
+const legacyLabelPlugin = {
+    id: "legacyLabelPlugin",
+    afterDraw: (chart: any, args: any, options: any) => {
+        const { ctx, scales: { x, y } } = chart;
+        const legacyVal = options.legacyValue || 0;
+        if (legacyVal <= 0) return;
+
+        const yPos = y.getPixelForValue(legacyVal);
+        const xStart = x.left;
+        const xEnd = x.right;
+
+        // Draw Label "มรดก" as a Badge
+        const text = "มรดก";
+        ctx.save();
+        ctx.font = "bold 12px 'Inter', 'Prompt', sans-serif";
+        const textMetrics = ctx.measureText(text);
+
+        // Badge Dimensions
+        const paddingX = 12;
+        const paddingY = 6;
+        const badgeHeight = 26;
+        const badgeWidth = textMetrics.width + (paddingX * 2);
+
+        // Position: Align more to the right side (e.g. 80-85% of width) to distinct from potentially overlapping goal line
+        const badgeX = xStart + (xEnd - xStart) * 0.85;
+        const badgeY = yPos - (badgeHeight / 2);
+
+        // Shadow
+        ctx.shadowColor = "rgba(239, 68, 68, 0.15)"; // Red shadow
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 4;
+
+        // Background (Pill Shape)
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 100);
+        } else {
+            ctx.rect(badgeX, badgeY, badgeWidth, badgeHeight);
+        }
+        ctx.fill();
+
+        // Restore shadow
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+
+        // Border
+        ctx.strokeStyle = "#fca5a5"; // Red 300
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Text
+        ctx.fillStyle = "#ef4444"; // Red 500
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, badgeX + paddingX, yPos + 1);
+
+        ctx.restore();
+    }
+};
+
 // Also register local plugins
-ChartJS.register(goalLabelPlugin, crosshairPlugin, agePeriodPlugin);
+ChartJS.register(goalLabelPlugin, legacyLabelPlugin, crosshairPlugin, agePeriodPlugin);
 
 
 interface ProjectionChartProps {
@@ -284,6 +345,19 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         hidden: false
                     },
                     {
+                        label: "มรดก",
+                        data: labels.map((age, i) => Number(age) >= Number(inputs.retireAge) ? inputs.legacyFund : null),
+                        borderColor: "#EF4444", // Red-500
+                        borderDash: [5, 5],
+                        backgroundColor: "transparent",
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        fill: false,
+                        order: 4,
+                        hidden: !(inputs.legacyFund > 0),
+                    },
+                    {
                         label: "ทุนประกัน", data: sumAssuredSeries, borderColor: "#F97316", backgroundColor: "transparent", borderWidth: 2, stepped: false,
                         pointRadius: 3, // Restored small dots
                         pointHoverRadius: 6,
@@ -323,6 +397,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         }, filter: (item: any) => item.dataset.label !== "P5" && item.dataset.label !== "P95",
                     },
                     goalLabelPlugin: { goalValue: result.targetFund, labelText: "เป้าหมายทางการเงิน", formatNumber, chartTickInterval, retireAge: Number(inputs.retireAge) },
+                    legacyLabelPlugin: { legacyValue: inputs.legacyFund },
                     agePeriodPlugin: { tickInterval: chartTickInterval },
                 },
                 scales: {

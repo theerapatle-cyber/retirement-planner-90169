@@ -136,8 +136,11 @@ export const useInsuranceLogic = (form: FormState) => {
                     }
                 }
                 if (plan.useSurrender && plan.surrenderAge && age === Number(plan.surrenderAge)) {
-                    totalCashValue += Number(String(plan.surrenderValue || 0).replace(/,/g, ""));
+                    const sv = Number(String(plan.surrenderValue || 0).replace(/,/g, ""));
+                    totalCashValue += sv;
                     hasCashValue = true;
+                    // Add surrender value to total cash flow so it shows in the tooltip
+                    totalFlow += sv;
                 }
             });
             deathBenefit.push(totalDeathBenefit);
@@ -398,7 +401,7 @@ export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, f
                         {tab === "details" && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
-                                    {["เริ่มต้นจากเงินสะสมที่มีอยู่ในปัจจุบัน", "คำนวณผลตอบแทนจากเงินสะสมทั้งหมดของปีนั้น (ผลตอบแทนเฉลี่ยต่อปี)", "เพิ่มเงินออมประจำปีเข้าไปในยอดสะสม", "หากมีเงินเพิ่มเติมจากแหล่งอื่น เช่น เงินคืนประกัน ก็จะนำมาบวกกับยอดสะสมของปีนั้นด้วย", "ทำซ้ำขั้นตอนทั้งหมดจนถึงปีเกษียณ → จะได้ยอดสะสมสุดท้าย"].map((step, idx) => (
+                                    {["เริ่มต้นจากเงินสะสมที่มีอยู่ในปัจจุบัน", "คำนวณผลตอบแทนจากเงินสะสมทั้งหมดของปีนั้น (ผลตอบแทนเฉลี่ยต่อปี)", "เพิ่มเงินออมประจำปีเข้าไปในยอดสะสม", "หากมีเงินเพิ่มเติมจากแหล่งอื่น เช่น เงินคืนประกัน ก็จะนำมาบวกกับยอดสะสมของปีนั้นด้วย", "ทำซ้ำขั้นตอน 2–4 สำหรับทุกปีจนถึงปีเกษียณ → จะได้ยอดสะสมสุดท้าย"].map((step, idx) => (
                                         <div key={idx} className="flex gap-4 text-sm text-slate-600 group">
                                             <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 font-bold text-xs shadow-sm ring-1 ring-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-colors">{idx + 1}</div>
                                             <div className="pt-1.5 leading-relaxed font-medium">{step}</div>
@@ -407,7 +410,7 @@ export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, f
                                 </div>
                                 <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 p-5 border border-amber-100/50 flex gap-4 items-start shadow-sm">
                                     <span className="text-amber-500 text-2xl mt-0.5">💡</span>
-                                    <div className="text-sm text-slate-700 pt-1"><span className="font-bold text-slate-900 block mb-1 text-base">Key Takeaway</span>หัวใจสำคัญคือ <span className="font-bold text-amber-700">"พลังของดอกเบี้ยทบต้น"</span> (Compound Interest) ยิ่งออมเร็ว เงินยิ่งทบต้นได้นานขึ้น</div>
+                                    <div className="text-sm text-slate-700 pt-1"><span className="font-bold text-slate-900 block mb-1 text-base">สรุป:</span>(เงินต้น + บวกดอกเบี้ย) + เงินออมใหม่ + เงินพิเศษ ทำซ้ำทุกปีจนถึงเกษียณ</div>
                                 </div>
                             </div>
                         )}
@@ -445,8 +448,7 @@ export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result 
             <div className="w-full max-w-2xl rounded-[32px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-black/5">
                 <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100">
                     <div>
-                        <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2"><span className="w-8 h-8 rounded-lg bg-blue-100/50 flex items-center justify-center text-blue-600 text-lg">🎯</span> เป้าหมายเกษียณ (Target Fund)</h3>
-                        <p className="text-sm text-slate-500 mt-1 ml-10">คำนวณเงินทุนที่ต้องมีเพื่อให้พอใช้</p>
+                        <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">เงินที่ต้องการก่อนเกษียณ</h3>
                     </div>
                     <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"><CloseIcon className="w-5 h-5" /></button>
                 </div>
@@ -458,36 +460,78 @@ export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result 
                     <div className="px-8 pb-8 pt-2">
                         {tab === "details" && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <p className="text-sm text-slate-600 leading-relaxed bg-white p-6 rounded-3xl border border-blue-100 shadow-sm relative overflow-hidden"><span className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500"></span><span className="font-bold text-slate-900 block mb-2 text-base">นิยาม (Simple Definition)</span>คือจำนวนเงินก้อนที่คุณ <b>"ต้องมี"</b> ณ วันสุดท้ายของการทำงาน เพื่อให้สามารถถอนออกมาใช้จ่ายได้ทุกเดือนไปจนถึงวันสุดท้ายของชีวิต โดยไม่เดือดร้อน</p>
+                                <p className="text-sm text-slate-600 leading-relaxed bg-white p-6 rounded-3xl border border-blue-100 shadow-sm">
+                                    เป็นจำนวนเงินทั้งหมดที่ต้องเตรียมก่อนเกษียณ เพื่อให้ครอบคลุมค่าใช้จ่ายในช่วงเกษียณ จนถึงเงินมรดกที่ต้องมี (ถ้ามีประกันชีวิตจะครอบคลุมส่วนนี้)
+                                </p>
                                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
-                                    <div className="text-base font-bold text-slate-900">ขั้นตอนการคิด (Step-by-Step):</div>
-                                    <ol className="list-none space-y-3">
-                                        {["ประมาณการรายจ่ายต่อเดือน หลังเกษียณ (ปรับเงินเฟ้อแล้ว)", "หักลบรายได้อื่นๆ ที่จะมีแน่นอน เช่น บำนาญ, เบี้ยยังชีพ", "คำนวณว่าต้องมีเงินก้อนเท่าไหร่ ที่จะถอนมาใช้ได้พอดีตามระยะเวลาที่คาดการณ์", "บวกเงินมรดกที่ต้องการส่งต่อ (ถ้ามี)", "ผลลัพธ์คือ เป้าหมายทางการเงิน (Target Fund)"].map((item, idx) => (
-                                            <li key={idx} className="flex gap-4 items-center p-3 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"><div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">{idx + 1}</div><span className="text-sm text-slate-700 font-medium">{item}</span></li>
-                                        ))}
+                                    <div className="text-base font-bold text-slate-900">ขั้นตอนการคำนวณ:</div>
+                                    <ol className="list-decimal list-inside space-y-3 text-sm text-slate-700 font-medium pl-2">
+                                        <li className="pl-2">รวมค่าใช้จ่ายสุทธิรายปี (หลังหักรายได้หลังเกษียณ หรือผลตอบแทนหลังเกษียณ) ของทุกปี</li>
+                                        <li className="pl-2">หักเงินที่คาดว่าจะได้รับจากสิทธิประโยชน์อื่น ๆ เช่น เงินประกันชีวิต หรือเงินมรดก</li>
                                     </ol>
+                                    <div className="mt-4 pt-4 border-t border-slate-100 text-sm font-bold text-slate-900">
+                                        ผลรวมค่าใช้จ่ายสุทธิในช่วงเกษียณ + เงินมรดกที่ยังขาด
+                                    </div>
                                 </div>
                             </div>
                         )}
                         {tab === "formula" && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
-                                    <div className="text-base font-bold text-slate-900 flex items-center gap-2"><span className="w-1 h-6 bg-blue-500 rounded-full"></span> สูตรหาเงินออมที่ต้องเก็บ (PMT for Goal)</div>
-                                    <p className="text-sm text-slate-500 leading-relaxed pl-3 border-l-2 border-slate-100">คำนวณย้อนกลับว่า ต้องเก็บเงินเพิ่มปีละเท่าไหร่ จึงจะไปถึงเป้าหมาย โดยคำนึงถึงผลตอบแทนทบต้น</p>
-                                    <div className="rounded-2xl bg-slate-900 p-6 overflow-x-auto shadow-inner relative group"><div className="absolute top-3 right-3 text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded">Math</div><div className="font-mono text-sm text-blue-400 whitespace-nowrap">PMT = (Target - Current × (1+r)^n) / [((1+r)^n - 1) / r]</div></div>
-                                </div>
-                                <div className="space-y-4">
-                                    <div className="text-sm font-bold text-slate-900">สรุปการคำนวณจริง (Result):</div>
-                                    <div className="rounded-3xl bg-white border border-slate-200 p-6 overflow-hidden shadow-sm relative">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50 pointer-events-none"></div>
-                                        <div className="relative z-10 space-y-4">
-                                            <div className="flex justify-between items-center border-b border-slate-100 pb-3"><span className="text-sm text-slate-600">เป้าหมายทั้งหมดที่ต้องมี</span><span className="font-bold text-lg text-slate-800">฿ {formatNumber(result.targetFund)}</span></div>
-                                            <div className="flex justify-between items-center border-b border-slate-100 pb-3"><span className="text-sm text-slate-600">เงินที่มีและจะโตไปในอนาคต</span><span className="font-bold text-lg text-slate-500">฿ {formatNumber(result.fvLumpSum + result.insuranceCashInflow)}</span></div>
-                                            <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                                                <div className="flex justify-between items-center mb-2"><span className="text-xs font-bold text-blue-600 uppercase tracking-wide">ต้องออมเพิ่มต่อปี</span><span className="font-mono text-base font-bold text-blue-700">฿ {formatNumber2(result.monthlyNeeded * 12, 0)}</span></div>
-                                                <div className="flex justify-between items-center"><span className="text-sm font-black text-slate-800">เฉลี่ยต่อเดือน</span><span className="font-mono text-2xl font-black text-blue-600">฿ {formatNumber2(result.monthlyNeeded, 0)}</span></div>
+                                    <div className="text-lg font-bold text-slate-900">สูตรออมขั้นต่ำ</div>
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        หากเราต้องการรู้ว่า “จะต้องเก็บเงินเท่าไหร่” หรือ “เงินจะโตเป็นเท่าไหร่” ในอนาคตเมื่อมีผลตอบแทนเฉลี่ยต่อปี เราจะใช้แนวคิดของ <b>ดอกเบี้ยทบต้น (Compound Interest)</b> เพื่อหาค่า <b>มูลค่าในอนาคต (Future Value)</b>
+                                    </p>
+
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-indigo-500">📘</span>
+                                            <span className="font-bold text-slate-900 text-sm">สูตรทั่วไป:</span>
+                                        </div>
+                                        <div className="font-mono text-sm text-slate-800 text-center py-2 overflow-x-auto">
+                                            FV = P₀ × (1 + r)ⁿ + P × ((1 + r)ⁿ - 1) / r
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="text-sm font-bold text-slate-900">โดยที่:</div>
+                                        <ul className="list-disc list-inside space-y-1 text-sm text-slate-600 pl-2">
+                                            <li><b>FV</b> = มูลค่าในอนาคต (Future Value)</li>
+                                            <li><b>P₀</b> = เงินเริ่มต้นที่มีอยู่ตอนนี้</li>
+                                            <li><b>P</b> = เงินที่ออมเพิ่มในแต่ละปี</li>
+                                            <li><b>r</b> = ผลตอบแทนต่อปี (เช่น 5% = 0.05)</li>
+                                            <li><b>n</b> = จำนวนปีที่ลงทุนหรือออม</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="space-y-2 mt-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-pink-500">🧠</span>
+                                            <span className="font-bold text-slate-900 text-sm">แนวคิด:</span>
+                                        </div>
+                                        <p className="text-sm text-slate-600 leading-relaxed">
+                                            สูตรนี้เกิดจากการรวมผลของ <b>เงินก้อนแรกที่โตด้วยดอกเบี้ย</b> และ <b>เงินที่ออมเพิ่มทุกปี</b> เข้าด้วยกัน
+                                        </p>
+                                        <p className="text-sm text-slate-600 leading-relaxed mt-2">
+                                            ส่วนแรก P₀ × (1 + r)ⁿ คือการโตของเงินก้อนเริ่มต้น ส่วนที่สอง P × ((1 + r)ⁿ - 1) / r คือผลรวมของเงินที่ออมต่อปีพร้อมดอกเบี้ยทบต้น
+                                        </p>
+                                    </div>
+
+                                    <div className="mt-6 pt-6 border-t border-slate-100">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="text-indigo-500">📊</span>
+                                            <span className="font-bold text-slate-900 text-sm">ตัวอย่าง:</span>
+                                        </div>
+                                        <p className="text-sm text-slate-600 mb-4">จากสูตร เราสามารถจัดรูปใหม่เพื่อหาเงินที่ต้องออมต่อปี (ออมสิ้นปี):</p>
+
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 overflow-x-auto">
+                                            <div className="font-mono text-xs sm:text-sm text-slate-800 whitespace-nowrap">
+                                                P = (FV - P₀ × (1 + r)ⁿ) ÷ ((1 + r)ⁿ - 1) ÷ r)
                                             </div>
                                         </div>
+                                        <p className="text-sm text-slate-600 mt-2 text-center text-xs">
+                                            จากนั้นจะได้เงินออมต่อปี แล้วนำมาหาร 12 อีกทีเพื่อให้เป็นต่อเดือน
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -548,9 +592,18 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form,
                         {tab === "formula" && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
-                                    <div className="text-base font-bold text-slate-900">การคิดค่าเงินเฟ้อ (Inflation Calc)</div>
-                                    <p className="text-sm text-slate-500 leading-relaxed pl-3 border-l-2 border-slate-100">เงินในอนาคตจะมีค่าน้อยลง เราจึงต้องคำนวณว่า "จำนวนเงินที่เราต้องใช้" จะเพิ่มขึ้นเป็นเท่าไหร่</p>
-                                    <div className="rounded-2xl bg-slate-900 p-6 text-sm text-purple-300 border border-slate-800 leading-relaxed font-mono shadow-inner">FutureExpense = CurrentExpense × (1 + InflationRate) ^ Years</div>
+                                    <div className="text-lg font-bold text-slate-900">ค่าใช้จ่ายเดือนแรกที่เกษียณ</div>
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        คำนวณจาก:
+                                    </p>
+                                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 text-center">
+                                        <div className="font-mono text-sm text-slate-800 leading-relaxed">
+                                            ค่าใช้จ่ายปีเกษียณ = ค่าใช้จ่ายปัจจุบัน × (1 + อัตราเงินเฟ้อ) ^ จำนวนปีกว่าจะเกษียณ
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-slate-500 leading-relaxed pl-2">
+                                        ปรับค่าใช้จ่ายปัจจุบันตามเงินเฟ้อไปจนถึงปีที่เกษียณ
+                                    </p>
                                 </div>
                                 <div className="bg-purple-50 rounded-3xl p-6 border border-purple-100 space-y-3">
                                     <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">ตัวอย่างวันนี้ vs วันเกษียณ</h4>

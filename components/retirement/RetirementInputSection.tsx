@@ -3,8 +3,9 @@ import React, { useRef, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { NumericInput } from "@/components/NumericInput";
 import { FormState, InsurancePlan, Allocation } from "@/types/retirement";
-import { User, Briefcase, Home, Plus, Minus, Camera, Calculator, X, ChevronDown, ChevronUp, Trash2, RotateCcw, PenLine, ShieldCheck, TrendingUp, DollarSign, Settings2, ArrowRight, ArrowLeft, Check, Table as TableIcon } from "lucide-react";
+import { User, Briefcase, Home, Plus, Minus, Camera, Calculator, X, ChevronDown, ChevronUp, Trash2, RotateCcw, PenLine, ShieldCheck, TrendingUp, DollarSign, Settings2, ArrowRight, ArrowLeft, Check, Table as TableIcon, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { calculateRetirement, buildRetirementInputs } from "@/lib/retirement-calculation";
 
 interface RetirementInputSectionProps {
     user: { name: string } | null;
@@ -68,9 +69,73 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
     }, [step]);
 
     const [avatarImage, setAvatarImage] = useState<string | null>(null);
-    const [showMonteCarlo, setShowMonteCarlo] = useState(false);
+    const [showMonteCarlo, setShowMonteCarlo] = useState(true);
     const [isRelationOpen, setIsRelationOpen] = useState(false);
-    // Local state for spending mode just for UI toggling as per screenshot
+
+    // Validation State
+    const [showValidationModal, setShowValidationModal] = useState(false);
+    const [missingFields, setMissingFields] = useState<string[]>([]);
+
+    const handleCalculateCheck = () => {
+        // 1. Build Inputs to check the potential result
+        const inputs = buildRetirementInputs({
+            form,
+            gender,
+            savingMode,
+            returnMode,
+            allocations
+        });
+
+        // 2. Calculate to see Target Fund
+        const result = calculateRetirement(inputs);
+
+        // 3. Validation Logic
+        // If Target Fund <= 0, it means either they possess enough (Pension > Expense) OR they forgot to fill expenses/ages
+        // The user specifically wants to warn if value is <= 0.
+        if (result.targetFund <= 0) {
+            const missing: string[] = [];
+
+            // Check Expenses
+            const expenseVal = Number(form.retireExtraExpense.replace(/,/g, ""));
+            if (!expenseVal || expenseVal <= 0) {
+                missing.push("ค่าใช้จ่ายหลังเกษียณ (เช่น 15,000 / เดือน)");
+            }
+
+            // Check Ages
+            const current = Number(form.currentAge);
+            const retire = Number(form.retireAge);
+            const life = Number(form.lifeExpectancy);
+
+            if (current >= retire) {
+                missing.push("อายุเกษียณ ต้องมากกว่า อายุปัจจุบัน");
+            }
+            if (retire >= life) {
+                missing.push("อายุขัย ต้องมากกว่า อายุเกษียณ");
+            }
+
+            // Check if pure missing info caused the zero.
+            // If they have expenses but high pension, we might optionally let it pass, 
+            // but for now, if target <= 0, let's just show what MIGHT be missing or wrong.
+            // If expenses are filled and ages are correct, but target is still 0 (Super Rich), 
+            // we might just warn "Target is 0 because Income > Expense".
+
+            if (missing.length > 0) {
+                setMissingFields(missing);
+                setShowValidationModal(true);
+                return; // Stop here
+            } else if (result.targetFund <= 0 && expenseVal > 0) {
+                // Case: Valid inputs but really rich. 
+                // Maybe show a different message? or just let it pass?
+                // The user prompt is specific: "If value < 0... popup warning to fill data".
+                // This implies "Missing Data" scenario.
+                // If data is NOT missing, we should probably let them proceed to see their "Financial Freedom".
+                // So if missing.length === 0, we proceed.
+            }
+        }
+
+        // Proceed if valid
+        onCalculate();
+    };
 
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -114,7 +179,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         const currentValueStr = String(form.insurancePlans[index][field] || "0");
         const currentVal = parseInt(currentValueStr.replace(/,/g, "")) || 0;
         const newVal = Math.max(0, currentVal + delta);
-        updateInsurancePlan(index, field, newVal.toString());
+        updateInsurancePlan(index, field, newVal.toLocaleString());
     };
 
     const changeAllocationBy = (id: number, field: keyof Allocation, delta: number) => () => {
@@ -128,9 +193,9 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
     // --- Modern Unified Input Control ---
     const InputControl = ({
-        label, value, field, suffix, disabled = false, icon: Icon, subLabel, badge
+        label, value, field, suffix, disabled = false, icon: Icon, subLabel, badge, step = 1
     }: {
-        label: string, value: any, field?: keyof FormState, suffix?: string, disabled?: boolean, icon?: any, subLabel?: string, badge?: React.ReactNode
+        label: string, value: any, field?: keyof FormState, suffix?: string, disabled?: boolean, icon?: any, subLabel?: string, badge?: React.ReactNode, step?: number
     }) => {
         return (
             <div className="group space-y-2">
@@ -146,7 +211,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                 <div className="relative flex items-center gap-2">
                     <button
                         type="button"
-                        onClick={field ? changeBy(field, -1) : undefined}
+                        onClick={field ? changeBy(field, -step) : undefined}
                         disabled={disabled}
                         className="w-12 h-12 rounded-full bg-white/50 border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
                     >
@@ -165,7 +230,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
                     <button
                         type="button"
-                        onClick={field ? changeBy(field, 1) : undefined}
+                        onClick={field ? changeBy(field, step) : undefined}
                         disabled={disabled}
                         className="w-12 h-12 rounded-full bg-white/50 border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
                     >
@@ -194,7 +259,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
     // --- Steps ---
 
-    const PersonalStep = () => (
+    const renderPersonalStep = () => (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="flex flex-col items-center justify-center gap-6 py-4">
                 <div className="relative group/avatar cursor-pointer" onClick={() => fileInputRef.current?.click()}>
@@ -229,6 +294,20 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     </button>
                 </div>
 
+                {/* Name Input */}
+                <div className="w-64 relative z-20">
+                    <Label className="text-slate-500 font-bold text-xs mb-1.5 block text-center">ชื่อของคุณ / ชื่อแผน</Label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={form.planName || ''}
+                            onChange={(e) => handleChange('planName')(e)}
+                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-center shadow-sm hover:border-indigo-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50/50 transition-all text-slate-700 font-bold text-sm outline-none placeholder:text-slate-300"
+                            placeholder="ระบุชื่อเพื่อระบุตัวตน..."
+                        />
+                    </div>
+                </div>
+
                 {/* Relation Selector (Dropdown Style) - Only for Family Plan */}
                 {setRelation && relation && (
                     <div className="w-64 relative z-20">
@@ -240,16 +319,16 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                             >
                                 <div className="flex items-center gap-2">
                                     <span className="text-lg">
-                                        {{
+                                        {({
                                             self: "👨‍💼", spouse: "👩‍❤️‍👨", child: "👶",
                                             father: "👴", mother: "👵", relative: "👥"
-                                        }[relation as any] || "👤"}
+                                        } as Record<string, string>)[relation || ""] || "👤"}
                                     </span>
                                     <span>
-                                        {{
+                                        {({
                                             self: "เจ้าของแผน", spouse: "คู่สมรส", child: "บุตร",
                                             father: "บิดา", mother: "มารดา", relative: "ญาติ"
-                                        }[relation as any] || "เลือกความสัมพันธ์"}
+                                        } as Record<string, string>)[relation || ""] || "เลือกความสัมพันธ์"}
                                     </span>
                                 </div>
                                 <ChevronDown size={16} className={`text-slate-400 transition-transform ${isRelationOpen ? "rotate-180" : ""}`} />
@@ -293,7 +372,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         </div>
     );
 
-    const FinancialStep = () => (
+    const renderFinancialStep = () => (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="text-center pb-2 flex items-center justify-center gap-2">
                 <Briefcase className="text-slate-800" />
@@ -302,10 +381,10 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
             <div className="space-y-6 px-1">
                 <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 space-y-6">
-                    <InputControl label="เงินออมปัจจุบัน (บาท)" value={form.currentSavings} field="currentSavings" icon={Briefcase} />
+                    <InputControl label="เงินออมปัจจุบัน (บาท)" value={form.currentSavings} field="currentSavings" icon={Briefcase} step={1000} />
 
                     <div className="pt-2 border-t border-slate-100/50 space-y-4">
-                        <InputControl label="การออมต่อเดือน (บาท)" value={form.monthlySaving} field="monthlySaving" icon={Plus} />
+                        <InputControl label="การออมต่อเดือน (บาท)" value={form.monthlySaving} field="monthlySaving" icon={Plus} step={1000} />
 
                         <div className="flex items-center gap-4">
                             <label className="flex items-center gap-2 cursor-pointer">
@@ -536,19 +615,19 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex-1 bg-white border border-slate-200 rounded h-10 flex items-center px-3">
                                                         <NumericInput
-                                                            value={plan.coverageAge || 85}
+                                                            value={Number(String(plan.coverageAge || 85).replace(/,/g, "")).toLocaleString()}
                                                             onChange={(v) => updateInsurancePlan(index, "coverageAge", v)}
                                                             className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base"
                                                         />
                                                     </div>
                                                     <button
-                                                        onClick={() => updateInsurancePlan(index, "coverageAge", (Number(plan.coverageAge) || 85) - 1)}
+                                                        onClick={() => changeInsuranceBy(index, 'coverageAge', -1)()}
                                                         className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors"
                                                     >
                                                         <Minus size={16} />
                                                     </button>
                                                     <button
-                                                        onClick={() => updateInsurancePlan(index, "coverageAge", (Number(plan.coverageAge) || 85) + 1)}
+                                                        onClick={() => changeInsuranceBy(index, 'coverageAge', 1)()}
                                                         className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors"
                                                     >
                                                         <Plus size={16} />
@@ -562,19 +641,19 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex-1 bg-white border border-slate-200 rounded h-10 flex items-center px-3">
                                                         <NumericInput
-                                                            value={plan.sumAssured}
+                                                            value={Number(String(plan.sumAssured || 0).replace(/,/g, "")).toLocaleString()}
                                                             onChange={(v) => updateInsurancePlan(index, "sumAssured", v)}
                                                             className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base"
                                                         />
                                                     </div>
                                                     <button
-                                                        onClick={() => changeInsuranceBy(index, 'sumAssured', -10000)()}
+                                                        onClick={() => changeInsuranceBy(index, 'sumAssured', -1000)()}
                                                         className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors"
                                                     >
                                                         <Minus size={16} />
                                                     </button>
                                                     <button
-                                                        onClick={() => changeInsuranceBy(index, 'sumAssured', 10000)()}
+                                                        onClick={() => changeInsuranceBy(index, 'sumAssured', 1000)()}
                                                         className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors"
                                                     >
                                                         <Plus size={16} />
@@ -619,20 +698,20 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                                                         <Label className="text-slate-500 font-medium text-sm">อายุที่เวนคืน</Label>
                                                                         <div className="flex items-center gap-2">
                                                                             <div className="flex-1 bg-white border border-slate-200 rounded h-10 flex items-center px-3">
-                                                                                <NumericInput value={plan.surrenderAge || 55} onChange={(v) => updateInsurancePlan(index, "surrenderAge", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
+                                                                                <NumericInput value={Number(String(plan.surrenderAge || 55).replace(/,/g, "")).toLocaleString()} onChange={(v) => updateInsurancePlan(index, "surrenderAge", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
                                                                             </div>
-                                                                            <button onClick={() => updateInsurancePlan(index, "surrenderAge", (Number(plan.surrenderAge) || 55) - 1)} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Minus size={16} /></button>
-                                                                            <button onClick={() => updateInsurancePlan(index, "surrenderAge", (Number(plan.surrenderAge) || 55) + 1)} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Plus size={16} /></button>
+                                                                            <button onClick={() => changeInsuranceBy(index, 'surrenderAge', -1)()} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Minus size={16} /></button>
+                                                                            <button onClick={() => changeInsuranceBy(index, 'surrenderAge', 1)()} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Plus size={16} /></button>
                                                                         </div>
                                                                     </div>
                                                                     <div className="space-y-1">
                                                                         <Label className="text-slate-500 font-medium text-sm">มูลค่าที่เวนคืน</Label>
                                                                         <div className="flex items-center gap-2">
                                                                             <div className="flex-1 bg-white border border-slate-200 rounded h-10 flex items-center px-3">
-                                                                                <NumericInput value={plan.surrenderValue || 0} onChange={(v) => updateInsurancePlan(index, "surrenderValue", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
+                                                                                <NumericInput value={Number(String(plan.surrenderValue || 0).replace(/,/g, "")).toLocaleString()} onChange={(v) => updateInsurancePlan(index, "surrenderValue", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
                                                                             </div>
-                                                                            <button onClick={() => updateInsurancePlan(index, "surrenderValue", (Number(plan.surrenderValue) || 0) - 10000)} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Minus size={16} /></button>
-                                                                            <button onClick={() => updateInsurancePlan(index, "surrenderValue", (Number(plan.surrenderValue) || 0) + 10000)} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Plus size={16} /></button>
+                                                                            <button onClick={() => changeInsuranceBy(index, 'surrenderValue', -1000)()} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Minus size={16} /></button>
+                                                                            <button onClick={() => changeInsuranceBy(index, 'surrenderValue', 1000)()} className="h-10 w-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center"><Plus size={16} /></button>
                                                                         </div>
                                                                     </div>
                                                                 </>
@@ -652,13 +731,13 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                                     <div className="space-y-1">
                                                         <Label className="text-slate-500 font-medium text-sm">เริ่มรับบำนาญ (อายุ)</Label>
                                                         <div className="bg-white border border-slate-200 rounded h-10 flex items-center px-3">
-                                                            <NumericInput value={plan.pensionStartAge || 60} onChange={(v) => updateInsurancePlan(index, "pensionStartAge", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
+                                                            <NumericInput value={Number(String(plan.pensionStartAge || 60).replace(/,/g, "")).toLocaleString()} onChange={(v) => updateInsurancePlan(index, "pensionStartAge", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
                                                         </div>
                                                     </div>
                                                     <div className="space-y-1">
                                                         <Label className="text-slate-500 font-medium text-sm">บำนาญปีละ (บาท)</Label>
                                                         <div className="bg-white border border-slate-200 rounded h-10 flex items-center px-3">
-                                                            <NumericInput value={plan.pensionAmount || 0} onChange={(v) => updateInsurancePlan(index, "pensionAmount", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
+                                                            <NumericInput value={Number(String(plan.pensionAmount || 0).replace(/,/g, "")).toLocaleString()} onChange={(v) => updateInsurancePlan(index, "pensionAmount", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -667,7 +746,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                                 <div className="space-y-1 pt-2 border-t border-slate-100">
                                                     <Label className="text-slate-500 font-medium text-sm">ผลประโยชน์เมื่อครบกำหนด</Label>
                                                     <div className="bg-white border border-slate-200 rounded h-10 flex items-center px-3">
-                                                        <NumericInput value={plan.maturityAmount || 0} onChange={(v) => updateInsurancePlan(index, "maturityAmount", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
+                                                        <NumericInput value={Number(String(plan.maturityAmount || 0).replace(/,/g, "")).toLocaleString()} onChange={(v) => updateInsurancePlan(index, "maturityAmount", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
                                                     </div>
                                                 </div>
                                             )}
@@ -706,7 +785,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                         >
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-slate-700">{plan.planName || 'New Plan'}</span>
-                                                <span className="text-xs text-slate-400">{plan.type} • ทุน {Number(plan.sumAssured).toLocaleString()}</span>
+                                                <span className="text-xs text-slate-400">{plan.type} • ทุน {typeof plan.sumAssured === 'string' ? plan.sumAssured : Number(plan.sumAssured).toLocaleString()}</span>
                                             </div>
                                             <ChevronDown size={20} className="text-slate-400" />
                                         </div>
@@ -733,7 +812,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         </div >
     );
 
-    const GoalStep = () => (
+    const renderGoalStep = () => (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="text-center pb-2 flex items-center justify-center gap-2">
                 <Home className="text-slate-800" />
@@ -741,12 +820,13 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
             </div>
 
             <div className="grid gap-6 px-1">
-                <InputControl label="เงินก้อนตอนเกษียณ (เช่น กบข., บำเหน็จ)" value={form.retireFundOther} field="retireFundOther" icon={DollarSign} />
+                <InputControl label="เงินก้อนตอนเกษียณ (เช่น กบข., บำเหน็จ)" value={form.retireFundOther} field="retireFundOther" icon={DollarSign} step={1000} />
                 <InputControl
                     label="เงินเดือนหลังเกษียณ (ต่อเดือน)"
                     value={form.retirePension}
                     field="retirePension"
                     icon={DollarSign}
+                    step={1000}
                 />
                 <InputControl label="ผลตอบแทนหลังเกษียณ (% ต่อปี)" value={form.retireReturnAfter} field="retireReturnAfter" icon={TrendingUp} />
 
@@ -756,13 +836,14 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         value={form.retireExtraExpense}
                         field="retireExtraExpense"
                         icon={Home}
+                        step={1000}
                     />
                 </div>
 
 
 
                 <div className="pt-2 border-t border-slate-100">
-                    <InputControl label="มรดก" value={form.legacyFund} field="legacyFund" icon={Home} />
+                    <InputControl label="มรดก" value={form.legacyFund} field="legacyFund" icon={Home} step={1000} />
                 </div>
 
                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
@@ -834,7 +915,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
             )}
 
             {/* MAIN CARD */}
-            <div className={`bg-white/95 backdrop-blur-xl flex flex-col relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-100/50 ${isEmbedded ? 'p-5 rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100/80 ring-1 ring-white/50' : 'p-6 md:p-10 rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 min-h-[600px] mx-2'}`}>
+            <div className={`bg-white/95 backdrop-blur-xl flex flex-col relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-100/50 ${isEmbedded ? 'p-5 rounded-3xl shadow-md shadow-slate-300/50 border border-slate-300 ring-1 ring-white/50' : 'p-6 md:p-10 rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 min-h-[600px] mx-2'}`}>
 
                 {/* Content */}
                 <div className="flex-1 relative z-10 pb-8 space-y-8">
@@ -850,7 +931,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                 </button>
                             ) : null}
                             <div className={isEmbedded && !expandedSections[1] ? 'hidden' : 'block'}>
-                                <PersonalStep />
+                                {renderPersonalStep()}
                             </div>
                         </div>
                     )}
@@ -866,7 +947,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                 </button>
                             ) : null}
                             <div className={isEmbedded && !expandedSections[2] ? 'hidden' : 'block'}>
-                                <FinancialStep />
+                                {renderFinancialStep()}
                             </div>
                         </div>
                     )}
@@ -882,7 +963,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                 </button>
                             ) : null}
                             <div className={isEmbedded && !expandedSections[3] ? 'hidden' : 'block'}>
-                                <GoalStep />
+                                {renderGoalStep()}
                             </div>
                         </div>
                     )}
@@ -902,13 +983,63 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                 ถัดไป <ArrowRight size={20} />
                             </Button>
                         ) : (
-                            <Button type="button" onClick={onCalculate} className="flex-1 h-14 text-lg rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-xl shadow-blue-200 transition-all hover:translate-y-[-2px] flex items-center justify-center gap-2">
+                            <Button type="button" onClick={handleCalculateCheck} className="flex-1 h-14 text-lg rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-xl shadow-blue-200 transition-all hover:translate-y-[-2px] flex items-center justify-center gap-2">
                                 <Calculator size={20} /> คำนวณแผน
                             </Button>
                         )}
                     </div>
                 )}
             </div>
+
+            {/* Validation Modal */}
+            {showValidationModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="p-6 text-center space-y-4">
+                            <div className="w-16 h-16 rounded-full bg-red-100 text-red-500 flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                <AlertCircle size={32} strokeWidth={2.5} />
+                            </div>
+
+                            <h3 className="text-xl font-bold text-slate-800">ข้อมูลยังไม่ครบถ้วน</h3>
+                            <p className="text-slate-500 text-sm px-4">
+                                เพื่อการคำนวณแผนเกษียณที่แม่นยำ กรุณากรอกข้อมูลสำคัญตามรายการด้านล่างให้ครบถ้วน
+                            </p>
+
+                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100/50 text-left space-y-3">
+                                <Label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">สิ่งที่ต้องระบุ</Label>
+                                <ul className="space-y-2.5">
+                                    {missingFields.map((field, idx) => (
+                                        <li key={idx} className="flex items-start gap-3 text-sm font-semibold text-slate-700">
+                                            <div className="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <X size={12} strokeWidth={3} />
+                                            </div>
+                                            {field}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
+                            <Button
+                                onClick={() => setShowValidationModal(false)}
+                                className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl h-12"
+                            >
+                                ปิด
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setShowValidationModal(false);
+                                    // Logic to possibly jump to missing field could go here
+                                }}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl h-12 shadow-lg shadow-blue-200/50"
+                            >
+                                กรอกข้อมูล
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

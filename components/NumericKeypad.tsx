@@ -88,6 +88,14 @@ export function NumericKeypad({
         onClose();
     };
 
+    const handleAddAmount = (amount: number) => {
+        setDisplayValue((prev) => {
+            const current = parseFloat(prev.replace(/,/g, '')) || 0;
+            const newVal = current + amount;
+            return String(newVal);
+        });
+    };
+
     return createPortal(
         <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-4 sm:p-0">
             {/* Backdrop */}
@@ -96,7 +104,7 @@ export function NumericKeypad({
                 onClick={onClose}
             />
 
-            <div className="relative z-50 w-full sm:w-[360px] animate-in zoom-in-95 slide-in-from-bottom-12 duration-300">
+            <div className="relative z-50 w-full sm:w-[460px] animate-in zoom-in-95 slide-in-from-bottom-12 duration-300">
                 <div className="w-full bg-white/80 backdrop-blur-2xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] rounded-[3rem] p-1.5 ring-1 ring-white/50">
                     <div className="bg-gradient-to-br from-white via-white/80 to-indigo-50/30 p-6 rounded-[2.8rem] flex flex-col gap-6 w-full h-full relative border border-white/60">
 
@@ -119,33 +127,29 @@ export function NumericKeypad({
                         </div>
 
                         {/* Display Area */}
-                        <div className="w-full pt-10 pb-4 flex flex-col items-end px-2 space-y-0.5">
+                        <div className="w-full pt-8 pb-4 flex flex-col items-end px-4 space-y-0.5">
                             <span className="text-[10px] font-black text-indigo-400/60 tracking-[0.2em] uppercase mb-1">VALUE</span>
-                            <div className="w-full text-right overflow-hidden">
-                                <span className="text-[4rem] font-black tracking-tight text-slate-700 leading-none drop-shadow-sm break-all">
+                            <div className="w-full text-right overflow-hidden h-[5rem] flex items-end justify-end">
+                                <span
+                                    className={`font-black tracking-tight text-slate-700 leading-none drop-shadow-sm break-all transition-all duration-200 ${displayValue.replace(/[,.]/g, '').length > 10 ? "text-[2.5rem]" :
+                                        displayValue.replace(/[,.]/g, '').length > 8 ? "text-[3rem]" :
+                                            displayValue.replace(/[,.]/g, '').length > 6 ? "text-[3.8rem]" :
+                                                "text-[4.5rem]"
+                                        }`}
+                                >
                                     {displayValue === "" ? <span className="text-slate-200">0</span> : formattedDisplay}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Keypad Grid */}
-                        <div className="grid grid-cols-4 gap-3">
+                        {/* Keypad Grid - 5 Columns */}
+                        <div className="grid grid-cols-5 gap-2.5 px-2 pb-2">
                             {/* Row 1 */}
                             <KeypadButton onClick={() => handleNumClick("7")}>7</KeypadButton>
                             <KeypadButton onClick={() => handleNumClick("8")}>8</KeypadButton>
                             <KeypadButton onClick={() => handleNumClick("9")}>9</KeypadButton>
 
-                            <KeypadButton
-                                onClick={handleClear}
-                                className="bg-rose-50 text-rose-500 hover:bg-rose-100 border-rose-100 hover:shadow-rose-100"
-                            >
-                                <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
-                            </KeypadButton>
-
-                            {/* Row 2 */}
-                            <KeypadButton onClick={() => handleNumClick("4")}>4</KeypadButton>
-                            <KeypadButton onClick={() => handleNumClick("5")}>5</KeypadButton>
-                            <KeypadButton onClick={() => handleNumClick("6")}>6</KeypadButton>
+                            <QuickAddButton value={100000} label="+100K" onClick={(v) => handleAddAmount(v)} />
 
                             <KeypadButton
                                 onClick={handleBackspace}
@@ -154,22 +158,43 @@ export function NumericKeypad({
                                 <Delete className="w-6 h-6" strokeWidth={2.5} />
                             </KeypadButton>
 
+
+                            {/* Row 2 */}
+                            <KeypadButton onClick={() => handleNumClick("4")}>4</KeypadButton>
+                            <KeypadButton onClick={() => handleNumClick("5")}>5</KeypadButton>
+                            <KeypadButton onClick={() => handleNumClick("6")}>6</KeypadButton>
+
+                            <QuickAddButton value={500000} label="+500K" onClick={(v) => handleAddAmount(v)} />
+
+                            <KeypadButton
+                                onClick={handleClear}
+                                className="bg-rose-50 text-rose-500 hover:bg-rose-100 border-rose-100 hover:shadow-rose-100"
+                            >
+                                <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
+                            </KeypadButton>
+
+
                             {/* Row 3 */}
                             <KeypadButton onClick={() => handleNumClick("1")}>1</KeypadButton>
                             <KeypadButton onClick={() => handleNumClick("2")}>2</KeypadButton>
                             <KeypadButton onClick={() => handleNumClick("3")}>3</KeypadButton>
 
-                            {/* Confirm (Big Button) */}
+                            <QuickAddButton value={1000000} label="+1M" onClick={(v) => handleAddAmount(v)} />
+
+                            {/* Confirm (Big Button) - Spans 2 Rows vertically */}
                             <button
                                 onClick={handleConfirm}
-                                className="row-span-2 w-full h-full rounded-[2rem] bg-[#5856D6] hover:bg-[#4d4ba3] text-white shadow-lg shadow-indigo-500/30 flex items-center justify-center transition-all active:scale-95 group border-t border-white/20"
+                                className="row-span-2 w-full h-full rounded-[1.8rem] bg-[#5856D6] hover:bg-[#4d4ba3] text-white shadow-lg shadow-indigo-500/30 flex items-center justify-center transition-all active:scale-95 group border-t border-white/20"
                             >
                                 <Check className="w-8 h-8 group-hover:scale-110 transition-transform" strokeWidth={4} />
                             </button>
 
+
                             {/* Row 4 */}
                             <KeypadButton onClick={() => handleNumClick("0")} className="col-span-2 w-full">0</KeypadButton>
-                            <KeypadButton onClick={handleDecimal} disabled={!allowDecimal} className="text-3xl pb-4">.</KeypadButton>
+                            <KeypadButton onClick={handleDecimal} disabled={!allowDecimal} className="text-3xl pb-2">.</KeypadButton>
+                            <QuickAddButton value={5000000} label="+5M" onClick={(v) => handleAddAmount(v)} />
+                            {/* Confirm Spans here */}
                         </div>
                     </div>
                 </div>
@@ -195,7 +220,7 @@ function KeypadButton({
             onClick={onClick}
             disabled={disabled}
             className={cn(
-                "h-[4.5rem] w-full rounded-[1.8rem] text-2xl font-bold transition-all duration-200 select-none flex items-center justify-center cursor-pointer",
+                "h-[4rem] w-full rounded-[1.4rem] text-2xl font-bold transition-all duration-200 select-none flex items-center justify-center cursor-pointer",
                 "bg-white shadow-[0_4px_12px_-2px_rgba(0,0,0,0.06)] border border-slate-50",
                 "text-slate-700 hover:text-slate-900 hover:shadow-xl hover:-translate-y-0.5",
                 "active:scale-95 active:bg-slate-50 active:translate-y-0",
@@ -204,6 +229,17 @@ function KeypadButton({
             )}
         >
             {children}
+        </button>
+    );
+}
+
+function QuickAddButton({ value, label, onClick }: { value: number, label: string, onClick: (v: number) => void }) {
+    return (
+        <button
+            onClick={() => onClick(value)}
+            className="h-[4rem] w-full rounded-[1.4rem] bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold text-xs sm:text-sm transition-all shadow-[0_2px_8px_-2px_rgba(99,102,241,0.15)] border border-indigo-100 uppercase tracking-tight active:scale-95 hover:-translate-y-0.5"
+        >
+            {label}
         </button>
     );
 }
