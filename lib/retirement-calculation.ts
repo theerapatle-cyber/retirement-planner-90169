@@ -423,17 +423,17 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
 
         const shortfall = targetFund - (fvCurrentSavings + fvInsurancePreRetire);
 
-        if (shortfall > 0) {
-            if (Math.abs(r) < 1e-9) {
-                monthlyNeeded = shortfall / (n * 12);
-            } else {
-                const annuityFactor = (Math.pow(1 + r, n) - 1) / r;
-                const annualSavingNeeded = shortfall / annuityFactor;
-                monthlyNeeded = annualSavingNeeded / 12;
-            }
+        // if (shortfall > 0) { // REMOVED: Allow negative calculation
+        if (Math.abs(r) < 1e-9) {
+            monthlyNeeded = shortfall / (n * 12);
+        } else {
+            const annuityFactor = (Math.pow(1 + r, n) - 1) / r;
+            const annualSavingNeeded = shortfall / annuityFactor;
+            monthlyNeeded = annualSavingNeeded / 12;
         }
+        // }
     }
-    monthlyNeeded = Math.max(0, monthlyNeeded);
+    // monthlyNeeded = Math.max(0, monthlyNeeded); // Allow negative value (Surplus)
 
     const gap = projectedFund - targetFund;
     const status: "enough" | "short" = gap >= -1 ? "enough" : "short";

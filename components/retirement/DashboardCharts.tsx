@@ -314,10 +314,10 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                             const gradient = ctx.createLinearGradient(0, 0, 0, 400);
                             gradient.addColorStop(0, "rgba(16, 185, 129, 0.2)"); gradient.addColorStop(1, "rgba(16, 185, 129, 0.0)"); return gradient;
                         }, tension: 0.4, fill: true,
-                        pointRadius: 3, // Restored small dots
+                        pointRadius: 3,
                         pointHoverRadius: 6,
-                        pointBackgroundColor: "#ffffff", // White center
-                        pointBorderColor: "#10B981", // Green border
+                        pointBackgroundColor: "#ffffff",
+                        pointBorderColor: "#10B981",
                         pointBorderWidth: 2,
                         pointHoverBackgroundColor: "#ffffff",
                         pointHoverBorderColor: "#10B981",

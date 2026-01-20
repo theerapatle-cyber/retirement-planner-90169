@@ -142,14 +142,27 @@ export function NumericKeypad({
                             </div>
                         </div>
 
-                        {/* Keypad Grid - 5 Columns */}
                         <div className="grid grid-cols-5 gap-2.5 px-2 pb-2">
                             {/* Row 1 */}
                             <KeypadButton onClick={() => handleNumClick("7")}>7</KeypadButton>
                             <KeypadButton onClick={() => handleNumClick("8")}>8</KeypadButton>
                             <KeypadButton onClick={() => handleNumClick("9")}>9</KeypadButton>
 
+                            <QuickAddButton value={1000} label="+1K" onClick={(v) => handleAddAmount(v)} />
+                            <QuickAddButton value={10000} label="+10K" onClick={(v) => handleAddAmount(v)} />
+
+                            {/* Row 2 */}
+                            <KeypadButton onClick={() => handleNumClick("4")}>4</KeypadButton>
+                            <KeypadButton onClick={() => handleNumClick("5")}>5</KeypadButton>
+                            <KeypadButton onClick={() => handleNumClick("6")}>6</KeypadButton>
+
                             <QuickAddButton value={100000} label="+100K" onClick={(v) => handleAddAmount(v)} />
+                            <QuickAddButton value={1000000} label="+1M" onClick={(v) => handleAddAmount(v)} />
+
+                            {/* Row 3 */}
+                            <KeypadButton onClick={() => handleNumClick("1")}>1</KeypadButton>
+                            <KeypadButton onClick={() => handleNumClick("2")}>2</KeypadButton>
+                            <KeypadButton onClick={() => handleNumClick("3")}>3</KeypadButton>
 
                             <KeypadButton
                                 onClick={handleBackspace}
@@ -158,30 +171,7 @@ export function NumericKeypad({
                                 <Delete className="w-6 h-6" strokeWidth={2.5} />
                             </KeypadButton>
 
-
-                            {/* Row 2 */}
-                            <KeypadButton onClick={() => handleNumClick("4")}>4</KeypadButton>
-                            <KeypadButton onClick={() => handleNumClick("5")}>5</KeypadButton>
-                            <KeypadButton onClick={() => handleNumClick("6")}>6</KeypadButton>
-
-                            <QuickAddButton value={500000} label="+500K" onClick={(v) => handleAddAmount(v)} />
-
-                            <KeypadButton
-                                onClick={handleClear}
-                                className="bg-rose-50 text-rose-500 hover:bg-rose-100 border-rose-100 hover:shadow-rose-100"
-                            >
-                                <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
-                            </KeypadButton>
-
-
-                            {/* Row 3 */}
-                            <KeypadButton onClick={() => handleNumClick("1")}>1</KeypadButton>
-                            <KeypadButton onClick={() => handleNumClick("2")}>2</KeypadButton>
-                            <KeypadButton onClick={() => handleNumClick("3")}>3</KeypadButton>
-
-                            <QuickAddButton value={1000000} label="+1M" onClick={(v) => handleAddAmount(v)} />
-
-                            {/* Confirm (Big Button) - Spans 2 Rows vertically */}
+                            {/* Confirm (Big Button) - Spans 2 Rows vertically in Col 5 */}
                             <button
                                 onClick={handleConfirm}
                                 className="row-span-2 w-full h-full rounded-[1.8rem] bg-[#5856D6] hover:bg-[#4d4ba3] text-white shadow-lg shadow-indigo-500/30 flex items-center justify-center transition-all active:scale-95 group border-t border-white/20"
@@ -189,12 +179,16 @@ export function NumericKeypad({
                                 <Check className="w-8 h-8 group-hover:scale-110 transition-transform" strokeWidth={4} />
                             </button>
 
-
                             {/* Row 4 */}
                             <KeypadButton onClick={() => handleNumClick("0")} className="col-span-2 w-full">0</KeypadButton>
                             <KeypadButton onClick={handleDecimal} disabled={!allowDecimal} className="text-3xl pb-2">.</KeypadButton>
-                            <QuickAddButton value={5000000} label="+5M" onClick={(v) => handleAddAmount(v)} />
-                            {/* Confirm Spans here */}
+
+                            <KeypadButton
+                                onClick={handleClear}
+                                className="bg-rose-50 text-rose-500 hover:bg-rose-100 border-rose-100 hover:shadow-rose-100"
+                            >
+                                <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
+                            </KeypadButton>
                         </div>
                     </div>
                 </div>

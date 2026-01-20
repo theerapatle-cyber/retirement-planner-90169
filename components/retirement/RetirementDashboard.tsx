@@ -107,7 +107,7 @@ export const RetirementDashboard = ({
 }: RetirementDashboardProps) => {
 
     const [showSumAssured, setShowSumAssured] = React.useState(true);
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
     const [showActualSavings, setShowActualSavings] = React.useState(true);
     const [showInsuranceTable, setShowInsuranceTable] = React.useState(false);
     const [showProjectedModal, setShowProjectedModal] = React.useState(false);
@@ -211,8 +211,8 @@ export const RetirementDashboard = ({
                 <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-90" />
             </div>
             {/* TOP NAVIGATION BAR - Hide on Print */}
-            <div className="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4 shadow-sm flex items-center justify-between mb-8 print:hidden">
-                {/* ... existing header content ... */}
+            {/* TOP NAVIGATION BAR - Fixed Top */}
+            <div className="bg-white border-b border-slate-200 fixed top-0 left-0 right-0 z-50 px-6 py-4 shadow-sm flex items-center justify-between print:hidden h-[72px]">
                 <div className="flex items-center gap-3">
 
                     {onBack ? (
@@ -254,7 +254,7 @@ export const RetirementDashboard = ({
                 </div>
             </div>
 
-            <div className="w-full px-4 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10 print:px-0 print:space-y-4">
+            <div className="w-full px-4 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10 print:px-0 print:space-y-4 pt-[72px]">
 
                 {/* Print Only Header */}
                 <div className="hidden print:block mb-8 border-b-2 border-slate-800 pb-4">
@@ -271,83 +271,32 @@ export const RetirementDashboard = ({
                 </div>
 
                 {/* Header (Original - hide on print) */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 break-inside-avoid px-1 print:hidden">
-                    <div>
-                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">สรุปผลลัพธ์ทางการเงิน</h2>
-                        <p className="text-slate-500 text-sm font-medium mt-1">วางแผนการรับมือเกษียณด้วยเครื่องมือแบบเห็นภาพ</p>
-                    </div>
-                    {/* ... buttons ... */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Button
-                            variant={isSidebarOpen ? "secondary" : "default"}
-                            size="sm"
-                            className={`h-9 px-4 rounded-xl font-bold text-xs shadow-sm transition-all gap-2 ${isSidebarOpen ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200'}`}
-                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        >
-                            {isSidebarOpen ? (
-                                <>
-                                    <PanelLeftClose className="w-4 h-4" />
-                                    ดูผลลัพธ์ (View Result)
-                                </>
-                            ) : (
-                                <>
-                                    <PanelLeftOpen className="w-4 h-4" />
-                                    ปรับแผน (Adjust Plan)
-                                </>
-                            )}
-                        </Button>
-
-                        {planType === "family" && (
-                            <Button
-                                variant="default"
-                                size="sm"
-                                className="h-9 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg shadow-indigo-200 transition-all gap-2"
-                                onClick={() => {
-                                    syncCurrentToFamily();
-                                    setShowFamilyResult(true);
-                                }}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                                ดูผลลัพธ์ครอบครัว
-                            </Button>
-                        )}
-                        {form.insurancePlans.length > 0 && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-9 rounded-xl border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-all gap-2"
-                                onClick={() => {
-                                    setForm(prev => ({ ...prev, selectedPlanId: null }));
-                                    setShowInsuranceTable(true);
-                                }}
-                            >
-                                <TableIcon className="w-4 h-4" />
-                                พอร์ตประกัน
-                            </Button>
-                        )}
-                        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                            <span>ข้อมูลล่าสุด: {new Date().toLocaleDateString('th-TH')}</span>
-                        </div>
-                    </div>
-                </div>
-
-
+                {/* Header (Original - hide on print) */}
+                {/* Header Buttons Removed from Here */}
 
                 {/* Main Content Flex Container */}
-                <div className="flex items-start gap-0 relative xl:h-[calc(100vh-80px)] xl:overflow-hidden">
+                <div className="flex items-start gap-0 relative">
 
-                    {/* LEFT AREA: Sidebar (Fixed Width, Height 100%) */}
+                    {/* LEFT AREA: Sidebar (Sticky, Scrollable independently, Hidden Scrollbar) */}
+                    {/* LEFT AREA: Sidebar (Sticky, Scrollable independently, Hidden Scrollbar) */}
                     <div className={`
-                        shrink-0 transition-all duration-300 ease-in-out border-r border-slate-200 bg-white/50 backdrop-blur-sm
+                        fixed top-[72px] bottom-0 left-0 z-40
+                        transition-all duration-500 ease-in-out bg-white/50 backdrop-blur-sm transform shadow-[4px_0_24px_rgba(0,0,0,0.02)]
                         ${isSidebarOpen
-                            ? 'w-[360px] opacity-100 translate-x-0 mr-8'
-                            : 'w-0 opacity-0 -translate-x-4 border-none mr-0 overflow-hidden'}
-                        hidden xl:block xl:h-full xl:overflow-y-auto pr-1
-                        print:hidden
+                            ? 'w-[400px] opacity-100 translate-x-0'
+                            : 'w-0 opacity-0 -translate-x-full pointer-events-none overflow-hidden'}
+                        hidden xl:block pr-1 print:hidden
+                        overflow-y-auto pt-0
                         [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden
                     `}>
-                        <div className="pb-10 pl-1">
+                        <div className={`transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 delay-100' : 'opacity-0'}`}>
+
+                            {/* LEFT HEADER: Adjust Plan */}
+                            <div className="mb-6 pl-3 pt-6">
+                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">ปรับแผนการเงิน</h2>
+                                <p className="text-slate-500 text-sm font-medium mt-0.5">กำหนดแผนเกษียณในแบบของคุณ</p>
+                            </div>
+
                             {/* Inputs Component */}
                             <RetirementInputSection
                                 user={user}
@@ -400,8 +349,74 @@ export const RetirementDashboard = ({
                         />
                     </div>
 
-                    {/* RIGHT AREA: Charts & Metrics (Flex Grow, Scrollable) */}
-                    <div id="results-section" className={`flex-1 min-w-0 space-y-8 transition-all duration-300 xl:h-full xl:overflow-y-auto xl:overflow-x-hidden xl:pr-4 custom-scrollbar pb-20 ${isSidebarOpen ? 'max-w-[100vw] xl:max-w-none' : ''}`}>
+                    {/* RIGHT AREA: Charts & Metrics (Window Scroll) */}
+                    <div id="results-section" className={`
+                        flex-1 min-w-0 space-y-8 transition-all duration-500 ease-in-out pb-20
+                        ${isSidebarOpen ? 'xl:ml-[420px]' : 'xl:ml-0'}
+                    `}>
+
+                        {/* RIGHT HEADER: Financial Results Summary + Buttons */}
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 pt-6 print:hidden">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">สรุปผลลัพธ์ทางการเงิน</h2>
+                                <p className="text-slate-500 text-sm font-medium mt-0.5">ภาพรวมวางแผนการรับมือเกษียณ</p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3">
+                                <Button
+                                    variant={isSidebarOpen ? "secondary" : "default"}
+                                    size="sm"
+                                    className={`h-9 px-4 rounded-xl font-bold text-xs shadow-sm transition-all gap-2 ${isSidebarOpen ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200'}`}
+                                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                >
+                                    {isSidebarOpen ? (
+                                        <>
+                                            <PanelLeftClose className="w-4 h-4" />
+                                            ดูผลลัพธ์ (View Result)
+                                        </>
+                                    ) : (
+                                        <>
+                                            <PanelLeftOpen className="w-4 h-4" />
+                                            ปรับแผน (Adjust Plan)
+                                        </>
+                                    )}
+                                </Button>
+
+                                {planType === "family" && (
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        className="h-9 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg shadow-indigo-200 transition-all gap-2"
+                                        onClick={() => {
+                                            syncCurrentToFamily();
+                                            setShowFamilyResult(true);
+                                        }}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                                        ดูผลลัพธ์ครอบครัว
+                                    </Button>
+                                )}
+                                {form.insurancePlans.length > 0 && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-9 rounded-xl border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-all gap-2"
+                                        onClick={() => {
+                                            setForm(prev => ({ ...prev, selectedPlanId: null }));
+                                            setShowInsuranceTable(true);
+                                        }}
+                                    >
+                                        <TableIcon className="w-4 h-4" />
+                                        พอร์ตประกัน
+                                    </Button>
+                                )}
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                    <span>ข้อมูลล่าสุด: {new Date().toLocaleDateString('th-TH')}</span>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Hero Summary Card (Redesigned) */}
                         <div className={`relative rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 xl:p-10 overflow-hidden font-sans shadow-xl lg:shadow-2xl transition-all duration-500 group print:hidden ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981] shadow-emerald-900/40' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444] shadow-red-900/40'}`}>
                             {/* Decorative Background Patterns */}
@@ -450,7 +465,7 @@ export const RetirementDashboard = ({
                                         <div className="flex flex-row lg:flex-col justify-between lg:justify-start gap-4 lg:gap-6">
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-center mb-1">
-                                                    <p className="text-[10px] lg:text-[11px] font-bold text-white/70 uppercase tracking-widest">เงินออมที่จะมี (Projected)</p>
+                                                    <p className="text-sm lg:text-base font-bold text-white/90 uppercase tracking-wide">เงินออมที่จะมี (Projected)</p>
                                                     <div className="w-2 h-2 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]"></div>
                                                 </div>
                                                 <p className="text-2xl lg:text-4xl xl:text-[42px] font-black tracking-tighter text-white drop-shadow-sm leading-none">
@@ -463,10 +478,10 @@ export const RetirementDashboard = ({
 
                                             <div className="flex-1 text-right lg:text-left">
                                                 <div className="flex justify-end lg:justify-between items-center mb-1">
-                                                    <p className="text-[10px] lg:text-[11px] font-bold text-white/60 uppercase tracking-widest">เงินต้นที่ควรมี (Target)</p>
+                                                    <p className="text-sm lg:text-base font-bold text-white/80 uppercase tracking-wide">เงินต้นที่ควรมี (Target)</p>
                                                     <div className="hidden lg:block w-2 h-2 rounded-full bg-blue-200/50"></div>
                                                 </div>
-                                                <p className="text-xl lg:text-2xl font-bold tracking-tight text-white/90">
+                                                <p className="text-2xl lg:text-3xl font-bold tracking-tight text-white/95">
                                                     ฿{formatNumber(result.targetFund)}
                                                 </p>
                                             </div>
@@ -494,7 +509,7 @@ export const RetirementDashboard = ({
                                     <div className="relative flex flex-col h-full justify-between">
                                         <div className="flex justify-between items-start mb-3 lg:mb-4">
                                             <div>
-                                                <p className="text-sm lg:text-base font-bold text-slate-800 mb-1 group-hover:text-emerald-700 transition-colors">เงินออมที่มีอายุเกษียณ</p>
+                                                <p className="text-sm lg:text-base font-bold text-slate-800 mb-1 group-hover:text-emerald-700 transition-colors">เงินออมที่มีตอนอายุเกษียณ ({form.retireAge} ปี)</p>
                                                 <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Projected Wealth</span>
                                             </div>
                                             <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm border border-emerald-100/50">
@@ -789,6 +804,7 @@ export const RetirementDashboard = ({
                             show={showTargetModal}
                             onClose={() => setShowTargetModal(false)}
                             result={result}
+                            form={form}
                         />
                         <ExpenseModal
                             show={showExpenseModal}

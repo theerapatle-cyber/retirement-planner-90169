@@ -32,6 +32,7 @@ interface TargetModalProps {
     show: boolean;
     onClose: () => void;
     result: CalculationResult;
+    form: FormState;
 }
 
 interface ExpenseModalProps {
@@ -439,7 +440,7 @@ export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, f
     );
 };
 
-export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result }) => {
+export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result, form }) => {
     const [tab, setTab] = React.useState<"details" | "formula">("details");
 
     if (!show) return null;
@@ -477,61 +478,87 @@ export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result 
                         )}
                         {tab === "formula" && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
-                                    <div className="text-lg font-bold text-slate-900">สูตรออมขั้นต่ำ</div>
-                                    <p className="text-sm text-slate-600 leading-relaxed">
-                                        หากเราต้องการรู้ว่า “จะต้องเก็บเงินเท่าไหร่” หรือ “เงินจะโตเป็นเท่าไหร่” ในอนาคตเมื่อมีผลตอบแทนเฉลี่ยต่อปี เราจะใช้แนวคิดของ <b>ดอกเบี้ยทบต้น (Compound Interest)</b> เพื่อหาค่า <b>มูลค่าในอนาคต (Future Value)</b>
-                                    </p>
-
-                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-indigo-500">📘</span>
-                                            <span className="font-bold text-slate-900 text-sm">สูตรทั่วไป:</span>
-                                        </div>
-                                        <div className="font-mono text-sm text-slate-800 text-center py-2 overflow-x-auto">
-                                            FV = P₀ × (1 + r)ⁿ + P × ((1 + r)ⁿ - 1) / r
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <div className="text-sm font-bold text-slate-900">โดยที่:</div>
-                                        <ul className="list-disc list-inside space-y-1 text-sm text-slate-600 pl-2">
-                                            <li><b>FV</b> = มูลค่าในอนาคต (Future Value)</li>
-                                            <li><b>P₀</b> = เงินเริ่มต้นที่มีอยู่ตอนนี้</li>
-                                            <li><b>P</b> = เงินที่ออมเพิ่มในแต่ละปี</li>
-                                            <li><b>r</b> = ผลตอบแทนต่อปี (เช่น 5% = 0.05)</li>
-                                            <li><b>n</b> = จำนวนปีที่ลงทุนหรือออม</li>
-                                        </ul>
-                                    </div>
-
-                                    <div className="space-y-2 mt-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-pink-500">🧠</span>
-                                            <span className="font-bold text-slate-900 text-sm">แนวคิด:</span>
-                                        </div>
+                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-6">
+                                    {/* Original Theory Section */}
+                                    <div className="space-y-4 border-b border-slate-100 pb-6">
+                                        <div className="text-lg font-bold text-slate-900">สูตรออมขั้นต่ำ</div>
                                         <p className="text-sm text-slate-600 leading-relaxed">
-                                            สูตรนี้เกิดจากการรวมผลของ <b>เงินก้อนแรกที่โตด้วยดอกเบี้ย</b> และ <b>เงินที่ออมเพิ่มทุกปี</b> เข้าด้วยกัน
+                                            หากเราต้องการรู้ว่า “จะต้องเก็บเงินเท่าไหร่” หรือ “เงินจะโตเป็นเท่าไหร่” ในอนาคตเมื่อมีผลตอบแทนเฉลี่ยต่อปี เราจะใช้แนวคิดของ <b>ดอกเบี้ยทบต้น (Compound Interest)</b> เพื่อหาค่า <b>มูลค่าในอนาคต (Future Value)</b>
                                         </p>
-                                        <p className="text-sm text-slate-600 leading-relaxed mt-2">
-                                            ส่วนแรก P₀ × (1 + r)ⁿ คือการโตของเงินก้อนเริ่มต้น ส่วนที่สอง P × ((1 + r)ⁿ - 1) / r คือผลรวมของเงินที่ออมต่อปีพร้อมดอกเบี้ยทบต้น
-                                        </p>
-                                    </div>
 
-                                    <div className="mt-6 pt-6 border-t border-slate-100">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <span className="text-indigo-500">📊</span>
-                                            <span className="font-bold text-slate-900 text-sm">ตัวอย่าง:</span>
-                                        </div>
-                                        <p className="text-sm text-slate-600 mb-4">จากสูตร เราสามารถจัดรูปใหม่เพื่อหาเงินที่ต้องออมต่อปี (ออมสิ้นปี):</p>
-
-                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 overflow-x-auto">
-                                            <div className="font-mono text-xs sm:text-sm text-slate-800 whitespace-nowrap">
-                                                P = (FV - P₀ × (1 + r)ⁿ) ÷ ((1 + r)ⁿ - 1) ÷ r)
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-indigo-500">📘</span>
+                                                <span className="font-bold text-slate-900 text-sm">สูตรทั่วไป:</span>
+                                            </div>
+                                            <div className="font-mono text-sm text-slate-800 text-center py-2 overflow-x-auto">
+                                                FV = P₀ × (1 + r)ⁿ + P × ((1 + r)ⁿ - 1) / r
                                             </div>
                                         </div>
-                                        <p className="text-sm text-slate-600 mt-2 text-center text-xs">
-                                            จากนั้นจะได้เงินออมต่อปี แล้วนำมาหาร 12 อีกทีเพื่อให้เป็นต่อเดือน
-                                        </p>
+
+                                        <div className="space-y-2">
+                                            <div className="text-sm font-bold text-slate-900">โดยที่:</div>
+                                            <ul className="list-disc list-inside space-y-1 text-sm text-slate-600 pl-2">
+                                                <li><b>FV</b> = มูลค่าในอนาคต (Future Value)</li>
+                                                <li><b>P₀</b> = เงินเริ่มต้นที่มีอยู่ตอนนี้</li>
+                                                <li><b>P</b> = เงินที่ออมเพิ่มในแต่ละปี</li>
+                                                <li><b>r</b> = ผลตอบแทนต่อปี (เช่น 5% = 0.05)</li>
+                                                <li><b>n</b> = จำนวนปีที่ลงทุนหรือออม</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    {/* New Live Calculation Section */}
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-150">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-emerald-500 font-bold text-lg">💡</span>
+                                            <div className="text-lg font-bold text-slate-900">แทนค่าจากแผนของคุณ</div>
+                                        </div>
+
+                                        {/* Real Data Variables */}
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                                            <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
+                                                <span className="text-indigo-500">📝</span>
+                                                <span className="font-bold text-slate-900 text-sm">ตัวแปรของคุณ:</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                                <div className="flex justify-between"><span className="text-slate-500">เงินต้น (P₀)</span> <span className="font-bold font-mono text-slate-700">฿{formatNumber(form.currentSavings)}</span></div>
+                                                <div className="flex justify-between"><span className="text-slate-500">ผลตอบแทน (r)</span> <span className="font-bold font-mono text-slate-700">{form.expectedReturn}%</span></div>
+                                                <div className="flex justify-between"><span className="text-slate-500">ระยะเวลา (n)</span> <span className="font-bold font-mono text-slate-700">{result.yearsToRetire} ปี</span></div>
+                                                <div className="flex justify-between"><span className="text-slate-500">เป้าหมาย (FV)</span> <span className="font-bold font-mono text-blue-600">฿{formatNumber(result.targetFund)}</span></div>
+                                            </div>
+                                        </div>
+
+                                        {/* Substitution View */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-emerald-500">🔢</span>
+                                                <span className="font-bold text-slate-900 text-sm">แทนค่าในสูตร:</span>
+                                            </div>
+
+                                            <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-inner overflow-x-auto font-mono text-xs sm:text-sm leading-relaxed">
+                                                <div className="mb-2 text-slate-400 opacity-70">
+                                                    FV = P₀(1+r)ⁿ + PMT [((1+r)ⁿ - 1) / r]
+                                                </div>
+                                                <div className="text-emerald-300 whitespace-nowrap">
+                                                    {formatNumber(result.targetFund)} = {formatNumber(form.currentSavings)}(1+{Number(form.expectedReturn) / 100})^{result.yearsToRetire} + <span className="text-yellow-300 font-bold">PMT</span> [((1+{Number(form.expectedReturn) / 100})^{result.yearsToRetire} - 1) / {Number(form.expectedReturn) / 100}]
+                                                </div>
+                                            </div>
+
+                                            <p className="text-xs text-slate-500 leading-relaxed pl-2 bg-blue-50 border border-blue-100 p-3 rounded-xl">
+                                                <span className="font-bold text-blue-600">PMT คือสิ่งที่เราหา:</span> เมื่อย้ายข้างสมการ จะได้ยอดเงินที่ต้องออมเพิ่มต่อปี (และหาร 12 เป็นต่อเดือน)
+                                            </p>
+                                        </div>
+
+                                        <div className="mt-4 pt-4 border-t border-slate-100">
+                                            <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                                                <span className="text-sm font-bold text-emerald-800">สรุปต้องออมเพิ่ม (PMT):</span>
+                                                <div className="text-right">
+                                                    <div className="text-xl font-black text-emerald-600">฿{formatNumber(result.monthlyNeeded)}</div>
+                                                    <div className="text-[10px] text-emerald-500 font-bold">ต่อเดือน</div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -553,7 +580,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form,
                 <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100">
                     <div>
                         <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2"><span className="w-8 h-8 rounded-lg bg-purple-100/50 flex items-center justify-center text-purple-600 text-lg">💸</span> ค่าใช้จ่ายหลังเกษียณ (Future Expense)</h3>
-                        <p className="text-sm text-slate-500 mt-1 ml-10">ประมาณการเงินเฟ้อและค่าครองชีพ</p>
+                        <p className="text-sm text-slate-500 mt-1 ml-10">ประมาณการเงินเฟ้อ ({form.inflation}%) และค่าครองชีพ</p>
                     </div>
                     <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"><CloseIcon className="w-5 h-5" /></button>
                 </div>
@@ -576,14 +603,37 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form,
                                     <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm bg-white">
                                         <table className="w-full text-sm text-left">
                                             <thead className="bg-slate-50/80 text-slate-600 font-bold border-b border-slate-200">
-                                                <tr><th className="p-4 w-1/4">อายุ (ปี)</th><th className="p-4 text-right w-1/3">รายเดือน (อนาคต)</th><th className="p-4 text-right">รายปี (อนาคต)</th></tr>
+                                                <tr>
+                                                    <th className="p-4 w-[15%]">อายุ (ปี)</th>
+                                                    <th className="p-4 text-right w-[25%]">เงินต้น (วันนี้)</th>
+                                                    <th className="p-4 text-right w-[30%]">รายเดือน (อนาคต)</th>
+                                                    <th className="p-4 text-right w-[30%]">รายปี (อนาคต)</th>
+                                                </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
-                                                {result.expenseSchedule.map((row, idx) => (
-                                                    <tr key={row.age} className={`hover:bg-purple-50/30 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"}`}><td className="p-4 text-slate-800 font-bold">{row.age}</td><td className="p-4 text-right font-medium text-purple-600">฿{formatNumber(row.monthly)}</td><td className="p-4 text-right text-slate-600">฿{formatNumber(row.yearly)}</td></tr>
-                                                ))}
+                                                {result.expenseSchedule.map((row, idx) => {
+                                                    const inflation = Number(form.inflation) / 100;
+                                                    const yearsPassed = row.age - Number(form.currentAge);
+                                                    const pv = row.monthly / Math.pow(1 + inflation, yearsPassed);
+
+                                                    return (
+                                                        <tr key={row.age} className={`hover:bg-purple-50/30 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"}`}>
+                                                            <td className="p-4 text-slate-800 font-bold">{row.age}</td>
+                                                            <td className="p-4 text-right font-medium text-slate-500">฿{formatNumber(pv)}</td>
+                                                            <td className="p-4 text-right font-medium text-purple-600">฿{formatNumber(row.monthly)}</td>
+                                                            <td className="p-4 text-right text-slate-600">฿{formatNumber(row.yearly)}</td>
+                                                        </tr>
+                                                    );
+                                                })}
                                             </tbody>
-                                            <tfoot className="bg-slate-900 text-white font-semibold"><tr><td className="p-4 rounded-bl-xl">รวมทั้งหมดตลอดอายุขัย</td><td className="p-4 text-right">-</td><td className="p-4 text-right text-purple-300 text-lg rounded-br-xl">฿{formatNumber(result.totalLifetimeExpense)}</td></tr></tfoot>
+                                            <tfoot className="bg-slate-900 text-white font-semibold">
+                                                <tr>
+                                                    <td className="p-4 rounded-bl-xl">รวมทั้งหมดตลอดอายุขัย</td>
+                                                    <td className="p-4 text-right text-slate-400">-</td>
+                                                    <td className="p-4 text-right text-slate-400">-</td>
+                                                    <td className="p-4 text-right text-purple-300 text-lg rounded-br-xl">฿{formatNumber(result.totalLifetimeExpense)}</td>
+                                                </tr>
+                                            </tfoot>
                                         </table>
                                     </div>
                                 </div>

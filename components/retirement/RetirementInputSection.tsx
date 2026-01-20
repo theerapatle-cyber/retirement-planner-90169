@@ -1,9 +1,10 @@
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Label } from "@/components/ui/label";
 import { NumericInput } from "@/components/NumericInput";
 import { FormState, InsurancePlan, Allocation } from "@/types/retirement";
-import { User, Briefcase, Home, Plus, Minus, Camera, Calculator, X, ChevronDown, ChevronUp, Trash2, RotateCcw, PenLine, ShieldCheck, TrendingUp, DollarSign, Settings2, ArrowRight, ArrowLeft, Check, Table as TableIcon, AlertCircle } from "lucide-react";
+import { User, Briefcase, Home, Plus, Minus, Camera, Calculator, X, ChevronDown, ChevronUp, Trash2, RotateCcw, PenLine, ShieldCheck, TrendingUp, DollarSign, Settings2, ArrowRight, ArrowLeft, Check, Table as TableIcon, AlertCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { calculateRetirement, buildRetirementInputs } from "@/lib/retirement-calculation";
 
@@ -31,6 +32,98 @@ interface RetirementInputSectionProps {
     relation?: string;
     setRelation?: (r: string) => void;
 }
+
+// --- Portal Tooltip Component (Moved Outside) ---
+const PortalTooltip = ({ text, rect, onCheck, onLeave }: { text: string, rect: DOMRect, onCheck: () => void, onLeave: () => void }) => {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        requestAnimationFrame(() => setVisible(true));
+    }, []);
+
+    const top = rect.top - 10;
+    const left = rect.left + rect.width / 2;
+
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+        <div
+            className={`fixed inset-0 z-[9999] pointer-events-none transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
+        >
+            <div
+                className="absolute transition-all duration-300 ease-out origin-bottom"
+                style={{
+                    top: top,
+                    left: left,
+                    transform: `translate(-50%, -100%) scale(${visible ? 1 : 0.9}) translateY(${visible ? 0 : 10}px)`
+                }}
+                onMouseEnter={onCheck}
+                onMouseLeave={onLeave}
+            >
+                <div className="w-72 p-4 bg-white/95 backdrop-blur-xl text-slate-600 text-xs leading-relaxed rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-200 relative pointer-events-auto">
+                    <div className="font-bold text-indigo-600 mb-1 flex items-center gap-2">
+                        <Info size={14} />
+                        คำแนะนำ
+                    </div>
+                    {text}
+                    {/* Arrow */}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-8 border-transparent border-t-white/95 drop-shadow-sm"></div>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
+const TooltipWrapper = ({ text }: { text: string }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const iconRef = useRef<HTMLDivElement>(null);
+    const [rect, setRect] = useState<DOMRect | null>(null);
+    const closeTimer = useRef<NodeJS.Timeout | null>(null);
+
+    const handleEnter = () => {
+        if (closeTimer.current) clearTimeout(closeTimer.current);
+        if (iconRef.current) {
+            setRect(iconRef.current.getBoundingClientRect());
+            setIsOpen(true);
+        }
+    };
+
+    const handleLeave = () => {
+        closeTimer.current = setTimeout(() => {
+            setIsOpen(false);
+        }, 150); // 150ms buffer
+    };
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const update = () => {
+            if (iconRef.current) setRect(iconRef.current.getBoundingClientRect());
+        };
+        window.addEventListener('scroll', update, true);
+        window.addEventListener('resize', update);
+        return () => {
+            window.removeEventListener('scroll', update, true);
+            window.removeEventListener('resize', update);
+        };
+    }, [isOpen]);
+
+    return (
+        <>
+            <div
+                ref={iconRef}
+                onMouseEnter={handleEnter}
+                onMouseLeave={handleLeave}
+                onClick={() => isOpen ? handleLeave() : handleEnter()}
+                className="relative ml-1.5 cursor-help p-1 rounded-full text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 transition-all duration-300"
+            >
+                <Info size={15} strokeWidth={2.5} className="hover:scale-110 transition-transform" />
+                {!isOpen && <span className="absolute inset-0 rounded-full bg-indigo-400/20 animate-ping opacity-0 hover:opacity-100 duration-1000"></span>}
+            </div>
+            {isOpen && rect && <PortalTooltip text={text} rect={rect} onCheck={handleEnter} onLeave={handleLeave} />}
+        </>
+    );
+};
 
 export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
     user,
@@ -193,9 +286,9 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
     // --- Modern Unified Input Control ---
     const InputControl = ({
-        label, value, field, suffix, disabled = false, icon: Icon, subLabel, badge, step = 1
+        label, value, field, suffix, disabled = false, icon: Icon, subLabel, badge, step = 1, tooltip
     }: {
-        label: string, value: any, field?: keyof FormState, suffix?: string, disabled?: boolean, icon?: any, subLabel?: string, badge?: React.ReactNode, step?: number
+        label: string, value: any, field?: keyof FormState, suffix?: string, disabled?: boolean, icon?: any, subLabel?: string, badge?: React.ReactNode, step?: number, tooltip?: string
     }) => {
         return (
             <div className="group space-y-2">
@@ -204,6 +297,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         {Icon && <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors shadow-sm"><Icon size={14} /></div>}
                         {label}
                         {badge}
+                        {tooltip && <TooltipWrapper text={tooltip} />}
                     </Label>
                     {subLabel && <span className="text-[10px] text-slate-400 font-medium bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-full">{subLabel}</span>}
                 </div>
@@ -213,12 +307,12 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         type="button"
                         onClick={field ? changeBy(field, -step) : undefined}
                         disabled={disabled}
-                        className="w-12 h-12 rounded-full bg-white/50 border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
+                        className="w-12 h-12 rounded-full bg-white/50 border border-slate-300 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
                     >
                         <Minus size={18} strokeWidth={2.5} />
                     </button>
 
-                    <div className={`flex-1 relative bg-white/50 border border-slate-200 rounded-full h-12 flex items-center px-4 transition-all duration-300 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50/50 shadow-sm hover:shadow-md focus-within:bg-white backdrop-blur-sm ${disabled ? 'bg-slate-50/50 opacity-70' : ''}`}>
+                    <div className={`flex-1 relative bg-white border border-slate-300 rounded-full h-12 flex items-center px-4 transition-all duration-300 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50/50 shadow-sm hover:shadow-md focus-within:bg-white backdrop-blur-sm ${disabled ? 'bg-slate-50/50 opacity-70' : ''}`}>
                         <NumericInput
                             value={value}
                             onChange={field ? handleChange(field) : () => { }}
@@ -232,7 +326,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         type="button"
                         onClick={field ? changeBy(field, step) : undefined}
                         disabled={disabled}
-                        className="w-12 h-12 rounded-full bg-white/50 border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
+                        className="w-12 h-12 rounded-full bg-white/50 border border-slate-300 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
                     >
                         <Plus size={18} strokeWidth={2.5} />
                     </button>
@@ -364,7 +458,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                 )}
             </div>
 
-            <div className="grid gap-6 px-4">
+            <div className="grid gap-6 px-3">
                 <InputControl label="อายุปัจจุบัน (ปี)" value={form.currentAge} field="currentAge" icon={User} />
                 <InputControl label="อายุที่ต้องการเกษียณ (ปี)" value={form.retireAge} field="retireAge" icon={Settings2} />
                 <InputControl label="จะอยู่ถึงอายุ (ปี)" value={form.lifeExpectancy} field="lifeExpectancy" icon={RotateCcw} />
@@ -379,12 +473,26 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                 <h2 className="text-xl font-bold text-slate-800">ปัจจุบัน</h2>
             </div>
 
-            <div className="space-y-6 px-1">
+            <div className="space-y-6 px-3">
                 <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 space-y-6">
-                    <InputControl label="เงินออมปัจจุบัน (บาท)" value={form.currentSavings} field="currentSavings" icon={Briefcase} step={1000} />
+                    <InputControl
+                        label="เงินออมปัจจุบัน (บาท)"
+                        value={form.currentSavings}
+                        field="currentSavings"
+                        icon={Briefcase}
+                        step={1000}
+                        tooltip="กรอกจำนวนเงินออมทั้งหมดที่คุณมีอยู่ในปัจจุบัน"
+                    />
 
                     <div className="pt-2 border-t border-slate-100/50 space-y-4">
-                        <InputControl label="การออมต่อเดือน (บาท)" value={form.monthlySaving} field="monthlySaving" icon={Plus} step={1000} />
+                        <InputControl
+                            label="การออมต่อเดือน (บาท)"
+                            value={form.monthlySaving}
+                            field="monthlySaving"
+                            icon={Plus}
+                            step={1000}
+                            tooltip="กรอกจำนวนเงินที่คุณออมหรือลงทุนเพื่อการเกษียณในแต่ละเดือน (ไม่รวมเงินจากประกันสังคม หรือกองทุนสำรองเลี้ยงชีพนะ)"
+                        />
 
                         <div className="flex items-center gap-4">
                             <label className="flex items-center gap-2 cursor-pointer">
@@ -406,6 +514,16 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                 <span className="text-sm font-medium text-slate-700">ปรับตามอายุทุกปีที่ 5</span>
                             </label>
                         </div>
+
+                        {savingMode === 'step5' && (
+                            <div className="grid gap-4 pt-4 animate-in fade-in slide-in-from-top-2 border-t border-slate-100/50 mt-4">
+                                <InputControl label="อายุ 35" value={form.savingAt35} field="savingAt35" step={1000} />
+                                <InputControl label="อายุ 40" value={form.savingAt40} field="savingAt40" step={1000} />
+                                <InputControl label="อายุ 45" value={form.savingAt45} field="savingAt45" step={1000} />
+                                <InputControl label="อายุ 50" value={form.savingAt50} field="savingAt50" step={1000} />
+                                <InputControl label="อายุ 55" value={form.savingAt55} field="savingAt55" step={1000} />
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -417,6 +535,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                             field="expectedReturn"
                             icon={TrendingUp}
                             disabled={returnMode === 'custom'}
+                            tooltip="กรอกอัตราผลตอบแทนเฉลี่ยที่คาดว่าจะได้รับจากการลงทุนเพื่อการเกษียณ ช่วงก่อนเกษียณ"
                         />
 
                         {/* Return Mode Selection */}
@@ -536,7 +655,13 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     </div>
 
                     <div className="pt-2 border-t border-slate-100/50">
-                        <InputControl label="อัตราเงินเฟ้อ (% ต่อปี)" value={form.inflation} field="inflation" icon={TrendingUp} />
+                        <InputControl
+                            label="อัตราเงินเฟ้อ (% ต่อปี)"
+                            value={form.inflation}
+                            field="inflation"
+                            icon={TrendingUp}
+                            tooltip="กรอกอัตราเงินเฟ้อที่ประมาณการไว้ในอนาคต"
+                        />
                     </div>
                 </div>
 
@@ -820,15 +945,29 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
             </div>
 
             <div className="grid gap-6 px-1">
-                <InputControl label="เงินก้อนตอนเกษียณ (เช่น กบข., บำเหน็จ)" value={form.retireFundOther} field="retireFundOther" icon={DollarSign} step={1000} />
+                <InputControl
+                    label="เงินก้อนตอนเกษียณ (เช่น กบข., บำเหน็จ)"
+                    value={form.retireFundOther}
+                    field="retireFundOther"
+                    icon={DollarSign}
+                    step={1000}
+                    tooltip="เงินก้อนที่คุณคาดว่าจะได้รับในวันเกษียณ เช่น บำเหน็จ หรือเงินที่จะถอนมาใช้ช่วงเกษียณที่นอกจากลงทุน"
+                />
                 <InputControl
                     label="เงินเดือนหลังเกษียณ (ต่อเดือน)"
                     value={form.retirePension}
                     field="retirePension"
                     icon={DollarSign}
                     step={1000}
+                    tooltip="รายได้ที่คาดว่าจะได้รับหลังเกษียณที่ไม่ใช่เงินออม เช่น เงินจากประกันสังคม หรือกองทุนบำนาญ (ยกเว้นประกัน) หรือรายได้จากค่าสินทรัพย์อื่นๆ เช่น 6,000 บาท"
                 />
-                <InputControl label="ผลตอบแทนหลังเกษียณ (% ต่อปี)" value={form.retireReturnAfter} field="retireReturnAfter" icon={TrendingUp} />
+                <InputControl
+                    label="ผลตอบแทนหลังเกษียณ (% ต่อปี)"
+                    value={form.retireReturnAfter}
+                    field="retireReturnAfter"
+                    icon={TrendingUp}
+                    tooltip="Pro,Premium plan อัตราผลตอบแทนที่คาดว่าจะได้รับจากเงินก้อนที่เหลืออยู่หลังเกษียณ เช่น 4%"
+                />
 
                 <div className="bg-amber-50/50 p-6 rounded-3xl border border-amber-100/50 space-y-4">
                     <InputControl
@@ -837,13 +976,21 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         field="retireExtraExpense"
                         icon={Home}
                         step={1000}
+                        tooltip="ประมาณการค่าใช้จ่ายที่ต้องการหลังเกษียณในมูลค่าเงินปัจจุบัน โดยทั่วไปถือเราจะประมาณ 80% ของค่าใช้จ่ายปัจจุบัน เช่น 12,000 บาท"
                     />
                 </div>
 
 
 
                 <div className="pt-2 border-t border-slate-100">
-                    <InputControl label="มรดก" value={form.legacyFund} field="legacyFund" icon={Home} step={1000} />
+                    <InputControl
+                        label="มรดก"
+                        value={form.legacyFund}
+                        field="legacyFund"
+                        icon={Home}
+                        step={1000}
+                        tooltip="เงินที่อยากเก็บไว้ให้ลูกหลาน"
+                    />
                 </div>
 
                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
