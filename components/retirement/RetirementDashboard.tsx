@@ -107,19 +107,27 @@ export const RetirementDashboard = ({
 }: RetirementDashboardProps) => {
 
     const [showSumAssured, setShowSumAssured] = React.useState(true);
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
     const [showActualSavings, setShowActualSavings] = React.useState(true);
     const [showInsuranceTable, setShowInsuranceTable] = React.useState(false);
     const [showProjectedModal, setShowProjectedModal] = React.useState(false);
     const [showTargetModal, setShowTargetModal] = React.useState(false);
+    const [targetModalTab, setTargetModalTab] = React.useState<"details" | "formula">("details");
     const [showExpenseModal, setShowExpenseModal] = React.useState(false);
+    const [expenseModalTab, setExpenseModalTab] = React.useState<"details" | "formula">("details");
+    const [projectedModalTab, setProjectedModalTab] = React.useState<"details" | "formula">("details");
     const [showMonteCarloDetails, setShowMonteCarloDetails] = React.useState(false);
     const [isMonteCarloOpen, setIsMonteCarloOpen] = React.useState(false);
     const [chartTickInterval, setChartTickInterval] = React.useState<number>(5);
 
-    // Scroll to results on mobile/tablet when entering dashboard
+    // Responsive Sidebar Logic:
+    // - Desktop (>=1280): Auto-open sidebar
+    // - iPad/Mobile (<1280): Keep closed (default) to show results first
     React.useEffect(() => {
-        if (window.innerWidth < 1024) {
+        if (window.innerWidth >= 1280) {
+            setIsSidebarOpen(true);
+        } else {
+            // Mobile/Tablet: Scroll to top of results for better UX
             const resultsElement = document.getElementById("results-section");
             if (resultsElement) {
                 setTimeout(() => {
@@ -275,84 +283,98 @@ export const RetirementDashboard = ({
                 {/* Header Buttons Removed from Here */}
 
                 {/* Main Content Flex Container */}
-                <div className="flex items-start gap-0 relative">
+                <div className="flex flex-col xl:flex-row items-start gap-0 relative">
+
+                    {/* Mobile Backdrop */}
+                    <div
+                        className={`fixed inset-0 z-30 bg-black/20 backdrop-blur-sm transition-opacity duration-300 xl:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                        onClick={() => setIsSidebarOpen(false)}
+                    />
 
                     {/* LEFT AREA: Sidebar (Sticky, Scrollable independently, Hidden Scrollbar) */}
                     {/* LEFT AREA: Sidebar (Sticky, Scrollable independently, Hidden Scrollbar) */}
                     <div className={`
-                        fixed top-[72px] bottom-0 left-0 z-40
-                        transition-all duration-500 ease-in-out bg-white/50 backdrop-blur-sm transform shadow-[4px_0_24px_rgba(0,0,0,0.02)]
+                        fixed z-40 transition-all duration-300 ease-in-out
+                        
+                        /* Mobile/Tablet: Centered Modal Overlay */
+                        inset-0 flex items-center justify-center p-4 sm:p-6
                         ${isSidebarOpen
-                            ? 'w-[400px] opacity-100 translate-x-0'
-                            : 'w-0 opacity-0 -translate-x-full pointer-events-none overflow-hidden'}
-                        hidden xl:block pr-1 print:hidden
-                        overflow-y-auto pt-0
-                        [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden
+                            ? 'opacity-100 pointer-events-auto visible'
+                            : 'opacity-0 pointer-events-none invisible xl:opacity-100 xl:pointer-events-none xl:invisible'}
+                        
+                        /* Desktop: Fixed Sidebar (Reset Mobile styles) */
+                        xl:visible xl:pointer-events-auto xl:opacity-100
+                        xl:fixed xl:top-[72px] xl:bottom-0 xl:left-0 xl:inset-auto xl:block
+                        xl:p-0 xl:flex-none
+                        xl:bg-white/50 xl:backdrop-blur-sm xl:shadow-[4px_0_24px_rgba(0,0,0,0.02)]
+                        
+                        /* Desktop Width Transition */
+                        ${isSidebarOpen
+                            ? 'xl:w-[400px] xl:translate-x-0'
+                            : 'xl:w-0 xl:-translate-x-full xl:overflow-hidden'}
+                        
+                        print:hidden
                     `}>
-                        <div className={`transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 delay-100' : 'opacity-0'}`}>
+                        <div className={`
+                            transition-all duration-300 w-full
+                            
+                            /* Mobile/Tablet: Card Style */
+                            max-w-md bg-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]
+                            ${isSidebarOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4 xl:scale-100 xl:translate-y-0'}
 
-                            {/* LEFT HEADER: Adjust Plan */}
-                            <div className="mb-6 pl-3 pt-6">
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">ปรับแผนการเงิน</h2>
-                                <p className="text-slate-500 text-sm font-medium mt-0.5">กำหนดแผนเกษียณในแบบของคุณ</p>
+                            /* Desktop: Reset Card Style */
+                            xl:max-w-none xl:bg-transparent xl:rounded-none xl:shadow-none xl:h-auto xl:max-h-none xl:overflow-visible
+                        `}>
+                            {/* Mobile Close Button Header */}
+                            <div className="xl:hidden flex items-center justify-between p-4 border-b border-slate-100 bg-white sticky top-0 z-10">
+                                <span className="font-bold text-slate-400 text-sm">ปรับแต่งแผน Plans</span>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-slate-100 text-slate-500" onClick={() => setIsSidebarOpen(false)}>
+                                    <PanelLeftClose className="w-4 h-4" />
+                                </Button>
                             </div>
 
-                            {/* Inputs Component */}
-                            <RetirementInputSection
-                                user={user}
-                                form={form}
-                                handleChange={handleChange}
-                                changeBy={changeBy}
-                                gender={gender}
-                                setGender={setGender}
-                                addInsurancePlan={addInsurancePlan}
-                                removeInsurancePlan={removeInsurancePlan}
-                                updateInsurancePlan={updateInsurancePlan}
-                                onViewTable={() => setShowInsuranceTable(true)}
-                                savingMode={savingMode}
-                                setSavingMode={setSavingMode}
-                                returnMode={returnMode}
-                                setReturnMode={setReturnMode}
-                                allocations={allocations}
-                                addAllocation={addAllocation}
-                                removeAllocation={removeAllocation}
-                                updateAllocation={updateAllocation}
-                                onCalculate={() => { }}
-                                isEmbedded={true}
-                            />
+                            {/* Scrollable Content Area */}
+                            <div className="overflow-y-auto p-0 xl:p-0 custom-scrollbar xl:overflow-visible">
+
+                                {/* LEFT HEADER: Adjust Plan */}
+                                <div className="mb-6 pl-3 pt-6">
+                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">ปรับแผนการเงิน</h2>
+                                    <p className="text-slate-500 text-sm font-medium mt-0.5">กำหนดแผนเกษียณในแบบของคุณ</p>
+                                </div>
+
+                                {/* Inputs Component */}
+                                <RetirementInputSection
+                                    user={user}
+                                    form={form}
+                                    handleChange={handleChange}
+                                    changeBy={changeBy}
+                                    gender={gender}
+                                    setGender={setGender}
+                                    addInsurancePlan={addInsurancePlan}
+                                    removeInsurancePlan={removeInsurancePlan}
+                                    updateInsurancePlan={updateInsurancePlan}
+                                    onViewTable={() => setShowInsuranceTable(true)}
+                                    savingMode={savingMode}
+                                    setSavingMode={setSavingMode}
+                                    returnMode={returnMode}
+                                    setReturnMode={setReturnMode}
+                                    allocations={allocations}
+                                    addAllocation={addAllocation}
+                                    removeAllocation={removeAllocation}
+                                    updateAllocation={updateAllocation}
+                                    onCalculate={() => setIsSidebarOpen(false)}
+                                    isEmbedded={true}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    {/* LEFT AREA: Mobile/Tablet Stacked (Only visible when sidebar open on small screens) */}
-                    <div className={`xl:hidden space-y-6 mb-8 ${isSidebarOpen ? 'block' : 'hidden'} print:hidden`}>
-                        <RetirementInputSection
-                            user={user}
-                            form={form}
-                            handleChange={handleChange}
-                            changeBy={changeBy}
-                            gender={gender}
-                            setGender={setGender}
-                            addInsurancePlan={addInsurancePlan}
-                            removeInsurancePlan={removeInsurancePlan}
-                            updateInsurancePlan={updateInsurancePlan}
-                            onViewTable={() => setShowInsuranceTable(true)}
-                            savingMode={savingMode}
-                            setSavingMode={setSavingMode}
-                            returnMode={returnMode}
-                            setReturnMode={setReturnMode}
-                            allocations={allocations}
-                            addAllocation={addAllocation}
-                            removeAllocation={removeAllocation}
-                            updateAllocation={updateAllocation}
-                            onCalculate={() => { }}
-                            isEmbedded={true}
-                        />
-                    </div>
+
 
                     {/* RIGHT AREA: Charts & Metrics (Window Scroll) */}
                     <div id="results-section" className={`
-                        flex-1 min-w-0 space-y-8 transition-all duration-500 ease-in-out pb-20
-                        ${isSidebarOpen ? 'xl:ml-[420px]' : 'xl:ml-0'}
+                        flex-1 min-w-0 space-y-8 transition-all duration-500 ease-in-out pb-20 w-full
+                        ${isSidebarOpen ? 'xl:ml-[420px]' : 'ml-0'}
                     `}>
 
                         {/* RIGHT HEADER: Financial Results Summary + Buttons */}
@@ -530,7 +552,10 @@ export const RetirementDashboard = ({
 
                                 {/* Card 2: Target Fund */}
                                 <div
-                                    onClick={() => setShowTargetModal(true)}
+                                    onClick={() => {
+                                        setTargetModalTab('details');
+                                        setShowTargetModal(true);
+                                    }}
                                     className="bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(59,130,246,0.15)] hover:border-blue-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
                                 >
                                     <div className="absolute -right-8 -top-8 text-blue-100/50 group-hover:text-blue-200/50 transition-colors pointer-events-none z-0">
@@ -542,7 +567,18 @@ export const RetirementDashboard = ({
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <p className="text-sm lg:text-base font-bold text-slate-800 mb-1 group-hover:text-blue-700 transition-colors">เงินที่ต้องการก่อนเกษียณ</p>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-slate-300 mb-1"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+
+                                                    {/* Top ! Button -> Details */}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setTargetModalTab('details');
+                                                            setShowTargetModal(true);
+                                                        }}
+                                                        className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-800 flex items-center justify-center text-[10px] font-bold transition-all mb-1"
+                                                    >
+                                                        !
+                                                    </button>
                                                 </div>
                                                 <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Retirement Goal</span>
                                             </div>
@@ -562,7 +598,18 @@ export const RetirementDashboard = ({
                                                     </p>
                                                     <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors">
                                                         <span>หรือออมขั้นต่ำคร่าวๆ ฿{formatNumber2(result.monthlyNeeded)} ต่อเดือน</span>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-slate-300"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+
+                                                        {/* Bottom ! Button -> Formula */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setTargetModalTab('formula');
+                                                                setShowTargetModal(true);
+                                                            }}
+                                                            className="w-4 h-4 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-800 flex items-center justify-center text-[10px] font-bold transition-all"
+                                                        >
+                                                            !
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -799,6 +846,7 @@ export const RetirementDashboard = ({
                             onClose={() => setShowProjectedModal(false)}
                             form={form}
                             result={result}
+                            initialTab={projectedModalTab}
                         />
                         <TargetModal
                             show={showTargetModal}
@@ -811,6 +859,7 @@ export const RetirementDashboard = ({
                             onClose={() => setShowExpenseModal(false)}
                             form={form}
                             result={result}
+                            initialTab={expenseModalTab}
                         />
                         <MonteCarloDetailsModal
                             show={showMonteCarloDetails}

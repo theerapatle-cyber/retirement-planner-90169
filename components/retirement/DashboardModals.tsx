@@ -26,6 +26,7 @@ interface ProjectedModalProps {
     onClose: () => void;
     form: FormState;
     result: CalculationResult;
+    initialTab?: "details" | "formula";
 }
 
 interface TargetModalProps {
@@ -40,6 +41,7 @@ interface ExpenseModalProps {
     onClose: () => void;
     form: FormState;
     result: CalculationResult;
+    initialTab?: "details" | "formula";
 }
 
 interface MonteCarloDetailsModalProps {
@@ -379,8 +381,14 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
     );
 };
 
-export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, form, result }) => {
-    const [tab, setTab] = React.useState<"details" | "formula">("details");
+export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, form, result, initialTab = "details" }) => {
+    const [tab, setTab] = React.useState<"details" | "formula">(initialTab);
+
+    React.useEffect(() => {
+        if (show) {
+            setTab(initialTab);
+        }
+    }, [show, initialTab]);
 
     if (!show) return null;
     return (
@@ -440,8 +448,23 @@ export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, f
     );
 };
 
-export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result, form }) => {
-    const [tab, setTab] = React.useState<"details" | "formula">("details");
+interface TargetModalProps {
+    show: boolean;
+    onClose: () => void;
+    result: CalculationResult;
+    form: FormState;
+    initialTab?: "details" | "formula";
+}
+
+export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result, form, initialTab = "details" }) => {
+    const [tab, setTab] = React.useState<"details" | "formula">(initialTab);
+
+    // Reset tab when modal opens/changes initialTab
+    React.useEffect(() => {
+        if (show) {
+            setTab(initialTab);
+        }
+    }, [show, initialTab]);
 
     if (!show) return null;
     return (
@@ -570,8 +593,14 @@ export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result,
     );
 };
 
-export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form, result }) => {
-    const [tab, setTab] = React.useState<"details" | "formula">("details");
+export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form, result, initialTab = "details" }) => {
+    const [tab, setTab] = React.useState<"details" | "formula">(initialTab);
+
+    React.useEffect(() => {
+        if (show) {
+            setTab(initialTab);
+        }
+    }, [show, initialTab]);
 
     if (!show) return null;
     return (

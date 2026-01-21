@@ -72,7 +72,7 @@ export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) =>
                 </div>
 
                 {/* --- Right Column: Floating Form Card --- */}
-                <div className="order-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200">
+                <div className="order-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200 md:-mt-12 lg:mt-0">
                     <div className="relative w-full max-w-md mx-auto bg-white/95 backdrop-blur-2xl p-8 lg:p-10 rounded-[32px] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.3)] ring-1 ring-white/50">
 
                         {/* Decor */}

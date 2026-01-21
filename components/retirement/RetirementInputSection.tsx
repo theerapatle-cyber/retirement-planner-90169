@@ -1116,6 +1116,19 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     )}
                 </div>
 
+                {/* Mobile/Embedded Footer Actions */}
+                {isEmbedded && (
+                    <div className="pt-6 border-t border-slate-50 relative z-10 pb-4">
+                        <Button
+                            type="button"
+                            onClick={handleCalculateCheck}
+                            className="w-full h-12 text-lg rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-lg shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                        >
+                            <Calculator size={20} /> ดูผลลัพธ์ (View Result)
+                        </Button>
+                    </div>
+                )}
+
                 {/* Footer Actions */}
                 {!isEmbedded && (
                     <div className="pt-6 border-t border-slate-50 flex gap-4 relative z-10 items-center">
