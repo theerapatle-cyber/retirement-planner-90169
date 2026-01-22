@@ -304,7 +304,7 @@ export const RetirementDashboard = ({
                         /* Desktop: Fixed Sidebar (Reset Mobile styles) */
                         xl:fixed xl:top-[72px] xl:bottom-0 xl:left-0 xl:inset-auto xl:block
                         xl:p-0 xl:flex-none
-                        xl:bg-white/50 xl:backdrop-blur-sm xl:shadow-[4px_0_24px_rgba(0,0,0,0.02)]
+                        xl:bg-transparent xl:shadow-none
                         
                         /* Desktop Width & Visibility Transition */
                         ${isSidebarOpen
@@ -374,8 +374,8 @@ export const RetirementDashboard = ({
 
                     {/* RIGHT AREA: Charts & Metrics (Window Scroll) */}
                     <div id="results-section" className={`
-                        flex-1 min-w-0 space-y-8 transition-all duration-500 ease-in-out pb-20 w-full
-                        ${isSidebarOpen ? 'xl:ml-[500px]' : 'ml-0'}
+                        flex-1 min-w-0 space-y-8 transition-all duration-500 ease-in-out pb-20
+                        ${isSidebarOpen ? 'xl:ml-[500px] w-full xl:w-[calc(100%-500px)]' : 'ml-0 w-full'}
                     `}>
 
                         {/* RIGHT HEADER: Financial Results Summary + Buttons */}
@@ -499,7 +499,7 @@ export const RetirementDashboard = ({
                                                         <p className="text-sm lg:text-base font-bold text-white/90 uppercase tracking-wide">เงินออมที่จะมี (Projected)</p>
                                                         <div className="w-2 h-2 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]"></div>
                                                     </div>
-                                                    <p className="text-3xl lg:text-4xl xl:text-[42px] font-black tracking-tighter text-white drop-shadow-sm leading-none">
+                                                    <p className="text-2xl lg:text-4xl xl:text-[42px] font-black tracking-tighter text-white drop-shadow-sm leading-none">
                                                         ฿{formatNumber(result.projectedFund)}
                                                     </p>
                                                 </div>
@@ -540,15 +540,15 @@ export const RetirementDashboard = ({
                                         <div className="relative flex flex-col h-full justify-between">
                                             <div className="flex justify-between items-start mb-3 lg:mb-4">
                                                 <div>
-                                                    <p className="text-base font-bold text-slate-800 mb-1 group-hover:text-emerald-700 transition-colors">เงินออมที่มีตอนอายุเกษียณ ({form.retireAge} ปี)</p>
-                                                    <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Projected Wealth</span>
+                                                    <p className="text-sm sm:text-base font-bold text-slate-800 mb-1 group-hover:text-emerald-700 transition-colors">เงินออมที่มีตอนอายุเกษียณ ({form.retireAge} ปี)</p>
+                                                    <span className="text-[10px] lg:text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Projected Wealth</span>
                                                 </div>
                                                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm border border-emerald-100/50">
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5a3.5 3.5 0 0 1-4.9-5.0L10.3 1.5" /><path d="M19 5a3 5 0 0 1 0 6h-6.7" /><path d="M12 11l-3 3" /><circle cx="5" cy="18" r="4" /><path d="M9 18l6-6" /></svg>
                                                 </div>
                                             </div>
                                             <div>
-                                                <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-emerald-600 transition-colors">
+                                                <h4 className="text-xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-emerald-600 transition-colors">
                                                     ฿{formatNumber2(result.projectedFund)}
                                                 </h4>
                                                 <p className="text-xs font-medium text-slate-400 flex items-center gap-1">
@@ -579,7 +579,7 @@ export const RetirementDashboard = ({
 
                                                         {/* Top ! Button -> Removed */}
                                                     </div>
-                                                    <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Retirement Goal</span>
+                                                    <span className="text-[10px] lg:text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Retirement Goal</span>
                                                 </div>
                                                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-[-3deg] transition-transform duration-300 shadow-sm border border-blue-100/50">
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
@@ -587,7 +587,7 @@ export const RetirementDashboard = ({
                                             </div>
                                             <div>
                                                 <div>
-                                                    <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-2 group-hover:text-blue-600 transition-colors">
+                                                    <h4 className="text-xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-2 group-hover:text-blue-600 transition-colors">
                                                         ฿{formatNumber2(result.targetFund)}
                                                     </h4>
 
@@ -605,7 +605,7 @@ export const RetirementDashboard = ({
                                                                     setTargetModalTab('formula');
                                                                     setShowTargetModal(true);
                                                                 }}
-                                                                className="w-4 h-4 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-800 flex items-center justify-center text-[10px] font-bold transition-all opacity-0 group-hover:opacity-100 duration-300"
+                                                                className="w-4 h-4 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-800 flex items-center justify-center text-xs font-bold transition-all opacity-0 group-hover:opacity-100 duration-300"
                                                             >
                                                                 !
                                                             </button>
@@ -628,15 +628,15 @@ export const RetirementDashboard = ({
                                         <div className="relative flex flex-col h-full justify-between">
                                             <div className="flex justify-between items-start mb-3 lg:mb-4">
                                                 <div>
-                                                    <p className="text-base font-bold text-slate-800 mb-1 group-hover:text-purple-700 transition-colors">ค่าใช้จ่าย/เดือน (ปีแรก)</p>
-                                                    <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Future Expense</span>
+                                                    <p className="text-sm sm:text-base font-bold text-slate-800 mb-1 group-hover:text-purple-700 transition-colors">ค่าใช้จ่าย/เดือน (ปีแรก)</p>
+                                                    <span className="text-[10px] lg:text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Future Expense</span>
                                                 </div>
                                                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm border border-purple-100/50">
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
                                                 </div>
                                             </div>
                                             <div>
-                                                <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-purple-600 transition-colors">
+                                                <h4 className="text-xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-purple-600 transition-colors">
                                                     ฿{formatNumber2(result.fvExpenseMonthly)}
                                                 </h4>
                                                 <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors">
@@ -723,7 +723,7 @@ export const RetirementDashboard = ({
                                                     <button
                                                         key={interval}
                                                         onClick={() => setChartTickInterval(interval)}
-                                                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${chartTickInterval === interval
+                                                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${interval === 1 ? 'hidden md:block' : ''} ${chartTickInterval === interval
                                                             ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
                                                             : "text-slate-500 hover:bg-white hover:shadow-sm"
                                                             }`}

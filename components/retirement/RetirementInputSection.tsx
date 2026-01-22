@@ -318,7 +318,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                             value={value}
                             onChange={field ? handleChange(field) : () => { }}
                             disabled={disabled}
-                            className={`flex-1 min-w-0 h-full text-lg font-bold bg-transparent border-none p-0 focus:ring-0 text-center text-slate-700 ${disabled ? 'text-slate-400' : ''}`}
+                            className={`flex-1 min-w-0 h-full text-base font-bold bg-transparent border-none p-0 focus:ring-0 text-center text-slate-700 ${disabled ? 'text-slate-400' : ''}`}
                         />
                         {suffix && <span className="text-xs font-semibold text-slate-400 ml-2 select-none">{suffix}</span>}
                     </div>

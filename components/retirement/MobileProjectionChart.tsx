@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -11,7 +11,8 @@ import {
     Legend,
     Filler,
     ChartOptions,
-    TooltipItem
+    TooltipItem,
+    ScriptableContext
 } from "chart.js";
 import { Chart } from "react-chartjs-2";
 import { formatNumber } from "@/lib/utils";
@@ -19,7 +20,7 @@ import { buildProjectionSeries } from "@/lib/retirement-calculation";
 import { CalculationResult, MonteCarloResult, RetirementInputs } from "@/types/retirement";
 import { InsuranceChartData } from "./DashboardCharts"; // Import shared interface
 
-// Register ChartJS components (Redundant if already registered in app entry, but safe here)
+// Register ChartJS components
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -51,6 +52,8 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
     insuranceChartData,
     chartTickInterval
 }) => {
+    // Mode State: 'horizontal' (Bar Chart) vs 'vertical' (Column Chart)
+    const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
 
     // Formatting Helpers
     const valFormatter = (val: number) => {
@@ -60,20 +63,43 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
     };
 
     const chartData = useMemo(() => {
-        const { labels, actual, required, actualHistory } = buildProjectionSeries(inputs, result);
+        const { labels, actual, required } = buildProjectionSeries(inputs, result);
 
-        // Prepare Series Data
-        const p5Series = mcResult.p5Series || labels.map(() => 0);
-        const p95Series = mcResult.p95Series || labels.map(() => 0);
+        // Logic: Keep Current Age, Retirement Age, End Age, and every Nth year
+        const indicesToKeep: number[] = [];
+        labels.forEach((ageStr, index) => {
+            const age = Number(ageStr);
+            const isStart = index === 0;
+            const isEnd = index === labels.length - 1;
+            const isRetirement = age === Number(inputs.retireAge);
+            const isInterval = age % chartTickInterval === 0;
 
+            if (isStart || isEnd || isRetirement || isInterval) {
+                indicesToKeep.push(index);
+            }
+        });
+
+        // Helper to filter array by indices
+        const filterByIndices = (arr: any[]) => arr.filter((_, i) => indicesToKeep.includes(i));
+
+        const filteredLabels = filterByIndices(labels);
+        const filteredActual = filterByIndices(actual);
+        const filteredRequired = filterByIndices(required);
+
+        // MC Series
+        const p5Series = mcResult.p5Series ? filterByIndices(mcResult.p5Series) : filteredLabels.map(() => 0);
+        const p95Series = mcResult.p95Series ? filterByIndices(mcResult.p95Series) : filteredLabels.map(() => 0);
+
+        // Insurance Series
         const sumAssuredSeries = labels.map(ageStr => {
             const age = Number(ageStr);
             if (!insuranceChartData) return 0;
             const idx = insuranceChartData.labels.indexOf(age);
             return idx !== -1 ? (insuranceChartData.datasets[0].data[idx] as number) || 0 : 0;
         });
+        const filteredSumAssured = filterByIndices(sumAssuredSeries);
 
-        // Calculate Max for Scale
+        // Calculate suggested Max
         const maxActual = Math.max(...actual);
         const maxRequired = Math.max(...required);
         const maxSumAssured = showSumAssured ? Math.max(...sumAssuredSeries) : 0;
@@ -82,22 +108,20 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
 
         return {
             data: {
-                labels,
+                labels: filteredLabels,
                 datasets: [
-                    // Order Matters for painting layers: Background (MC) -> Bars -> Lines -> Foreground
-
-                    // 1. Monte Carlo Range (Background Area)
+                    // 1. Monte Carlo Range (Background)
                     {
                         label: "P5",
                         data: p5Series,
                         borderColor: "transparent",
-                        backgroundColor: "rgba(16, 185, 129, 0.05)", // Very faint green
+                        backgroundColor: "rgba(16, 185, 129, 0.05)",
                         pointRadius: 0,
-                        fill: "+1", // Fill to next dataset (P95)
+                        fill: "+1",
                         tension: 0.4,
                         order: 10,
                         type: 'line' as const,
-                        xAxisID: 'x',
+                        xAxisID: 'x', // Explicit ID binding not strictly needed if only one axis, but safe
                         yAxisID: 'y',
                     },
                     {
@@ -114,70 +138,109 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                         yAxisID: 'y',
                     },
 
-                    // 2. Accumulated Savings (Main Bar)
+                    // 2. Savings (Main Bar)
                     {
                         label: "เงินออมคาดว่าจะมี",
-                        data: actual,
-                        backgroundColor: "#10B981", // Solid Green
+                        data: filteredActual,
+                        backgroundColor: (context: ScriptableContext<"bar">) => {
+                            const ctx = context.chart.ctx;
+                            // Gradient Direction depends on Orientation
+                            // Vertical: (0,0,0,height), Horizontal: (0,0,width,0)
+                            // Ideally use chartArea, but standard gradient works for both simple cases often.
+                            // Let's adapt based on orientation state passed via closure if possible, or just standard fill.
+                            // For simplicity, a generic gradient or solid color is safer unless we calculate bounds.
+                            // Let's use a Diagonal gradient which works for both?
+                            // Or standard vertical (Green to Light Green)
+                            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                            gradient.addColorStop(0, "rgba(16, 185, 129, 1)");
+                            gradient.addColorStop(1, "rgba(16, 185, 129, 0.6)");
+                            return gradient;
+                        },
                         borderColor: "transparent",
                         borderWidth: 0,
-                        borderRadius: 2,
-                        barThickness: 6, // Slim bars
+                        borderRadius: 6,
+                        barThickness: orientation === 'horizontal' ? (chartTickInterval === 1 ? 8 : 20) : undefined, // Fixed thickness for horizontal view
+                        barPercentage: orientation === 'vertical' ? 0.6 : undefined,
+                        categoryPercentage: orientation === 'vertical' ? 0.8 : undefined,
                         order: 2,
                         hidden: !showActualSavings,
                         type: 'bar' as const,
-                        // Stack group to allow side-by-side with Insurance? 
-                        // Default behavior of Bar chart is side-by-side unless stacked: true.
+                        xAxisID: 'x',
+                        yAxisID: 'y',
                     },
 
-                    // 3. Insurance (Parallel Bar)
+                    // 3. Insurance
                     {
                         label: "ทุนประกัน",
-                        data: sumAssuredSeries,
-                        backgroundColor: "#F97316", // Orange 500
+                        data: filteredSumAssured,
+                        backgroundColor: (context: ScriptableContext<"bar">) => {
+                            const ctx = context.chart.ctx;
+                            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                            gradient.addColorStop(0, "rgba(249, 115, 22, 1)");
+                            gradient.addColorStop(1, "rgba(249, 115, 22, 0.6)");
+                            return gradient;
+                        },
                         borderColor: "transparent",
-                        borderRadius: 2,
-                        barThickness: 4, // Slightly thinner than savings
+                        borderRadius: 4,
+                        barThickness: orientation === 'horizontal' ? (chartTickInterval === 1 ? 4 : 12) : undefined,
+                        barPercentage: orientation === 'vertical' ? 0.6 : undefined,
+                        categoryPercentage: orientation === 'vertical' ? 0.8 : undefined,
                         order: 3,
                         hidden: !showSumAssured,
                         type: 'bar' as const,
+                        xAxisID: 'x',
+                        yAxisID: 'y',
                     },
 
-                    // 4. Financial Goal (Reference Line - Dashed)
+                    // 4. Goal
                     {
                         label: "เป้าหมาย",
-                        data: required.map((val, i) => Number(labels[i]) <= Number(inputs.retireAge) ? val : null),
-                        borderColor: "#3b82f6", // Blue 500
-                        borderWidth: 2,
+                        // Only show goal at Retirement Age for Horizontal mode
+                        data: filteredRequired.map((val, i) => {
+                            const age = Number(filteredLabels[i]);
+                            const retireAge = Number(inputs.retireAge);
+                            if (orientation === 'horizontal') {
+                                return age === retireAge ? val : null;
+                            }
+                            // Vertical mode: Line logic
+                            return age <= retireAge ? val : null;
+                        }),
+                        // Horizontal: Dot (Scatter style), Vertical: Solid Line
+                        borderColor: orientation === 'horizontal' ? "transparent" : "rgba(59, 130, 246, 0.5)",
+                        backgroundColor: orientation === 'horizontal' ? "#3b82f6" : undefined,
+                        borderWidth: orientation === 'horizontal' ? 0 : 4,
+                        borderDash: [],
+                        pointRadius: orientation === 'horizontal' ? 6 : 0, // Dot only in Horizontal
+                        pointHoverRadius: orientation === 'horizontal' ? 8 : 0,
+                        fill: false,
+                        tension: 0.4,
+                        order: 1,
+                        type: 'line' as const,
+                        spanGaps: true
+                    },
+
+                    // 5. Legacy
+                    {
+                        label: "มรดก",
+                        data: filteredLabels.map((age, i) => Number(age) >= Number(inputs.retireAge) ? inputs.legacyFund : null),
+                        borderColor: "#EF4444",
+                        borderWidth: 3,
                         borderDash: [4, 4],
                         pointRadius: 0,
                         fill: false,
-                        tension: 0.4, // Curve to smooth out the path
-                        order: 1, // On top
-                        type: 'line' as const,
-                    },
-
-                    // 5. Legacy (Post-Retirement)
-                    {
-                        label: "มรดก",
-                        data: labels.map((age, i) => Number(age) >= Number(inputs.retireAge) ? inputs.legacyFund : null),
-                        borderColor: "#EF4444", // Red 500
-                        borderWidth: 2,
-                        borderDash: [2, 2],
-                        pointRadius: 0,
-                        fill: false,
-                        order: 0, // Very Top
+                        order: 0,
                         type: 'line' as const,
                         hidden: !(inputs.legacyFund > 0),
+                        spanGaps: true
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                indexAxis: 'y' as const, // Horizontal Chart!
+                indexAxis: orientation === 'horizontal' ? 'y' as const : 'x' as const, // Toggle Axis!
                 layout: {
-                    padding: { left: 0, right: 10, top: 0, bottom: 0 }
+                    padding: { left: 0, right: 10, top: 10, bottom: 0 }
                 },
                 plugins: {
                     legend: { display: false },
@@ -190,9 +253,9 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                         bodyColor: '#475569',
                         borderColor: '#e2e8f0',
                         borderWidth: 1,
-                        titleFont: { size: 12, weight: 'bold', family: "'Inter', 'Prompt', sans-serif" },
-                        bodyFont: { size: 11, family: "'Inter', 'Prompt', sans-serif" },
-                        padding: 10,
+                        titleFont: { size: 13, weight: 'bold', family: "'Inter', 'Prompt', sans-serif" },
+                        bodyFont: { size: 12, family: "'Inter', 'Prompt', sans-serif" },
+                        padding: 12,
                         cornerRadius: 8,
                         displayColors: true,
                         usePointStyle: true,
@@ -200,66 +263,165 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                             title: (items: any[]) => items.length ? `อายุ ${items[0].label} ปี` : "",
                             label: (context: any) => {
                                 let label = context.dataset.label || '';
-                                let value = context.parsed.x; // Value is on X axis now
-                                if (label === "P5" || label === "P95") return null; // Hide MC bounds in tooltip to reduce clutter/duplication unless requested
+                                let value = orientation === 'horizontal' ? context.parsed.x : context.parsed.y; // Parse based on axis
+                                if (label === "P5" || label === "P95") return null;
                                 return `${label}: ฿${formatNumber(value)}`;
                             }
                         },
-                        filter: (item: any) => item.dataset.label !== "P5" && item.dataset.label !== "P95", // Explicit filter
+                        filter: (item: any) => item.dataset.label !== "P5" && item.dataset.label !== "P95",
                     },
-                    // Disable custom plugins from Shared Charts by not registering them here or locally disabling if registered globally
                 },
                 scales: {
-                    x: {
+                    x: orientation === 'horizontal' ? {
+                        // Horizontal Mode (X = Value)
                         position: 'bottom' as const,
                         min: 0,
                         max: suggestedMax,
-                        grid: {
-                            color: '#f1f5f9',
-                            drawBorder: false,
-                        },
+                        grid: { color: '#f1f5f9', drawBorder: false },
                         ticks: {
-                            font: { size: 9 }, // Tiny text
+                            font: { size: 10 },
                             color: '#94a3b8',
+                            stepSize: 2000000,
                             callback: (val: any) => valFormatter(val),
-                            maxTicksLimit: 5,
-                        },
-                        title: { display: false },
+                            maxTicksLimit: 20, // Increase limit to allow all 2M steps to show
+                        }
+                    } : {
+                        // Vertical Mode (X = Category/Age)
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: 11 },
+                            color: '#64748b',
+                            autoSkip: false,
+                            maxRotation: 0,
+                        }
                     },
-                    y: {
+                    y: orientation === 'horizontal' ? {
+                        // Horizontal Mode (Y = Category/Age)
                         position: 'left' as const,
-                        reverse: false, // Age goes down (top) to up (bottom) naturally in ChartJS Bar?
-                        // Actually in Bars, index 0 is at Top usually.
-                        // We want Age 30 at Top, Age 85 at Bottom => Standard behavior.
-                        grid: {
-                            display: false,
-                        },
+                        reverse: true, // REVERSE: 30 at bottom, 85 at top
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: 12, weight: 'bold' as const },
+                            color: '#64748b',
+                            autoSkip: false,
+                        }
+                    } : {
+                        // Vertical Mode (Y = Value)
+                        position: 'left' as const,
+                        min: 0,
+                        max: suggestedMax,
+                        grid: { color: '#f1f5f9', drawBorder: false },
                         ticks: {
                             font: { size: 10, weight: 'bold' as const },
-                            color: '#64748b',
-                            autoSkip: false, // We want to control skipping manually if needed
-                            callback: function (this: any, val: any, index: number) {
-                                // Show every 5th or 10th label based on density
-                                const label = this.getLabelForValue(val as number);
-                                const age = Number(label);
-                                // Show first, last, and interval
-                                const isInterval = age % 5 === 0;
-                                return isInterval ? `${age}` : "";
-                            }
+                            color: '#94a3b8',
+                            // Auto step size for Vertical mode (as per user request "only horizontal")
+                            callback: (val: any) => valFormatter(val),
+                            maxTicksLimit: 10,
                         }
                     }
                 },
                 interaction: {
-                    mode: 'index' as const,
+                    mode: 'nearest' as const,
+                    axis: orientation === 'horizontal' ? 'y' : 'x',
                     intersect: false,
+                },
+                onClick: (event, elements, chart) => {
+                    if (!elements.length) return;
+
+                    const el = elements[0];
+                    const datasetIndex = el.datasetIndex;
+                    const index = el.index;
+                    const datasetLabel = chart.data.datasets[datasetIndex].label;
+
+                    // Interaction for Single Goal Dot (Horizontal Mode)
+                    if (orientation === 'horizontal' && datasetLabel === "เป้าหมาย") {
+                        const age = chart.data.labels?.[index];
+                        const value = chart.data.datasets[datasetIndex].data[index];
+                        // In a real app, use a Toast or Bottom Sheet. For now, native alert or console is simplest proof-of-concept,
+                        // but user interaction usually expects visual feedback.
+                        // Let's assume the Tooltip is sufficient, or if "cliking" is needed, we alert.
+                        // The user said "If press... tell age".
+                        alert(`เป้าหมายเกษียณที่อายุ ${age} ปี: ฿${formatNumber(Number(value))}`);
+                    }
                 },
             } as ChartOptions
         };
-    }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData]);
+    }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData, chartTickInterval, orientation]);
+
+    // Calculate Scroll Width for Vertical Mode
+    const minVerticalWidth = Math.max(window.innerWidth - 32, chartData.data.labels.length * 50);
 
     return (
-        <div className="w-full h-full relative overflow-hidden">
-            <Chart type='bar' data={chartData.data} options={chartData.options} />
+        <div className="w-full h-full flex flex-col relative">
+
+            {/* Header: Legend + Toggle */}
+            <div className="flex flex-col items-center gap-2 mb-2 px-2 shrink-0">
+
+                {/* 1. View Toggle Switch */}
+                <div className="flex bg-slate-100 p-1 rounded-lg">
+                    <button
+                        onClick={() => setOrientation('horizontal')}
+                        className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${orientation === 'horizontal'
+                            ? 'bg-white text-indigo-600 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                    >
+                        แนวนอน
+                    </button>
+                    <button
+                        onClick={() => setOrientation('vertical')}
+                        className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${orientation === 'vertical'
+                            ? 'bg-white text-indigo-600 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                    >
+                        แนวตั้ง
+                    </button>
+                </div>
+
+                {/* 2. Legend */}
+                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+                    {showActualSavings && (
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 rounded-sm bg-[#10B981]"></div>
+                            <span className="text-[10px] lg:text-xs font-medium text-slate-500">เงินออม</span>
+                        </div>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                        {orientation === 'horizontal' ? (
+                            <div className="w-2.5 h-2.5 bg-[#3b82f6] rounded-full"></div>
+                        ) : (
+                            <div className="w-5 h-[4px] bg-[#3b82f6] opacity-50 rounded-full"></div>
+                        )}
+                        <span className="text-[10px] lg:text-xs font-medium text-slate-500">เป้าหมาย</span>
+                    </div>
+                    {inputs.legacyFund > 0 && (
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-0 border-t-[3px] border-dashed border-[#EF4444]"></div>
+                            <span className="text-[10px] lg:text-xs font-medium text-slate-500">มรดก</span>
+                        </div>
+                    )}
+                    {showSumAssured && (
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 rounded-sm bg-[#F97316]"></div>
+                            <span className="text-[10px] lg:text-xs font-medium text-slate-500">ทุนประกัน</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Chart Container based on Orientation */}
+            <div className={`flex-1 w-full relative min-h-0 ${orientation === 'vertical' ? 'overflow-x-auto pb-2 custom-scrollbar' : ''}`}>
+                {orientation === 'vertical' ? (
+                    <div style={{ width: `${minVerticalWidth}px`, height: '100%' }} className="relative">
+                        <Chart type='bar' data={chartData.data} options={chartData.options} />
+                    </div>
+                ) : (
+                    <div className="w-full h-full relative">
+                        <Chart type='bar' data={chartData.data} options={chartData.options} />
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

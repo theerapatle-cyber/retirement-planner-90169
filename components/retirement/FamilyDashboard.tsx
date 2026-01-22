@@ -71,16 +71,18 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
                         </button>
                         <div>
-                            <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                                <span className="text-slate-900">ภาพรวม</span> ครอบครัว (Family Overview)
+                            <h1 className="text-base md:text-2xl font-black text-slate-900 tracking-tight flex flex-col md:flex-row md:items-center md:gap-2 leading-tight">
+                                <span className="text-slate-900">ภาพรวมครอบครัว</span>
+                                <span className="text-slate-400 font-bold md:font-black text-xs md:text-2xl mt-0.5 md:mt-0">(Family Overview)</span>
                             </h1>
                             <p className="text-xs text-slate-500 font-medium hidden sm:block">ภาพรวมแผนการเงินของครอบครัว ({familyMembers.filter(m => !m.isDraft).length} ท่าน)</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <button onClick={() => window.print()} className="px-5 py-2.5 bg-[#1e293b] text-white text-xs font-bold rounded-2xl shadow-lg shadow-slate-900/20 hover:shadow-xl hover:-translate-y-0.5 hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95">
-                            <span>พิมพ์รายงาน (Print Report)</span>
+                        <button onClick={() => window.print()} className="px-3 py-2.5 md:px-5 bg-[#1e293b] text-white text-xs font-bold rounded-2xl shadow-lg shadow-slate-900/20 hover:shadow-xl hover:-translate-y-0.5 hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
+                            <span className="hidden md:inline">พิมพ์รายงาน (Print Report)</span>
                         </button>
                     </div>
                 </div>
@@ -105,7 +107,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                 </div>
                                 <div>
                                     <div className="text-[10px] lg:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">สถานะภาพรวม</div>
-                                    <div className={`text-lg lg:text-xl font-black ${summary.totalGap >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                                    <div className={`text-base lg:text-xl font-black ${summary.totalGap >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                                         {summary.totalGap >= 0 ? "มั่งคั่ง (Wealthy)" : "ต้องปรับปรุง"}
                                         {summary.totalGap >= 0 && <span className="ml-2 text-amber-400 inline-block animate-pulse">✨</span>}
                                     </div>
@@ -125,7 +127,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                         <div className="w-1 h-4 lg:h-5 rounded-full bg-blue-500"></div>
                                         <span className="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">เป้าหมายเกษียณรวม</span>
                                     </div>
-                                    <div className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tighter">฿{formatNumber(summary.totalTarget)}</div>
+                                    <div className="text-xl lg:text-4xl font-black text-slate-800 tracking-tighter">฿{formatNumber(summary.totalTarget)}</div>
                                     <div className="mt-1 lg:mt-2 text-[10px] lg:text-xs text-slate-400 font-medium">Total Target Fund</div>
                                 </div>
                             </div>
@@ -140,7 +142,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                         <div className="w-1 h-4 lg:h-5 rounded-full bg-indigo-500"></div>
                                         <span className="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">เงินออมคาดการณ์</span>
                                     </div>
-                                    <div className="text-2xl lg:text-4xl font-black text-indigo-600 tracking-tighter">฿{formatNumber(summary.totalProjected)}</div>
+                                    <div className="text-xl lg:text-4xl font-black text-indigo-600 tracking-tighter">฿{formatNumber(summary.totalProjected)}</div>
                                     <div className="mt-1 lg:mt-2 text-[10px] lg:text-xs text-slate-400 font-medium">Projected Savings</div>
                                 </div>
                             </div>
@@ -155,7 +157,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                         <div className="w-1 h-4 lg:h-5 rounded-full bg-white/60"></div>
                                         <span className="text-[10px] lg:text-xs font-bold text-white/90 uppercase tracking-wider">ส่วนต่างเป้าหมาย</span>
                                     </div>
-                                    <div className="text-2xl lg:text-4xl font-black tracking-tighter flex items-center gap-1">
+                                    <div className="text-xl lg:text-4xl font-black tracking-tighter flex items-center gap-1">
                                         {summary.totalGap >= 0 ? "+" : ""}{formatNumber(Math.abs(summary.totalGap))}
                                     </div>
                                     <div className="mt-3 inline-flex">
@@ -175,7 +177,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center text-amber-600 shadow-inner">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.29 7 12 12 20.71 7" /><line x1="12" y1="22" x2="12" y2="12" /></svg>
                         </div>
-                        <h4 className="text-2xl font-black text-slate-800 tracking-tight">บทวิเคราะห์จาก AI (AI Insight)</h4>
+                        <h4 className="text-lg lg:text-2xl font-black text-slate-800 tracking-tight">บทวิเคราะห์จาก AI (AI Insight)</h4>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
@@ -187,7 +189,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                     <span className="w-2 h-2 rounded-full bg-amber-500"></span>
                                     สรุปผลวิเคราะห์ (ANALYSIS SUMMARY)
                                 </div>
-                                <p className="text-base text-slate-700 leading-relaxed font-medium">
+                                <p className="text-sm lg:text-base text-slate-700 leading-relaxed font-medium">
                                     จากการประเมินแผนการเกษียณของสมาชิกในครอบครัว
                                     {summary.totalGap >= 0
                                         ? " พบว่าภาพรวมสถานะทางการเงินมีความแข็งแกร่ง (Strong Health) สามารถบรรลุเป้าหมายเกษียณได้ทุกคน มีเงินสำรองเพียงพอสำหรับการใช้ชีวิตในระยะยาว"
@@ -248,7 +250,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                         className="transition-all duration-1000 ease-out" />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-5xl lg:text-7xl font-black text-slate-900 tracking-tighter drop-shadow-sm">{totalProgress.toFixed(0)}%</span>
+                                    <span className="text-4xl lg:text-7xl font-black text-slate-900 tracking-tighter drop-shadow-sm">{totalProgress.toFixed(0)}%</span>
                                 </div>
                             </div>
 
