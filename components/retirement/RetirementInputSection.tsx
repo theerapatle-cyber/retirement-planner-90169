@@ -164,6 +164,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
     const [avatarImage, setAvatarImage] = useState<string | null>(null);
     const [showMonteCarlo, setShowMonteCarlo] = useState(true);
     const [isRelationOpen, setIsRelationOpen] = useState(false);
+    const [showInsuranceHelp, setShowInsuranceHelp] = useState(false);
 
     // Validation State
     const [showValidationModal, setShowValidationModal] = useState(false);
@@ -669,8 +670,56 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
             </div>
 
             {/* Insurance Section - Detailed List (Screenshot Match) */}
-            <div className="pt-6 mt-6 border-t border-slate-100">
-                <h3 className="font-bold text-slate-700 text-lg mb-4 pl-2">ประกันชีวิต</h3>
+            <div className="pt-6 mt-6 border-t border-slate-100 relative">
+                <div className="flex items-center gap-2 mb-4 pl-2">
+                    <h3 className="font-bold text-slate-700 text-lg">ประกันชีวิต</h3>
+                    <button
+                        onClick={() => setShowInsuranceHelp(true)}
+                        className="w-5 h-5 rounded-full bg-slate-200 text-slate-500 hover:bg-blue-100 hover:text-blue-600 flex items-center justify-center transition-colors"
+                    >
+                        <Info size={14} strokeWidth={2.5} />
+                    </button>
+                </div>
+
+                {/* Insurance Help Modal */}
+                {showInsuranceHelp && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setShowInsuranceHelp(false)}>
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                            <button onClick={() => setShowInsuranceHelp(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                                <X size={20} />
+                            </button>
+
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <Info size={20} />
+                                </div>
+                                <h4 className="text-lg font-bold text-slate-800">คำแนะนำแผนประกัน</h4>
+                            </div>
+
+                            <div className="space-y-4 text-sm text-slate-600 leading-relaxed font-medium">
+                                <p>
+                                    ส่วนนี้ใช้สำหรับกรอกข้อมูลประกันชีวิต ที่มีวัตถุประสงค์เพื่อเป็นเห็นทุนประกันหรือ cash flow ที่ได้มาจากประกัน โดยจะมีรายละเอียดการกรอกที่ซับซ้อนขึ้นอยู่กับประเภทของประกันที่เลือก เช่น:
+                                </p>
+                                <ul className="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                    <li><strong className="text-slate-800">ทุนประกัน:</strong> จำนวนเงินเอาประกัน</li>
+                                    <li><strong className="text-slate-800">อายุที่ต้องการสิ้นสุดความคุ้มครอง:</strong> อายุที่คุณต้องการให้กรมธรรม์สิ้นสุด</li>
+                                    <li><strong className="text-slate-800">ประเภท:</strong> ประเภทของประกันเพื่อให้คำนวณตารางต่างกัน</li>
+                                    <li><strong className="text-slate-800">มูลค่าเวนคืน:</strong> จำนวนเงินที่ได้เมื่อเวนคืน</li>
+                                </ul>
+                                <p className="text-blue-600 font-bold bg-blue-50 p-3 rounded-lg border border-blue-100 text-center">
+                                    เมื่อกรอกครบแล้วเราก็จะสามารถกดตารางเพื่อดู cash flow ของแต่ละกรมธรรม์ได้เลย
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => setShowInsuranceHelp(false)}
+                                className="w-full mt-6 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors"
+                            >
+                                เข้าใจแล้ว
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                     {/* Card Header */}
@@ -1121,10 +1170,10 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     <div className="pt-6 border-t border-slate-50 relative z-10 pb-4">
                         <Button
                             type="button"
-                            onClick={handleCalculateCheck}
+                            onClick={onCalculate}
                             className="w-full h-12 text-lg rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-lg shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                         >
-                            <Calculator size={20} /> ดูผลลัพธ์ (View Result)
+                            <Calculator size={20} /> คำนวณและดูผลลัพธ์
                         </Button>
                     </div>
                 )}
@@ -1143,8 +1192,8 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                 ถัดไป <ArrowRight size={20} />
                             </Button>
                         ) : (
-                            <Button type="button" onClick={handleCalculateCheck} className="flex-1 h-14 text-lg rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-xl shadow-blue-200 transition-all hover:translate-y-[-2px] flex items-center justify-center gap-2">
-                                <Calculator size={20} /> คำนวณแผน
+                            <Button type="button" onClick={onCalculate} className="flex-1 h-14 text-lg rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-xl shadow-blue-200 transition-all hover:translate-y-[-2px] flex items-center justify-center gap-2">
+                                <Calculator size={20} /> คำนวณและดูผลลัพธ์
                             </Button>
                         )}
                     </div>

@@ -83,6 +83,8 @@ const crosshairPlugin = {
 const goalLabelPlugin = {
     id: "goalLabelPlugin",
     afterDraw: (chart: any, args: any, options: any) => {
+        if (options.display === false) return; // Check display option
+
         const { ctx, scales: { x, y } } = chart;
         const goalVal = options.goalValue;
         const retireAge = options.retireAge;
@@ -197,6 +199,8 @@ const agePeriodPlugin = {
 const legacyLabelPlugin = {
     id: "legacyLabelPlugin",
     afterDraw: (chart: any, args: any, options: any) => {
+        if (options.display === false) return; // Check display option
+
         const { ctx, scales: { x, y } } = chart;
         const legacyVal = options.legacyValue || 0;
         if (legacyVal <= 0) return;
@@ -269,6 +273,12 @@ interface ProjectionChartProps {
     chartTickInterval: number;
 }
 
+import { Chart } from "react-chartjs-2";
+
+// ... existing imports ...
+
+// ... existing code ...
+
 export const ProjectionChart: React.FC<ProjectionChartProps> = ({
     inputs,
     result,
@@ -278,6 +288,15 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
     insuranceChartData,
     chartTickInterval
 }) => {
+    // Mobile Detection State
+    const [isMobile, setIsMobile] = React.useState(false);
+    React.useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     const valFormatter = (val: number) => {
         if (val >= 1000000) return "B" + (val / 1000000).toFixed(1) + "M";
         if (val >= 1000) return "B" + (val / 1000).toFixed(0) + "k";
@@ -302,18 +321,52 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
         const maxMain = Math.max(maxActual, maxRequired, maxSumAssured);
         const suggestedMax = Math.ceil((maxMain * 1.1) / 1000000) * 1000000;
 
+        // Configuration for Scales (Swappable)
+        const ageScaleConfig = {
+            title: { display: true, text: "อายุ (ปี)" },
+            grid: { display: false },
+            ticks: {
+                maxRotation: 0, minRotation: 0, autoSkip: false, maxTicksLimit: chartTickInterval === 1 ? 200 : undefined,
+                font: { size: chartTickInterval === 1 ? 10 : (isMobile ? 10 : 12) },
+                callback: function (this: any, val: any) { const label = this.getLabelForValue(val as number); const age = Number(label); if (age % (isMobile ? chartTickInterval * 2 : chartTickInterval) === 0) return label; return ""; }
+            },
+        };
+
+        const moneyScaleConfig = {
+            title: { display: !isMobile, text: "จำนวนเงิน" },
+            grid: { color: "#f1f5f9" },
+            min: 0,
+            max: suggestedMax,
+            ticks: {
+                stepSize: 1000000,
+                color: '#94a3b8',
+                font: { size: 10, weight: 'bold' as const },
+                padding: 10,
+                callback: function (this: any, v: any) { return valFormatter(v as number); }
+            },
+        };
+
         return {
             data: {
                 labels,
                 datasets: [
-                    { label: "P5", data: p5Series, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: "+1", tension: 0.4, order: 5, hidden: false },
-                    { label: "P95", data: p95Series, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: false, tension: 0.4, order: 6, hidden: false },
+                    { label: "P5", data: p5Series, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: "+1", tension: 0.4, order: 5, hidden: isMobile, type: 'line' as const },
+                    { label: "P95", data: p95Series, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: false, tension: 0.4, order: 6, hidden: isMobile, type: 'line' as const },
                     {
-                        label: "เงินออมคาดว่าจะมี", data: actual, borderColor: "#10B981", borderWidth: 3, backgroundColor: (context: any) => {
+                        label: "เงินออมคาดว่าจะมี",
+                        data: actual,
+                        borderColor: "#10B981",
+                        // Bar specific style
+                        backgroundColor: isMobile ? "#10B981" : (context: any) => {
                             const ctx = context.chart.ctx;
                             const gradient = ctx.createLinearGradient(0, 0, 0, 400);
                             gradient.addColorStop(0, "rgba(16, 185, 129, 0.2)"); gradient.addColorStop(1, "rgba(16, 185, 129, 0.0)"); return gradient;
-                        }, tension: 0.4, fill: true,
+                        },
+                        borderWidth: isMobile ? 0 : 3,
+                        borderRadius: isMobile ? 4 : 0,
+                        barThickness: isMobile ? 8 : undefined, // Thinner bars on mobile
+                        tension: 0.4,
+                        fill: true,
                         pointRadius: 3,
                         pointHoverRadius: 6,
                         pointBackgroundColor: "#ffffff",
@@ -322,19 +375,35 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         pointHoverBackgroundColor: "#ffffff",
                         pointHoverBorderColor: "#10B981",
                         pointHoverBorderWidth: 3,
-                        order: 1, hidden: !showActualSavings
+                        order: 1,
+                        hidden: !showActualSavings
                     },
-                    { label: "เงินที่เก็บได้จริง", data: actualHistory, borderColor: "#2563eb", backgroundColor: "transparent", pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: "#ffffff", pointBorderColor: "#2563eb", pointBorderWidth: 2, order: 0, showLine: false, hidden: !showActualSavings },
-                    // Label changed to "เป้าหมาย" (Target) and Color to Blue
+                    {
+                        label: "เงินที่เก็บได้จริง",
+                        data: actualHistory,
+                        borderColor: "#2563eb",
+                        backgroundColor: "transparent",
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: "#ffffff",
+                        pointBorderColor: "#2563eb",
+                        pointBorderWidth: 2,
+                        order: 0,
+                        showLine: false, // Scatter points essentially
+                        hidden: !showActualSavings,
+                        type: 'line' as const
+                    },
                     {
                         label: "เป้าหมาย",
                         data: required.map((val, i) => Number(labels[i]) <= Number(inputs.retireAge) ? val : null),
                         borderColor: "#2563eb",
                         borderDash: [6, 6],
                         backgroundColor: "#2563eb",
-                        borderWidth: 0, // Hidden Line (drawn by plugin)
+                        borderWidth: isMobile ? 2 : 0, // Visible line on mobile (since plugin might not draw perpendicular well on rotated axis? Plugin logic needs checking. Actually plugin draws specific lines. If rotated, plugin might break. I should rely on dataset line for mobile target).
+                        // Wait, plugin draws horizontal line on vertical chart. On horizontal chart, it should draw vertical line. 
+                        // GoalLabelPlugin logic relies on axis 'x' and 'y'. If I swap them, plugin might need update or disable.
+                        // I will DISABLE GoalLabelPlugin on mobile and use this dataset line as the visual indicator.
 
-                        // Point Style (Hollow Blue Circle like friends)
                         pointRadius: 0,
                         pointBackgroundColor: "#ffffff",
                         pointBorderColor: "#2563eb",
@@ -343,12 +412,13 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
 
                         fill: false,
                         order: 2,
-                        hidden: false
+                        hidden: false,
+                        type: 'line' as const
                     },
                     {
                         label: "มรดก",
                         data: labels.map((age, i) => Number(age) >= Number(inputs.retireAge) ? inputs.legacyFund : null),
-                        borderColor: "#EF4444", // Red-500
+                        borderColor: "#EF4444",
                         borderDash: [5, 5],
                         backgroundColor: "transparent",
                         borderWidth: 2,
@@ -357,10 +427,16 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         fill: false,
                         order: 4,
                         hidden: !(inputs.legacyFund > 0),
+                        type: 'line' as const
                     },
                     {
-                        label: "ทุนประกัน", data: sumAssuredSeries, borderColor: "#F97316", backgroundColor: "transparent", borderWidth: 2, stepped: false,
-                        pointRadius: 3, // Restored small dots
+                        label: "ทุนประกัน",
+                        data: sumAssuredSeries,
+                        borderColor: "#F97316",
+                        backgroundColor: "transparent",
+                        borderWidth: 2,
+                        stepped: false,
+                        pointRadius: 3,
                         pointHoverRadius: 6,
                         pointBackgroundColor: "#ffffff",
                         pointBorderColor: "#F97316",
@@ -368,12 +444,17 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         pointHoverBackgroundColor: "#ffffff",
                         pointHoverBorderColor: "#F97316",
                         pointHoverBorderWidth: 3,
-                        fill: false, order: 3, hidden: !showSumAssured
+                        fill: false,
+                        order: 3,
+                        hidden: !showSumAssured,
+                        type: 'line' as const
                     },
                 ],
             },
             options: {
-                responsive: true, maintainAspectRatio: false,
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: isMobile ? 'y' as const : 'x' as const,
                 plugins: {
                     legend: { display: false },
                     tooltip: {
@@ -382,7 +463,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         callbacks: {
                             title: (items: any[]) => items.length ? `อายุ ${items[0].label}` : "",
                             label: (ctx: any) => {
-                                const label = ctx.dataset.label; const val = ctx.parsed.y || 0;
+                                const label = ctx.dataset.label; const val = ctx.parsed[isMobile ? 'x' : 'y'] || 0; // Check correct axis val
                                 if (label === "เงินออมคาดว่าจะมี" || label === "เงินที่เก็บได้จริง") return `เงินออม: ฿${formatNumber(val)}`;
                                 if (label === "เป้าหมาย") return `เป้าหมาย: ฿${formatNumber(val)}`;
                                 if (label === "ทุนประกัน") {
@@ -397,30 +478,21 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                             },
                         }, filter: (item: any) => item.dataset.label !== "P5" && item.dataset.label !== "P95",
                     },
-                    goalLabelPlugin: { goalValue: result.targetFund, labelText: "เป้าหมายทางการเงิน", formatNumber, chartTickInterval, retireAge: Number(inputs.retireAge) },
-                    legacyLabelPlugin: { legacyValue: inputs.legacyFund },
+                    goalLabelPlugin: { goalValue: result.targetFund, labelText: "เป้าหมายทางการเงิน", formatNumber, chartTickInterval, retireAge: Number(inputs.retireAge), display: !isMobile }, // Disable on Mobile
+                    legacyLabelPlugin: { legacyValue: inputs.legacyFund, display: !isMobile }, // Disable on Mobile
                     agePeriodPlugin: { tickInterval: chartTickInterval },
                 },
                 scales: {
-                    x: {
-                        title: { display: true, text: "อายุ (ปี)" }, grid: { display: false },
-                        ticks: {
-                            maxRotation: 0, minRotation: 0, autoSkip: false, maxTicksLimit: chartTickInterval === 1 ? 200 : undefined,
-                            font: { size: chartTickInterval === 1 ? 10 : 12 },
-                            callback: function (this: any, val: any) { const label = this.getLabelForValue(val as number); const age = Number(label); if (age % chartTickInterval === 0) return label; return ""; }
-                        },
-                    },
-                    y: {
-                        title: { display: true, text: "จำนวนเงิน" }, grid: { color: "#f1f5f9" }, min: 0, max: suggestedMax,
-                        ticks: { stepSize: 1000000, color: '#94a3b8', font: { size: 10, weight: 'bold' as const }, padding: 10, callback: function (this: any, v: any) { return valFormatter(v as number); }, },
-                    },
+                    x: isMobile ? moneyScaleConfig : ageScaleConfig,
+                    y: isMobile ? ageScaleConfig : moneyScaleConfig,
                 },
             },
         };
-    }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData, chartTickInterval]);
+    }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData, chartTickInterval, isMobile]);
 
     return (
-        <Line
+        <Chart
+            type={isMobile ? 'bar' : 'line'}
             data={projectionChart.data}
             options={{
                 ...projectionChart.options,

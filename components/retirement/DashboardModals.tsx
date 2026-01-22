@@ -207,7 +207,7 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                 </div>
                             )}
 
-                            <table className="w-full text-sm border-collapse">
+                            <table className="w-full text-xs sm:text-sm border-collapse">
                                 <thead className="bg-[#F8F9FA] border-b border-slate-200 text-slate-700 font-bold text-xs sticky top-0 z-10">
                                     <tr>
                                         <th className="py-3 px-4 text-left w-[10%]">อายุ</th>
@@ -428,7 +428,7 @@ export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, f
                                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
                                     <div className="text-base font-bold text-slate-900 flex items-center gap-2"><span className="w-1 h-6 bg-indigo-500 rounded-full"></span> สูตรมูลค่าเงินในอนาคต (Future Value)</div>
                                     <p className="text-sm text-slate-500 leading-relaxed pl-3 border-l-2 border-slate-100">คำนวณโดยนำเงิน 2 ส่วนมารวมกัน: <br /> 1. <b>เงินก้อนเดิม</b> ที่เติบโตขึ้นตามผลตอบแทน <br /> 2. <b>เงินออมใหม่</b> ที่เติมเข้ามาทุกปีพร้อมผลตอบแทน</p>
-                                    <div className="rounded-2xl bg-slate-900 p-6 overflow-x-auto shadow-inner relative group"><div className="absolute top-3 right-3 text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded">Math</div><div className="font-mono text-sm text-emerald-400 whitespace-nowrap">FV = [P₀ × (1 + r)ⁿ] + [PMT × ((1 + r)ⁿ - 1) / r] + Others</div></div>
+                                    <div className="rounded-2xl bg-slate-900 p-6 overflow-x-auto shadow-inner relative group no-scrollbar"><div className="absolute top-3 right-3 text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded">Math</div><div className="font-mono text-sm text-emerald-400 whitespace-nowrap">FV = [P₀ × (1 + r)ⁿ] + [PMT × ((1 + r)ⁿ - 1) / r] + Others</div></div>
                                 </div>
                                 <div className="space-y-4 pt-4">
                                     <div className="text-sm font-bold text-slate-900">ตัวอย่างการคำนวณจริง (Live Calculation):</div>
@@ -514,7 +514,7 @@ export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result,
                                                 <span className="text-indigo-500">📘</span>
                                                 <span className="font-bold text-slate-900 text-sm">สูตรทั่วไป:</span>
                                             </div>
-                                            <div className="font-mono text-sm text-slate-800 text-center py-2 overflow-x-auto">
+                                            <div className="font-mono text-sm text-slate-800 text-center py-2 overflow-x-auto no-scrollbar">
                                                 FV = P₀ × (1 + r)ⁿ + P × ((1 + r)ⁿ - 1) / r
                                             </div>
                                         </div>
@@ -559,7 +559,7 @@ export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result,
                                                 <span className="font-bold text-slate-900 text-sm">แทนค่าในสูตร:</span>
                                             </div>
 
-                                            <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-inner overflow-x-auto font-mono text-xs sm:text-sm leading-relaxed">
+                                            <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-inner overflow-x-auto font-mono text-xs sm:text-sm leading-relaxed no-scrollbar">
                                                 <div className="mb-2 text-slate-400 opacity-70">
                                                     FV = P₀(1+r)ⁿ + PMT [((1+r)ⁿ - 1) / r]
                                                 </div>
@@ -630,7 +630,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form,
                                 <div className="space-y-4">
                                     <div className="text-base font-bold text-slate-900 flex items-center gap-2"><span className="w-1 h-5 bg-purple-500 rounded-full"></span> ตารางค่าใช้จ่ายรายปี (จนถึงอายุขัย)</div>
                                     <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm bg-white">
-                                        <table className="w-full text-sm text-left">
+                                        <table className="w-full text-xs sm:text-sm text-left">
                                             <thead className="bg-slate-50/80 text-slate-600 font-bold border-b border-slate-200">
                                                 <tr>
                                                     <th className="p-4 w-[15%]">อายุ (ปี)</th>

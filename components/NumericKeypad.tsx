@@ -97,7 +97,7 @@ export function NumericKeypad({
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-4 sm:p-0">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-0">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-all duration-500"
@@ -127,14 +127,15 @@ export function NumericKeypad({
                         </div>
 
                         {/* Display Area */}
-                        <div className="w-full pt-8 pb-4 flex flex-col items-end px-4 space-y-0.5">
+                        <div className="w-full pt-8 pb-4 flex flex-col items-center px-4 space-y-0.5">
                             <span className="text-[10px] font-black text-indigo-400/60 tracking-[0.2em] uppercase mb-1">VALUE</span>
-                            <div className="w-full text-right overflow-hidden h-[5rem] flex items-end justify-end">
+                            <div className="w-full text-center h-[5rem] flex items-center justify-center relative px-2">
                                 <span
-                                    className={`font-black tracking-tight text-slate-700 leading-none drop-shadow-sm break-all transition-all duration-200 ${displayValue.replace(/[,.]/g, '').length > 10 ? "text-[2.5rem]" :
-                                        displayValue.replace(/[,.]/g, '').length > 8 ? "text-[3rem]" :
-                                            displayValue.replace(/[,.]/g, '').length > 6 ? "text-[3.8rem]" :
-                                                "text-[4.5rem]"
+                                    className={`font-black tracking-tight text-slate-700 leading-none drop-shadow-sm transition-all duration-200 whitespace-nowrap ${formattedDisplay.length > 13 ? "text-[2rem]" :
+                                            formattedDisplay.length > 10 ? "text-[2.6rem]" :
+                                                formattedDisplay.length > 8 ? "text-[3.2rem]" :
+                                                    formattedDisplay.length > 6 ? "text-[3.8rem]" :
+                                                        "text-[4.5rem]"
                                         }`}
                                 >
                                     {displayValue === "" ? <span className="text-slate-200">0</span> : formattedDisplay}

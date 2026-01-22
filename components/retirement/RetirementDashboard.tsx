@@ -124,10 +124,8 @@ export const RetirementDashboard = ({
     // - Desktop (>=1280): Auto-open sidebar
     // - iPad/Mobile (<1280): Keep closed (default) to show results first
     React.useEffect(() => {
-        if (window.innerWidth >= 1280) {
-            setIsSidebarOpen(true);
-        } else {
-            // Mobile/Tablet: Scroll to top of results for better UX
+        // Mobile/Tablet: Scroll to top of results for better UX
+        if (window.innerWidth < 1280) {
             const resultsElement = document.getElementById("results-section");
             if (resultsElement) {
                 setTimeout(() => {
@@ -262,7 +260,7 @@ export const RetirementDashboard = ({
                 </div>
             </div>
 
-            <div className="w-full px-4 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10 print:px-0 print:space-y-4 pt-[72px]">
+            <div className="w-full px-3 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10 print:px-0 print:space-y-4 pt-[72px]">
 
                 {/* Print Only Header */}
                 <div className="hidden print:block mb-8 border-b-2 border-slate-800 pb-4">
@@ -303,15 +301,14 @@ export const RetirementDashboard = ({
                             : 'opacity-0 pointer-events-none invisible xl:opacity-100 xl:pointer-events-none xl:invisible'}
                         
                         /* Desktop: Fixed Sidebar (Reset Mobile styles) */
-                        xl:visible xl:pointer-events-auto xl:opacity-100
                         xl:fixed xl:top-[72px] xl:bottom-0 xl:left-0 xl:inset-auto xl:block
                         xl:p-0 xl:flex-none
                         xl:bg-white/50 xl:backdrop-blur-sm xl:shadow-[4px_0_24px_rgba(0,0,0,0.02)]
                         
-                        /* Desktop Width Transition */
+                        /* Desktop Width & Visibility Transition */
                         ${isSidebarOpen
-                            ? 'xl:w-[400px] xl:translate-x-0'
-                            : 'xl:w-0 xl:-translate-x-full xl:overflow-hidden'}
+                            ? 'xl:w-[480px] xl:translate-x-0 xl:visible xl:pointer-events-auto xl:opacity-100 xl:overflow-y-auto no-scrollbar'
+                            : 'xl:w-0 xl:-translate-x-full xl:invisible xl:pointer-events-none xl:opacity-0 xl:overflow-hidden'}
                         
                         print:hidden
                     `}>
@@ -362,7 +359,10 @@ export const RetirementDashboard = ({
                                     addAllocation={addAllocation}
                                     removeAllocation={removeAllocation}
                                     updateAllocation={updateAllocation}
-                                    onCalculate={() => setIsSidebarOpen(false)}
+                                    onCalculate={() => {
+                                        // Defer slightly to allow click animation to finish and ensure smooth transition
+                                        setTimeout(() => setIsSidebarOpen(false), 50);
+                                    }}
                                     isEmbedded={true}
                                 />
                             </div>
@@ -374,7 +374,7 @@ export const RetirementDashboard = ({
                     {/* RIGHT AREA: Charts & Metrics (Window Scroll) */}
                     <div id="results-section" className={`
                         flex-1 min-w-0 space-y-8 transition-all duration-500 ease-in-out pb-20 w-full
-                        ${isSidebarOpen ? 'xl:ml-[420px]' : 'ml-0'}
+                        ${isSidebarOpen ? 'xl:ml-[500px]' : 'ml-0'}
                     `}>
 
                         {/* RIGHT HEADER: Financial Results Summary + Buttons */}
@@ -387,14 +387,17 @@ export const RetirementDashboard = ({
                             <div className="flex flex-wrap items-center gap-3">
                                 <Button
                                     variant={isSidebarOpen ? "secondary" : "default"}
-                                    size="sm"
-                                    className={`h-9 px-4 rounded-xl font-bold text-xs shadow-sm transition-all gap-2 ${isSidebarOpen ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200'}`}
+                                    size={isSidebarOpen ? "sm" : "default"}
+                                    className={`rounded-xl font-bold text-xs shadow-sm transition-all gap-2 ${isSidebarOpen
+                                        ? 'h-9 px-4 bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                        : 'h-10 px-6 bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200 animate-in slide-in-from-left-2 duration-300'
+                                        }`}
                                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                                 >
                                     {isSidebarOpen ? (
                                         <>
                                             <PanelLeftClose className="w-4 h-4" />
-                                            ดูผลลัพธ์ (View Result)
+                                            ซ่อนแถบเครื่องมือ
                                         </>
                                     ) : (
                                         <>
@@ -439,330 +442,336 @@ export const RetirementDashboard = ({
                             </div>
                         </div>
 
-                        {/* Hero Summary Card (Redesigned) */}
-                        <div className={`relative rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 xl:p-10 overflow-hidden font-sans shadow-xl lg:shadow-2xl transition-all duration-500 group print:hidden ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981] shadow-emerald-900/40' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444] shadow-red-900/40'}`}>
-                            {/* Decorative Background Patterns */}
-                            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
-                            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none mix-blend-overlay animate-pulse duration-3000"></div>
-                            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-black/10 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none"></div>
+                        {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
+                        {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
+                        {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
+                        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-4 px-3 -mx-3 pb-0 items-start md:pb-0 md:px-0 md:mx-0 md:block md:space-y-6 no-scrollbar">
 
-                            {/* Content Container */}
-                            <div className={`relative z-10 flex flex-col ${isSidebarOpen ? '2xl:flex-row' : 'xl:flex-row'} xl:items-center justify-between gap-8 lg:gap-10`}>
-                                {/* Left Side: Status & Message */}
-                                <div className="flex-1 space-y-4 lg:space-y-6">
-                                    <div className={`inline-flex items-center gap-2.5 px-3 py-1.5 lg:px-4 lg:py-2 rounded-full border backdrop-blur-md shadow-sm ${result.status === 'enough' ? 'bg-emerald-500/20 border-emerald-400/30 text-emerald-50' : 'bg-red-500/20 border-red-400/30 text-red-50'}`}>
-                                        <span className={`relative flex h-2.5 w-2.5 lg:h-3 lg:w-3`}>
-                                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${result.status === 'enough' ? 'bg-emerald-300' : 'bg-red-300'}`}></span>
-                                            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 lg:h-3 lg:w-3 ${result.status === 'enough' ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
-                                        </span>
-                                        <span className="text-xs lg:text-sm font-bold tracking-wide uppercase">{result.status === 'enough' ? 'สถานะ : เป้าหมายสำเร็จ' : 'สถานะ : ต้องปรับปรุงแผน'}</span>
+                            {/* Hero Summary Card (Redesigned) */}
+                            <div className={`min-w-[88vw] md:min-w-0 snap-center relative rounded-[24px] lg:rounded-[32px] p-4 sm:p-5 lg:p-8 xl:p-10 overflow-hidden font-sans shadow-xl lg:shadow-2xl transition-all duration-500 group print:hidden ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981] shadow-emerald-900/40' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444] shadow-red-900/40'}`}>
+                                {/* Decorative Background Patterns */}
+                                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+                                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none mix-blend-overlay animate-pulse duration-3000"></div>
+                                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-black/10 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none"></div>
+
+                                {/* Content Container */}
+                                <div className={`relative z-10 flex flex-col ${isSidebarOpen ? '2xl:flex-row' : 'xl:flex-row'} xl:items-center justify-between gap-6 lg:gap-10`}>
+                                    {/* Left Side: Status & Message */}
+                                    <div className="flex-1 space-y-4 lg:space-y-6">
+                                        <div className={`inline-flex items-center gap-2.5 px-3 py-1.5 lg:px-4 lg:py-2 rounded-full border backdrop-blur-md shadow-sm ${result.status === 'enough' ? 'bg-emerald-500/20 border-emerald-400/30 text-emerald-50' : 'bg-red-500/20 border-red-400/30 text-red-50'}`}>
+                                            <span className={`relative flex h-2.5 w-2.5 lg:h-3 lg:w-3`}>
+                                                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${result.status === 'enough' ? 'bg-emerald-300' : 'bg-red-300'}`}></span>
+                                                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 lg:h-3 lg:w-3 ${result.status === 'enough' ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+                                            </span>
+                                            <span className="text-xs lg:text-sm font-bold tracking-wide uppercase">{result.status === 'enough' ? 'สถานะ : เป้าหมายสำเร็จ' : 'สถานะ : ต้องปรับปรุงแผน'}</span>
+                                        </div>
+
+                                        <div className="space-y-2 lg:space-y-3">
+                                            <h1 className="text-3xl lg:text-4xl xl:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-md">
+                                                {result.status === 'enough' ? 'แผนการเงินมั่นคง' : 'แผนการเงินยังมีความเสี่ยง'}
+                                            </h1>
+                                            <h2 className="text-lg lg:text-xl xl:text-2xl font-bold text-white/90">
+                                                {result.status === 'enough' ? 'พร้อมเกษียณอย่างสบายตามที่ตั้งใจ' : 'ควรเริ่มวางแผนเก็บออมเพิ่มเติมทันที'}
+                                            </h2>
+                                        </div>
+
+                                        <div className="p-3 lg:p-4 rounded-xl lg:rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm max-w-xl">
+                                            <p className="text-white/90 text-sm md:text-base font-medium leading-relaxed flex items-start gap-3">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 shrink-0 mt-0.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                                                {result.status === 'enough'
+                                                    ? 'ยินดีด้วย! สินทรัพย์ของคุณเพียงพอสำหรับการเกษียณ คุณมีอิสรภาพทางการเงินแล้ว'
+                                                    : `คุณยังขาดเงินเกษียณอีก ฿${formatNumber(Math.abs(result.gap))} ลองเพิ่มเงินออมหรือปรับเปลี่ยนแผนการลงทุน`}
+                                            </p>
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-2 lg:space-y-3">
-                                        <h1 className="text-3xl lg:text-4xl xl:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-md">
-                                            {result.status === 'enough' ? 'แผนการเงินมั่นคง' : 'แผนการเงินยังมีความเสี่ยง'}
-                                        </h1>
-                                        <h2 className="text-lg lg:text-xl xl:text-2xl font-bold text-white/90">
-                                            {result.status === 'enough' ? 'พร้อมเกษียณอย่างสบายตามที่ตั้งใจ' : 'ควรเริ่มวางแผนเก็บออมเพิ่มเติมทันที'}
-                                        </h2>
-                                    </div>
+                                    {/* Right Side: Summary Stats Card */}
+                                    <div className="shrink-0 relative group/stats cursor-default w-full lg:w-auto">
+                                        <div className="absolute inset-0 bg-white/20 blur-xl rounded-[24px] lg:rounded-[32px] transform rotate-1 lg:rotate-3 group-hover/stats:rotate-2 lg:group-hover/stats:rotate-6 transition-transform duration-500"></div>
+                                        <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 min-w-[280px] lg:min-w-[320px] shadow-2xl overflow-hidden">
+                                            {/* Shine Effect */}
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover/stats:translate-x-[100%] transition-transform duration-1000"></div>
 
-                                    <div className="p-3 lg:p-4 rounded-xl lg:rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm max-w-xl">
-                                        <p className="text-white/90 text-sm md:text-base font-medium leading-relaxed flex items-start gap-3">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 shrink-0 mt-0.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-                                            {result.status === 'enough'
-                                                ? 'ยินดีด้วย! สินทรัพย์ของคุณเพียงพอสำหรับการเกษียณ คุณมีอิสรภาพทางการเงินแล้ว'
-                                                : `คุณยังขาดเงินเกษียณอีก ฿${formatNumber(Math.abs(result.gap))} ลองเพิ่มเงินออมหรือปรับเปลี่ยนแผนการลงทุน`}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Right Side: Summary Stats Card */}
-                                <div className="shrink-0 relative group/stats cursor-default w-full lg:w-auto">
-                                    <div className="absolute inset-0 bg-white/20 blur-xl rounded-[24px] lg:rounded-[32px] transform rotate-1 lg:rotate-3 group-hover/stats:rotate-2 lg:group-hover/stats:rotate-6 transition-transform duration-500"></div>
-                                    <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 min-w-[280px] lg:min-w-[320px] shadow-2xl overflow-hidden">
-                                        {/* Shine Effect */}
-                                        <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover/stats:translate-x-[100%] transition-transform duration-1000"></div>
-
-                                        <div className="flex flex-row lg:flex-col justify-between lg:justify-start gap-4 lg:gap-6">
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <p className="text-sm lg:text-base font-bold text-white/90 uppercase tracking-wide">เงินออมที่จะมี (Projected)</p>
-                                                    <div className="w-2 h-2 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]"></div>
+                                            <div className="flex flex-col gap-6">
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <p className="text-sm lg:text-base font-bold text-white/90 uppercase tracking-wide">เงินออมที่จะมี (Projected)</p>
+                                                        <div className="w-2 h-2 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]"></div>
+                                                    </div>
+                                                    <p className="text-3xl lg:text-4xl xl:text-[42px] font-black tracking-tighter text-white drop-shadow-sm leading-none">
+                                                        ฿{formatNumber(result.projectedFund)}
+                                                    </p>
                                                 </div>
-                                                <p className="text-2xl lg:text-4xl xl:text-[42px] font-black tracking-tighter text-white drop-shadow-sm leading-none">
-                                                    ฿{formatNumber(result.projectedFund)}
-                                                </p>
-                                            </div>
 
-                                            <div className="hidden lg:block h-px bg-gradient-to-r from-transparent via-white/30 to-transparent w-full"></div>
-                                            <div className="block lg:hidden w-px bg-gradient-to-b from-transparent via-white/30 to-transparent h-full mx-2"></div>
+                                                <div className="h-px bg-gradient-to-r from-transparent via-white/30 to-transparent w-full"></div>
 
-                                            <div className="flex-1 text-right lg:text-left">
-                                                <div className="flex justify-end lg:justify-between items-center mb-1">
-                                                    <p className="text-sm lg:text-base font-bold text-white/80 uppercase tracking-wide">เงินต้นที่ควรมี (Target)</p>
-                                                    <div className="hidden lg:block w-2 h-2 rounded-full bg-blue-200/50"></div>
+                                                <div className="flex-1 text-left">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <p className="text-sm lg:text-base font-bold text-white/80 uppercase tracking-wide">เงินต้นที่ควรมี (Target)</p>
+                                                        <div className="w-2 h-2 rounded-full bg-blue-200/50"></div>
+                                                    </div>
+                                                    <p className="text-3xl lg:text-3xl font-bold tracking-tight text-white/95 leading-none">
+                                                        ฿{formatNumber(result.targetFund)}
+                                                    </p>
                                                 </div>
-                                                <p className="text-2xl lg:text-3xl font-bold tracking-tight text-white/95">
-                                                    ฿{formatNumber(result.targetFund)}
-                                                </p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Key Metrics Grid (Redesigned) */}
-                        <div className="relative print:hidden">
-                            {/* Grid Background Decoration */}
-                            <div className="absolute inset-0 -m-8 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
+                            {/* Key Metrics Grid (Redesigned) */}
+                            <div className="relative print:hidden">
+                                {/* Grid Background Decoration */}
+                                <div className="absolute inset-0 -m-8 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
 
-                            <div className={`grid grid-cols-1 gap-4 lg:gap-6 relative z-10 ${isSidebarOpen ? 'xl:grid-cols-1 2xl:grid-cols-2' : 'md:grid-cols-2'}`}>
-                                {/* Card 1: Projected Savings */}
-                                <div
-                                    onClick={() => setShowProjectedModal(true)}
-                                    className="bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
-                                >
-                                    <div className="absolute -right-8 -top-8 text-emerald-100/50 group-hover:text-emerald-200/50 transition-colors pointer-events-none z-0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5a3.5 3.5 0 0 1-4.9-5.0L10.3 1.5" /><path d="M19 5a3 5 0 0 1 0 6h-6.7" /><path d="M12 11l-3 3" /><circle cx="5" cy="18" r="4" /><path d="M9 18l6-6" /></svg>
-                                    </div>
-                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-emerald-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-emerald-100/80 -z-10"></div>
-                                    <div className="relative flex flex-col h-full justify-between">
-                                        <div className="flex justify-between items-start mb-3 lg:mb-4">
-                                            <div>
-                                                <p className="text-sm lg:text-base font-bold text-slate-800 mb-1 group-hover:text-emerald-700 transition-colors">เงินออมที่มีตอนอายุเกษียณ ({form.retireAge} ปี)</p>
-                                                <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Projected Wealth</span>
-                                            </div>
-                                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm border border-emerald-100/50">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5a3.5 3.5 0 0 1-4.9-5.0L10.3 1.5" /><path d="M19 5a3 5 0 0 1 0 6h-6.7" /><path d="M12 11l-3 3" /><circle cx="5" cy="18" r="4" /><path d="M9 18l6-6" /></svg>
-                                            </div>
+                                {/* Grid Container: On mobile, use 'contents' so children become part of the main carousel. On Desktop, use Grid. */}
+                                <div className={`contents md:grid md:grid-cols-2 md:gap-6 relative z-10 ${isSidebarOpen ? 'xl:grid-cols-1 2xl:grid-cols-2' : ''}`}>
+                                    {/* Card 1: Projected Savings */}
+                                    <div
+                                        onClick={() => setShowProjectedModal(true)}
+                                        className="min-w-[85vw] sm:min-w-[350px] md:min-w-0 snap-center bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-200 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
+                                    >
+                                        <div className="absolute -right-8 -top-8 text-emerald-100/50 group-hover:text-emerald-200/50 transition-colors pointer-events-none z-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5a3.5 3.5 0 0 1-4.9-5.0L10.3 1.5" /><path d="M19 5a3 5 0 0 1 0 6h-6.7" /><path d="M12 11l-3 3" /><circle cx="5" cy="18" r="4" /><path d="M9 18l6-6" /></svg>
                                         </div>
-                                        <div>
-                                            <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-emerald-600 transition-colors">
-                                                ฿{formatNumber2(result.projectedFund)}
-                                            </h4>
-                                            <p className="text-xs font-medium text-slate-400 flex items-center gap-1">
-                                                จากการออมและการลงทุน
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-0 group-hover:opacity-100 transition-opacity"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Card 2: Target Fund */}
-                                <div
-                                    onClick={() => {
-                                        setTargetModalTab('details');
-                                        setShowTargetModal(true);
-                                    }}
-                                    className="bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(59,130,246,0.15)] hover:border-blue-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
-                                >
-                                    <div className="absolute -right-8 -top-8 text-blue-100/50 group-hover:text-blue-200/50 transition-colors pointer-events-none z-0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
-                                    </div>
-                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-blue-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-blue-100/80 -z-10"></div>
-                                    <div className="relative flex flex-col h-full justify-between">
-                                        <div className="flex justify-between items-start mb-3 lg:mb-4">
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-sm lg:text-base font-bold text-slate-800 mb-1 group-hover:text-blue-700 transition-colors">เงินที่ต้องการก่อนเกษียณ</p>
-
-                                                    {/* Top ! Button -> Details */}
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setTargetModalTab('details');
-                                                            setShowTargetModal(true);
-                                                        }}
-                                                        className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-800 flex items-center justify-center text-[10px] font-bold transition-all mb-1"
-                                                    >
-                                                        !
-                                                    </button>
+                                        <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-emerald-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-emerald-100/80 -z-10"></div>
+                                        <div className="relative flex flex-col h-full justify-between">
+                                            <div className="flex justify-between items-start mb-3 lg:mb-4">
+                                                <div>
+                                                    <p className="text-base font-bold text-slate-800 mb-1 group-hover:text-emerald-700 transition-colors">เงินออมที่มีตอนอายุเกษียณ ({form.retireAge} ปี)</p>
+                                                    <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Projected Wealth</span>
                                                 </div>
-                                                <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Retirement Goal</span>
+                                                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm border border-emerald-100/50">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5a3.5 3.5 0 0 1-4.9-5.0L10.3 1.5" /><path d="M19 5a3 5 0 0 1 0 6h-6.7" /><path d="M12 11l-3 3" /><circle cx="5" cy="18" r="4" /><path d="M9 18l6-6" /></svg>
+                                                </div>
                                             </div>
-                                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-[-3deg] transition-transform duration-300 shadow-sm border border-blue-100/50">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
+                                            <div>
+                                                <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-emerald-600 transition-colors">
+                                                    ฿{formatNumber2(result.projectedFund)}
+                                                </h4>
+                                                <p className="text-xs font-medium text-slate-400 flex items-center gap-1">
+                                                    จากการออมและการลงทุน
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-0 group-hover:opacity-100 transition-opacity"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+                                                </p>
                                             </div>
                                         </div>
-                                        <div>
+                                    </div>
+
+                                    {/* Card 2: Target Fund */}
+                                    <div
+                                        onClick={() => {
+                                            setTargetModalTab('details');
+                                            setShowTargetModal(true);
+                                        }}
+                                        className="min-w-[85vw] sm:min-w-[350px] md:min-w-0 snap-center bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-200 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(59,130,246,0.15)] hover:border-blue-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
+                                    >
+                                        <div className="absolute -right-8 -top-8 text-blue-100/50 group-hover:text-blue-200/50 transition-colors pointer-events-none z-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
+                                        </div>
+                                        <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-blue-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-blue-100/80 -z-10"></div>
+                                        <div className="relative flex flex-col h-full justify-between">
+                                            <div className="flex justify-between items-start mb-3 lg:mb-4">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-base font-bold text-slate-800 mb-1 group-hover:text-blue-700 transition-colors">เงินที่ต้องการก่อนเกษียณ</p>
+
+                                                        {/* Top ! Button -> Removed */}
+                                                    </div>
+                                                    <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Retirement Goal</span>
+                                                </div>
+                                                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-[-3deg] transition-transform duration-300 shadow-sm border border-blue-100/50">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
+                                                </div>
+                                            </div>
                                             <div>
-                                                <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-2 group-hover:text-blue-600 transition-colors">
-                                                    ฿{formatNumber2(result.targetFund)}
-                                                </h4>
+                                                <div>
+                                                    <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-2 group-hover:text-blue-600 transition-colors">
+                                                        ฿{formatNumber2(result.targetFund)}
+                                                    </h4>
 
-                                                <div className="flex flex-col gap-1">
-                                                    <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors line-clamp-1">
-                                                        สำหรับ {result.yearsInRetirement} ปีหลังเกษียณ (โดยไม่สร้างผลตอบแทนเพิ่มเลย)
-                                                    </p>
-                                                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors">
-                                                        <span>หรือออมขั้นต่ำคร่าวๆ ฿{formatNumber2(result.monthlyNeeded)} ต่อเดือน</span>
+                                                    <div className="flex flex-col gap-1">
+                                                        <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors line-clamp-1">
+                                                            สำหรับ {result.yearsInRetirement} ปีหลังเกษียณ (โดยไม่สร้างผลตอบแทนเพิ่มเลย)
+                                                        </p>
+                                                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors">
+                                                            <span>หรือออมขั้นต่ำคร่าวๆ ฿{formatNumber2(result.monthlyNeeded)} ต่อเดือน</span>
 
-                                                        {/* Bottom ! Button -> Formula */}
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setTargetModalTab('formula');
-                                                                setShowTargetModal(true);
-                                                            }}
-                                                            className="w-4 h-4 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-800 flex items-center justify-center text-[10px] font-bold transition-all"
-                                                        >
-                                                            !
-                                                        </button>
+                                                            {/* Bottom ! Button -> Formula */}
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setTargetModalTab('formula');
+                                                                    setShowTargetModal(true);
+                                                                }}
+                                                                className="w-4 h-4 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-800 flex items-center justify-center text-[10px] font-bold transition-all opacity-0 group-hover:opacity-100 duration-300"
+                                                            >
+                                                                !
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Card 3: Monthly Expense */}
-                                <div
-                                    onClick={() => setShowExpenseModal(true)}
-                                    className="bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(168,85,247,0.15)] hover:border-purple-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
-                                >
-                                    <div className="absolute -right-8 -top-8 text-purple-100/50 group-hover:text-purple-200/50 transition-colors pointer-events-none z-0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-                                    </div>
-                                    <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-purple-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-purple-100/80 -z-10"></div>
-                                    <div className="relative flex flex-col h-full justify-between">
-                                        <div className="flex justify-between items-start mb-3 lg:mb-4">
+                                    {/* Card 3: Monthly Expense */}
+                                    <div
+                                        onClick={() => setShowExpenseModal(true)}
+                                        className="min-w-[85vw] sm:min-w-[350px] md:min-w-0 snap-center bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-200 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(168,85,247,0.15)] hover:border-purple-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
+                                    >
+                                        <div className="absolute -right-8 -top-8 text-purple-100/50 group-hover:text-purple-200/50 transition-colors pointer-events-none z-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                                        </div>
+                                        <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-purple-50 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors group-hover:bg-purple-100/80 -z-10"></div>
+                                        <div className="relative flex flex-col h-full justify-between">
+                                            <div className="flex justify-between items-start mb-3 lg:mb-4">
+                                                <div>
+                                                    <p className="text-base font-bold text-slate-800 mb-1 group-hover:text-purple-700 transition-colors">ค่าใช้จ่าย/เดือน (ปีแรก)</p>
+                                                    <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Future Expense</span>
+                                                </div>
+                                                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm border border-purple-100/50">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                                                </div>
+                                            </div>
                                             <div>
-                                                <p className="text-sm lg:text-base font-bold text-slate-800 mb-1 group-hover:text-purple-700 transition-colors">ค่าใช้จ่าย/เดือน (ปีแรก)</p>
-                                                <span className="text-[9px] lg:text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Future Expense</span>
+                                                <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-purple-600 transition-colors">
+                                                    ฿{formatNumber2(result.fvExpenseMonthly)}
+                                                </h4>
+                                                <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors">
+                                                    รวมเงินเฟ้อแล้ว (ทั้งชีวิต ฿{formatNumber2(result.totalLifetimeExpense)})
+                                                </p>
                                             </div>
-                                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm border border-purple-100/50">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h4 className="text-2xl lg:text-3xl xl:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-1 lg:mb-2 group-hover:text-purple-600 transition-colors">
-                                                ฿{formatNumber2(result.fvExpenseMonthly)}
-                                            </h4>
-                                            <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors">
-                                                รวมเงินเฟ้อแล้ว (ทั้งชีวิต ฿{formatNumber2(result.totalLifetimeExpense)})
-                                            </p>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Card 4: Status */}
-                                <div
-                                    className={`bg-white rounded-[24px] lg:rounded-[28px] p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-default transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] ${result.status === 'enough' ? 'hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100' : 'hover:shadow-[0_20px_50px_-15px_rgba(244,63,94,0.15)] hover:border-rose-100'}`}
-                                >
-                                    <div className={`absolute -right-8 -top-8 transition-colors pointer-events-none z-0 ${result.status === 'enough' ? 'text-emerald-100/50 group-hover:text-emerald-200/50' : 'text-rose-100/50 group-hover:text-rose-200/50'}`}>
-                                        {result.status === 'enough' ? (
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                        ) : (
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-                                        )}
-                                    </div>
-                                    <div className={`absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors -z-10 ${result.status === 'enough' ? 'bg-emerald-50 group-hover:bg-emerald-100/80' : 'bg-rose-50 group-hover:bg-rose-100/80'}`}></div>
-                                    <div className="relative flex flex-col h-full justify-between">
-                                        <div className="flex justify-between items-start mb-3 lg:mb-4">
-                                            <div>
-                                                <p className={`text-sm lg:text-base font-bold mb-1 transition-colors ${result.status === 'enough' ? 'text-slate-800 group-hover:text-emerald-700' : 'text-slate-800 group-hover:text-rose-700'}`}>สถานะแผน</p>
-                                                <span className={`text-[9px] lg:text-[10px] px-2 py-0.5 rounded-full font-bold ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                                                    Result Status
-                                                </span>
-                                            </div>
-                                            <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm border ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' : 'bg-rose-50 text-rose-600 border-rose-100/50'}`}>
-                                                {result.status === 'enough' ? (
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                                ) : (
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-                                                )}
-                                            </div>
+                                    {/* Card 4: Status */}
+                                    <div
+                                        className={`min-w-[85vw] sm:min-w-[350px] md:min-w-0 snap-center bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-default transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] ${result.status === 'enough' ? 'hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100' : 'hover:shadow-[0_20px_50px_-15px_rgba(244,63,94,0.15)] hover:border-rose-100'}`}
+                                    >
+                                        <div className={`absolute -right-8 -top-8 transition-colors pointer-events-none z-0 ${result.status === 'enough' ? 'text-emerald-100/50 group-hover:text-emerald-200/50' : 'text-rose-100/50 group-hover:text-rose-200/50'}`}>
+                                            {result.status === 'enough' ? (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                            ) : (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                            )}
                                         </div>
-                                        <div>
-                                            <h4 className={`text-2xl lg:text-3xl xl:text-[40px] font-black tracking-tight leading-none mb-1 lg:mb-2 transition-colors ${result.status === 'enough' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                                {result.status === 'enough' ? "เพียงพอ" : "ไม่พอ"}
-                                            </h4>
-                                            <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors">
-                                                {result.status === 'enough' ? "คุณทำได้ดีมาก แผนการออมยั่งยืน" : "สินทรัพย์ไม่เพียงพอ ต้องปรับแผนด่วน"}
-                                            </p>
+                                        <div className={`absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 rounded-full blur-2xl -mr-8 -mt-8 lg:-mr-10 lg:-mt-10 transition-colors -z-10 ${result.status === 'enough' ? 'bg-emerald-50 group-hover:bg-emerald-100/80' : 'bg-rose-50 group-hover:bg-rose-100/80'}`}></div>
+                                        <div className="relative flex flex-col h-full justify-between">
+                                            <div className="flex justify-between items-start mb-3 lg:mb-4">
+                                                <div>
+                                                    <p className={`text-base font-bold mb-1 transition-colors ${result.status === 'enough' ? 'text-slate-800 group-hover:text-emerald-700' : 'text-slate-800 group-hover:text-rose-700'}`}>สถานะแผน</p>
+                                                    <span className={`text-[9px] lg:text-[10px] px-2 py-0.5 rounded-full font-bold ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                                        Result Status
+                                                    </span>
+                                                </div>
+                                                <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm border ${result.status === 'enough' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' : 'bg-rose-50 text-rose-600 border-rose-100/50'}`}>
+                                                    {result.status === 'enough' ? (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                                    ) : (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h4 className={`text-2xl lg:text-3xl xl:text-[40px] font-black tracking-tight leading-none mb-1 lg:mb-2 transition-colors ${result.status === 'enough' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                    {result.status === 'enough' ? "เพียงพอ" : "ไม่พอ"}
+                                                </h4>
+                                                <p className="text-xs font-medium text-slate-400 group-hover:text-slate-500 transition-colors">
+                                                    {result.status === 'enough' ? "คุณทำได้ดีมาก แผนการออมยั่งยืน" : "สินทรัพย์ไม่เพียงพอ ต้องปรับแผนด่วน"}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Main Dashboard Grid */}
-                        <div className="flex flex-col gap-8 mb-8 break-inside-avoid">
-                            {/* Main Chart Area */}
-                            <div className="w-full bg-white rounded-[32px] p-8 shadow-xl border border-slate-100 relative overflow-hidden">
-                                <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6 print:hidden">
-                                    <div>
-                                        <div className="flex items-center gap-4 mb-1">
-                                            <div className="w-1.5 h-8 bg-slate-800 rounded-full"></div>
-                                            <div>
-                                                <h3 className="text-3xl font-black text-slate-900 tracking-tight">กราฟการเงินออม</h3>
+                            {/* Main Dashboard Grid (Chart Container) - Wrapped in Carousel above, so removed flex-col wrapper behavior for mobile chart, but kept for structure? 
+                            Wait, the Chart DIV is inside this Div (Line 681). 
+                            If I Wrap 440-750, then Line 681 is INSIDE the Wrapper.
+                            Line 681 is `flex flex-col gap-8`.
+                            If Line 681 remains a `div`, it becomes a flex item of my Wrapper.
+                            So on mobile, the entire Chart SECTION (Chart + whatever else) becomes one slide.
+                            This is actually FINE. 
+                            The user probably wants the Chart to be one big slide.
+                            So I can leave Line 681 as is, effectively. The Chart Area (683) is inside it.
+                            Wait, if 681 is the slide, then 683 doesn't need `snap-center`. 681 does.
+                        */}
+                            <div className="min-w-[88vw] md:min-w-0 snap-center flex flex-col gap-8 mb-8 break-inside-avoid">
+                                {/* Main Chart Area */}
+                                <div className="min-w-[90vw] md:min-w-0 snap-center w-full bg-white rounded-[32px] p-8 shadow-xl border border-slate-100 relative overflow-hidden">
+                                    <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6 print:hidden">
+                                        <div>
+                                            <div className="flex items-center gap-4 mb-1">
+                                                <div className="w-1.5 h-8 bg-slate-800 rounded-full"></div>
+                                                <div>
+                                                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">กราฟการเงินออม</h3>
+                                                </div>
                                             </div>
+                                            <p className="text-sm text-slate-500 font-medium pl-4.5">Wealth Projection & Goal Analysis</p>
                                         </div>
-                                        <p className="text-sm text-slate-500 font-medium pl-4.5">Wealth Projection & Goal Analysis</p>
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <div className="flex bg-slate-100/80 p-1.5 rounded-2xl backdrop-blur-sm mr-4">
-                                            {[1, 5, 10].map((interval) => (
-                                                <button
-                                                    key={interval}
-                                                    onClick={() => setChartTickInterval(interval)}
-                                                    className={`px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${chartTickInterval === interval
-                                                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                                                        : "text-slate-500 hover:bg-white hover:shadow-sm"
-                                                        }`}
-                                                >
-                                                    {interval} ปี
-                                                </button>
-                                            ))}
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <div className="flex bg-slate-100/80 p-1.5 rounded-2xl backdrop-blur-sm mr-4">
+                                                {[1, 5, 10].map((interval) => (
+                                                    <button
+                                                        key={interval}
+                                                        onClick={() => setChartTickInterval(interval)}
+                                                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${chartTickInterval === interval
+                                                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                                                            : "text-slate-500 hover:bg-white hover:shadow-sm"
+                                                            }`}
+                                                    >
+                                                        {interval} ปี
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <button className="px-5 py-2.5 text-sm font-bold text-blue-600 bg-white hover:bg-blue-50 rounded-xl border-2 border-blue-600 flex items-center gap-2 transition-all hover:-translate-y-0.5" onClick={handleExportExcel}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                                                Export Excel
+                                            </button>
+                                            <button className="px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5" onClick={handlePrint}>
+                                                Print
+                                            </button>
                                         </div>
-                                        <button className="px-5 py-2.5 text-sm font-bold text-blue-600 bg-white hover:bg-blue-50 rounded-xl border-2 border-blue-600 flex items-center gap-2 transition-all hover:-translate-y-0.5" onClick={handleExportExcel}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                                            Export Excel
-                                        </button>
-                                        <button className="px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5" onClick={handlePrint}>
-                                            Print
-                                        </button>
                                     </div>
-                                </div>
-                                <div id="printable-chart" className="w-full relative h-[500px] print:h-[250px] bg-white/40 backdrop-blur-sm rounded-3xl border border-white/60 shadow-[inset_0_2px_15px_rgba(0,0,0,0.02)] p-6">
-                                    <ProjectionChart
-                                        inputs={inputs}
-                                        result={result}
-                                        mcResult={mcResult}
-                                        showSumAssured={showSumAssured}
-                                        showActualSavings={showActualSavings}
-                                        insuranceChartData={insuranceChartData}
-                                        chartTickInterval={chartTickInterval}
-                                    />
-                                </div>
-                                <div className="mt-8 flex flex-wrap items-center justify-center gap-4 pt-6 print:hidden">
-                                    <button
-                                        onClick={() => setShowSumAssured(!showSumAssured)}
-                                        className={`px-5 py-2.5 rounded-full text-sm font-bold border-2 transition-all duration-300 flex items-center gap-2 ${showSumAssured
-                                            ? "bg-orange-50 border-orange-200 text-orange-600 shadow-sm hover:bg-orange-100"
-                                            : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
-                                            }`}
-                                    >
-                                        <div className={`w-2.5 h-2.5 rounded-full ${showSumAssured ? "bg-orange-500" : "bg-slate-300"}`}></div>
-                                        แสดงทุนประกัน
-                                    </button>
+                                    <div id="printable-chart" className="w-full relative h-[800px] md:h-[500px] print:h-[250px] bg-white/40 backdrop-blur-sm rounded-3xl border border-white/60 shadow-[inset_0_2px_15px_rgba(0,0,0,0.02)] p-6">
+                                        <ProjectionChart
+                                            inputs={inputs}
+                                            result={result}
+                                            mcResult={mcResult}
+                                            showSumAssured={showSumAssured}
+                                            showActualSavings={showActualSavings}
+                                            insuranceChartData={insuranceChartData}
+                                            chartTickInterval={chartTickInterval}
+                                        />
+                                    </div>
+                                    <div className="mt-8 flex flex-wrap items-center justify-center gap-4 pt-6 print:hidden">
+                                        <button
+                                            onClick={() => setShowSumAssured(!showSumAssured)}
+                                            className={`px-5 py-2.5 rounded-full text-sm font-bold border-2 transition-all duration-300 flex items-center gap-2 ${showSumAssured
+                                                ? "bg-orange-50 border-orange-200 text-orange-600 shadow-sm hover:bg-orange-100"
+                                                : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
+                                                }`}
+                                        >
+                                            <div className={`w-2.5 h-2.5 rounded-full ${showSumAssured ? "bg-orange-500" : "bg-slate-300"}`}></div>
+                                            แสดงทุนประกัน
+                                        </button>
 
-                                    <button
-                                        onClick={() => setShowActualSavings(!showActualSavings)}
-                                        className={`px-5 py-2.5 rounded-full text-sm font-bold border-2 transition-all duration-300 flex items-center gap-2 ${showActualSavings
-                                            ? "bg-blue-50 border-blue-200 text-blue-600 shadow-sm hover:bg-blue-100"
-                                            : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
-                                            }`}
-                                    >
-                                        <div className={`w-2.5 h-2.5 rounded-full ${showActualSavings ? "bg-blue-600" : "bg-slate-300"}`}></div>
-                                        แสดงเงินที่เก็บได้จริง
-                                    </button>
+                                        <button
+                                            onClick={() => setShowActualSavings(!showActualSavings)}
+                                            className={`px-5 py-2.5 rounded-full text-sm font-bold border-2 transition-all duration-300 flex items-center gap-2 ${showActualSavings
+                                                ? "bg-blue-50 border-blue-200 text-blue-600 shadow-sm hover:bg-blue-100"
+                                                : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
+                                                }`}
+                                        >
+                                            <div className={`w-2.5 h-2.5 rounded-full ${showActualSavings ? "bg-blue-600" : "bg-slate-300"}`}></div>
+                                            แสดงเงินที่เก็บได้จริง
+                                        </button>
 
-                                    <div className="px-5 py-2.5 rounded-full text-sm font-bold border-2 border-emerald-100 bg-emerald-50/50 text-emerald-600 flex items-center gap-2 cursor-default">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
-                                        Monte Carlo Simulation P5-P95
+                                        <div className="px-5 py-2.5 rounded-full text-sm font-bold border-2 border-emerald-100 bg-emerald-50/50 text-emerald-600 flex items-center gap-2 cursor-default">
+                                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
+                                            Monte Carlo Simulation P5-P95
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -816,76 +825,80 @@ export const RetirementDashboard = ({
 
 
 
-                            {/* Side Column Widgets */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:hidden">
-                                <AllocationWidget inputs={inputs} />
-                                <MonteCarloWidget
-                                    mcResult={mcResult}
-                                    mcSimulations={mcSimulations}
-                                    onClick={() => setShowMonteCarloDetails(true)}
-                                />
+                            <div className="contents md:grid md:grid-cols-2 md:gap-8 print:hidden">
+                                <div className="min-w-[88vw] md:min-w-0 snap-center w-full">
+                                    <AllocationWidget inputs={inputs} />
+                                </div>
+                                <div className="min-w-[88vw] md:min-w-0 snap-center w-full">
+                                    <MonteCarloWidget
+                                        mcResult={mcResult}
+                                        mcSimulations={mcSimulations}
+                                        onClick={() => setShowMonteCarloDetails(true)}
+                                    />
+                                </div>
                             </div>
-
-                        </div>
-                        {/* End of xl:col-span-3 */}
+                        </div> {/* End Mobile Carousel Wrapper */}
                     </div>
-                    {/* End of Main Grid */}
 
-                    <div id="modals-placeholder">
-                        <InsuranceTableModal
-                            show={showInsuranceTable}
-                            onClose={() => setShowInsuranceTable(false)}
-                            form={form}
-                            addInsurancePlan={addInsurancePlan}
-                            removeInsurancePlan={removeInsurancePlan}
-                            updateInsurancePlan={updateInsurancePlan}
-                            updateSurrenderTable={updateSurrenderTable}
-                        />
-                        <ProjectedModal
-                            show={showProjectedModal}
-                            onClose={() => setShowProjectedModal(false)}
-                            form={form}
-                            result={result}
-                            initialTab={projectedModalTab}
-                        />
-                        <TargetModal
-                            show={showTargetModal}
-                            onClose={() => setShowTargetModal(false)}
-                            result={result}
-                            form={form}
-                        />
-                        <ExpenseModal
-                            show={showExpenseModal}
-                            onClose={() => setShowExpenseModal(false)}
-                            form={form}
-                            result={result}
-                            initialTab={expenseModalTab}
-                        />
-                        <MonteCarloDetailsModal
-                            show={showMonteCarloDetails}
-                            onClose={() => setShowMonteCarloDetails(false)}
-                            mcResult={mcResult}
-                            mcSimulations={Number(form.monteCarloSimulations)}
-                        />
-                        <PlanManager
-                            currentData={{
-                                form,
-                                allocations,
-                                returnMode,
-                                savingMode,
-                                gender
-                            }}
-                            onLoad={(data) => {
-                                setForm(data.form);
-                                if (data.allocations) setAllocations(data.allocations);
-                                if (data.returnMode) setReturnMode(data.returnMode);
-                                if (data.savingMode) setSavingMode(data.savingMode);
-                                if (data.gender) setGender(data.gender);
-                            }}
-                        />
-                    </div>
                 </div>
+                {/* End of xl:col-span-3 */}
+            </div>
+            {/* End of Main Grid */}
+
+            <div id="modals-placeholder">
+                <InsuranceTableModal
+                    show={showInsuranceTable}
+                    onClose={() => setShowInsuranceTable(false)}
+                    form={form}
+                    addInsurancePlan={addInsurancePlan}
+                    removeInsurancePlan={removeInsurancePlan}
+                    updateInsurancePlan={updateInsurancePlan}
+                    updateSurrenderTable={updateSurrenderTable}
+                />
+                <ProjectedModal
+                    show={showProjectedModal}
+                    onClose={() => setShowProjectedModal(false)}
+                    form={form}
+                    result={result}
+                    initialTab={projectedModalTab}
+                />
+                <TargetModal
+                    show={showTargetModal}
+                    onClose={() => setShowTargetModal(false)}
+                    result={result}
+                    form={form}
+                />
+                <ExpenseModal
+                    show={showExpenseModal}
+                    onClose={() => setShowExpenseModal(false)}
+                    form={form}
+                    result={result}
+                    initialTab={expenseModalTab}
+                />
+                <MonteCarloDetailsModal
+                    show={showMonteCarloDetails}
+                    onClose={() => setShowMonteCarloDetails(false)}
+                    mcResult={mcResult}
+                    mcSimulations={Number(form.monteCarloSimulations)}
+                />
+                <PlanManager
+                    currentData={{
+                        form,
+                        allocations,
+                        returnMode,
+                        savingMode,
+                        gender
+                    }}
+                    onLoad={(data) => {
+                        setForm(data.form);
+                        if (data.allocations) setAllocations(data.allocations);
+                        if (data.returnMode) setReturnMode(data.returnMode);
+                        if (data.savingMode) setSavingMode(data.savingMode);
+                        if (data.gender) setGender(data.gender);
+                    }}
+                />
             </div>
         </div>
+
     );
 };

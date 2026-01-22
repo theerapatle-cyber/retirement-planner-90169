@@ -1,5 +1,5 @@
 
-import { calculateRetirement } from './app/page';
+import { calculateRetirement } from './lib/retirement-calculation';
 
 
 // Mock Inputs
