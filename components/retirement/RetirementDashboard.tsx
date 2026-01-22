@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import * as XLSX from "xlsx";
 import { ProjectionChart } from "./DashboardCharts";
+import { MobileProjectionChart } from "./MobileProjectionChart";
 import { RetirementInputSection } from "./RetirementInputSection";
 import {
     InsuranceTableModal,
@@ -445,7 +446,7 @@ export const RetirementDashboard = ({
                         {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
                         {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
                         {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
-                        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-4 px-3 -mx-3 pb-0 items-start md:pb-0 md:px-0 md:mx-0 md:block md:space-y-6 no-scrollbar">
+                        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-4 px-3 -mx-3 pb-4 items-start md:pb-0 md:px-0 md:mx-0 md:block md:space-y-6 no-scrollbar">
 
                             {/* Hero Summary Card (Redesigned) */}
                             <div className={`min-w-full md:min-w-0 snap-center relative rounded-[24px] lg:rounded-[32px] p-4 sm:p-5 lg:p-8 xl:p-10 overflow-hidden font-sans shadow-xl lg:shadow-2xl transition-all duration-500 group print:hidden ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981] shadow-emerald-900/40' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444] shadow-red-900/40'}`}>
@@ -521,16 +522,16 @@ export const RetirementDashboard = ({
                             </div>
 
                             {/* Key Metrics Grid (Redesigned) */}
-                            <div className="relative print:hidden">
+                            <div className="min-w-full snap-center flex flex-col gap-3 relative print:hidden">
                                 {/* Grid Background Decoration */}
-                                <div className="absolute inset-0 -m-8 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
+                                <div className="hidden md:block absolute inset-0 -m-8 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
 
-                                {/* Grid Container: On mobile, use a full-width slide with vertical stack. On Desktop, use Grid. */}
-                                <div className={`min-w-full snap-center flex flex-col gap-3 md:min-w-0 md:grid md:grid-cols-2 md:gap-6 relative z-10 ${isSidebarOpen ? 'xl:grid-cols-1 2xl:grid-cols-2' : ''}`}>
+                                {/* Grid Container: On mobile, use a vertical stack. On Desktop, use Grid. */}
+                                <div className={`flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-6 relative z-10 ${isSidebarOpen ? 'xl:grid-cols-1 2xl:grid-cols-2' : ''}`}>
                                     {/* Card 1: Projected Savings */}
                                     <div
                                         onClick={() => setShowProjectedModal(true)}
-                                        className="min-w-full sm:min-w-[350px] md:min-w-0 snap-center bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-200 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
+                                        className="w-full bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-200 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
                                     >
                                         <div className="absolute -right-8 -top-8 text-emerald-100/50 group-hover:text-emerald-200/50 transition-colors pointer-events-none z-0">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5a3.5 3.5 0 0 1-4.9-5.0L10.3 1.5" /><path d="M19 5a3 5 0 0 1 0 6h-6.7" /><path d="M12 11l-3 3" /><circle cx="5" cy="18" r="4" /><path d="M9 18l6-6" /></svg>
@@ -564,7 +565,7 @@ export const RetirementDashboard = ({
                                             setTargetModalTab('details');
                                             setShowTargetModal(true);
                                         }}
-                                        className="min-w-full sm:min-w-[350px] md:min-w-0 snap-center bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-200 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(59,130,246,0.15)] hover:border-blue-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
+                                        className="w-full bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-200 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(59,130,246,0.15)] hover:border-blue-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
                                     >
                                         <div className="absolute -right-8 -top-8 text-blue-100/50 group-hover:text-blue-200/50 transition-colors pointer-events-none z-0">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
@@ -618,7 +619,7 @@ export const RetirementDashboard = ({
                                     {/* Card 3: Monthly Expense */}
                                     <div
                                         onClick={() => setShowExpenseModal(true)}
-                                        className="min-w-full sm:min-w-[350px] md:min-w-0 snap-center bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-200 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(168,85,247,0.15)] hover:border-purple-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
+                                        className="w-full bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-200 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(168,85,247,0.15)] hover:border-purple-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
                                     >
                                         <div className="absolute -right-8 -top-8 text-purple-100/50 group-hover:text-purple-200/50 transition-colors pointer-events-none z-0">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
@@ -647,7 +648,7 @@ export const RetirementDashboard = ({
 
                                     {/* Card 4: Status */}
                                     <div
-                                        className={`min-w-full sm:min-w-[350px] md:min-w-0 snap-center bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-default transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] ${result.status === 'enough' ? 'hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100' : 'hover:shadow-[0_20px_50px_-15px_rgba(244,63,94,0.15)] hover:border-rose-100'}`}
+                                        className={`w-full bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group cursor-default transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] ${result.status === 'enough' ? 'hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100' : 'hover:shadow-[0_20px_50px_-15px_rgba(244,63,94,0.15)] hover:border-rose-100'}`}
                                     >
                                         <div className={`absolute -right-8 -top-8 transition-colors pointer-events-none z-0 ${result.status === 'enough' ? 'text-emerald-100/50 group-hover:text-emerald-200/50' : 'text-rose-100/50 group-hover:text-rose-200/50'}`}>
                                             {result.status === 'enough' ? (
@@ -697,9 +698,15 @@ export const RetirementDashboard = ({
                             So I can leave Line 681 as is, effectively. The Chart Area (683) is inside it.
                             Wait, if 681 is the slide, then 683 doesn't need `snap-center`. 681 does.
                         */}
-                            <div className="min-w-full md:min-w-0 snap-center flex flex-col gap-8 mb-8 break-inside-avoid">
+
+
+                            {/* Main Dashboard Grid (Chart Container) - Moved OUT of Carousel for Full Width Vertical Stack on Mobile */}
+                            {/* Main Dashboard Grid (Chart Container) - Moved OUT of Carousel for Full Width Vertical Stack on Mobile */}
+                            {/* Main Dashboard Grid (Chart Container) - Moved OUT of Carousel for Full Width Vertical Stack on Mobile */}
+                            {/* Main Dashboard Grid (Chart Container) - Moved INTO Carousel for Unified Flow */}
+                            <div className="min-w-full md:min-w-0 snap-center flex flex-col gap-8 mb-8 print:break-inside-avoid px-0 md:px-0">
                                 {/* Main Chart Area */}
-                                <div className="min-w-full md:min-w-0 snap-center w-full bg-white rounded-[32px] p-8 shadow-xl border border-slate-100 relative overflow-hidden">
+                                <div className="w-full bg-white rounded-[32px] p-4 md:p-8 shadow-xl border border-slate-100 relative overflow-hidden">
                                     <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6 print:hidden">
                                         <div>
                                             <div className="flex items-center gap-4 mb-1">
@@ -734,16 +741,29 @@ export const RetirementDashboard = ({
                                             </button>
                                         </div>
                                     </div>
-                                    <div id="printable-chart" className="w-full relative h-[800px] md:h-[500px] print:h-[250px] bg-white/40 backdrop-blur-sm rounded-3xl border border-white/60 shadow-[inset_0_2px_15px_rgba(0,0,0,0.02)] p-6">
-                                        <ProjectionChart
-                                            inputs={inputs}
-                                            result={result}
-                                            mcResult={mcResult}
-                                            showSumAssured={showSumAssured}
-                                            showActualSavings={showActualSavings}
-                                            insuranceChartData={insuranceChartData}
-                                            chartTickInterval={chartTickInterval}
-                                        />
+                                    <div id="printable-chart" className="w-full relative h-[600px] md:h-[500px] print:h-[250px] bg-white/40 backdrop-blur-sm rounded-3xl border border-white/60 shadow-[inset_0_2px_15px_rgba(0,0,0,0.02)] p-4 md:p-6 overflow-hidden">
+                                        <div className="hidden md:block w-full h-full">
+                                            <ProjectionChart
+                                                inputs={inputs}
+                                                result={result}
+                                                mcResult={mcResult}
+                                                showSumAssured={showSumAssured}
+                                                showActualSavings={showActualSavings}
+                                                insuranceChartData={insuranceChartData}
+                                                chartTickInterval={chartTickInterval}
+                                            />
+                                        </div>
+                                        <div className="block md:hidden w-full h-full">
+                                            <MobileProjectionChart
+                                                inputs={inputs}
+                                                result={result}
+                                                mcResult={mcResult}
+                                                showSumAssured={showSumAssured}
+                                                showActualSavings={showActualSavings}
+                                                insuranceChartData={insuranceChartData}
+                                                chartTickInterval={chartTickInterval}
+                                            />
+                                        </div>
                                     </div>
                                     <div className="mt-8 flex flex-wrap items-center justify-center gap-4 pt-6 print:hidden">
                                         <button
@@ -826,10 +846,10 @@ export const RetirementDashboard = ({
 
 
                             <div className="contents md:grid md:grid-cols-2 md:gap-8 print:hidden">
-                                <div className="min-w-[88vw] md:min-w-0 snap-center w-full">
+                                <div className="min-w-full md:min-w-0 snap-center w-full">
                                     <AllocationWidget inputs={inputs} />
                                 </div>
-                                <div className="min-w-[88vw] md:min-w-0 snap-center w-full">
+                                <div className="min-w-full md:min-w-0 snap-center w-full">
                                     <MonteCarloWidget
                                         mcResult={mcResult}
                                         mcSimulations={mcSimulations}
@@ -837,7 +857,9 @@ export const RetirementDashboard = ({
                                     />
                                 </div>
                             </div>
-                        </div> {/* End Mobile Carousel Wrapper */}
+
+                        </div>
+
                     </div>
 
                 </div>
@@ -898,7 +920,7 @@ export const RetirementDashboard = ({
                     }}
                 />
             </div>
-        </div>
+        </div >
 
     );
 };
