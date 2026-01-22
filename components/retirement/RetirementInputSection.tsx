@@ -1170,7 +1170,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     <div className="pt-6 border-t border-slate-50 relative z-10 pb-4">
                         <Button
                             type="button"
-                            onClick={onCalculate}
+                            onClick={handleCalculateCheck}
                             className="w-full h-12 text-lg rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-lg shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                         >
                             <Calculator size={20} /> คำนวณและดูผลลัพธ์
@@ -1192,7 +1192,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                 ถัดไป <ArrowRight size={20} />
                             </Button>
                         ) : (
-                            <Button type="button" onClick={onCalculate} className="flex-1 h-14 text-lg rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-xl shadow-blue-200 transition-all hover:translate-y-[-2px] flex items-center justify-center gap-2">
+                            <Button type="button" onClick={handleCalculateCheck} className="flex-1 h-14 text-lg rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-xl shadow-blue-200 transition-all hover:translate-y-[-2px] flex items-center justify-center gap-2">
                                 <Calculator size={20} /> คำนวณและดูผลลัพธ์
                             </Button>
                         )}

@@ -92,7 +92,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                 {/* 1. STATUS HEADER */}
                 {/* 1. STATUS HEADER */}
                 <div className="relative -mx-4 px-4 sm:px-0">
-                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:pb-0 custom-scrollbar">
+                    <div className="flex gap-4 overflow-x-auto pb-0 snap-x snap-mandatory lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:pb-0 no-scrollbar">
 
                         {/* Status Card */}
                         <div className="min-w-[85vw] sm:min-w-[45vw] lg:min-w-0 snap-center">
@@ -298,8 +298,8 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                         </Button>
                     </div>
 
-                    {/* Mobile Card List View (Visible on small screens) */}
-                    <div className="space-y-4 md:hidden">
+                    {/* Mobile & Tablet Card List View (Visible on small screens and Tablets) */}
+                    <div className="space-y-4 lg:hidden md:grid md:grid-cols-2 md:gap-5 md:space-y-0">
                         {familyMembers.map((m) => {
                             const isCurrent = String(m.id) === String(currentMemberId);
                             const inputs = buildRetirementInputs({
@@ -380,15 +380,15 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                         {familyMembers.length < 10 && (
                             <button
                                 onClick={handleAddMember}
-                                className="w-full py-4 rounded-[24px] border-2 border-dashed border-slate-200 text-slate-400 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-50 hover:text-slate-600 hover:border-slate-300 transition-all"
+                                className="w-full h-full min-h-[180px] rounded-[24px] border-2 border-dashed border-slate-200 text-slate-400 font-bold text-sm flex flex-col items-center justify-center gap-3 hover:bg-slate-50 hover:text-slate-600 hover:border-slate-300 transition-all active:scale-95"
                             >
-                                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-lg">+</div>
+                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-2xl pb-1">+</div>
                                 เพิ่มสมาชิกใหม่
                             </button>
                         )}
                     </div>
 
-                    <div className="hidden md:block bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div className="hidden lg:block bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left border-collapse min-w-[800px]">
                                 <thead className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider">
