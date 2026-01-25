@@ -358,7 +358,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
             <div className="flex flex-col items-center gap-2 mb-2 px-2 shrink-0">
 
                 {/* 1. View Toggle Switch */}
-                <div className="flex bg-slate-100 p-1 rounded-lg">
+                <div className="flex bg-slate-100 p-1 rounded-lg print:hidden">
                     <button
                         onClick={() => setOrientation('horizontal')}
                         className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${orientation === 'horizontal'

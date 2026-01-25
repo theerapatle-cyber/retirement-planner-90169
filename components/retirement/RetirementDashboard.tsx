@@ -154,8 +154,20 @@ export const RetirementDashboard = ({
                 const idx = insuranceChartData.labels.indexOf(age);
                 if (idx !== -1) sumAssured = (insuranceChartData.datasets[0].data[idx] as number) || 0;
             }
+            // Cash Flow (Pension) - Only after retirement
+            let cashFlow = 0;
+            if (Number(label) >= Number(inputs.retireAge)) {
+                cashFlow = Number(inputs.retirePension) || 0;
+            }
 
-            return { age, savings, principal, target, sumAssured };
+            // Legacy - Only after retirement (conceptually, or always if it's a fund)
+            // Assuming Legacy is a target fund to leave behind, visible throughout or at end.
+            // Let's show it from retirement onwards as it becomes relevant 'estate' value?
+            // Or just constant if it's a set aside amount. User inputs 'legacyFund'.
+            let legacy = Number(inputs.legacyFund) || 0;
+
+
+            return { age, savings, principal, target, sumAssured, cashFlow, legacy };
         });
     }, [inputs, result, insuranceChartData]);
 
@@ -188,11 +200,14 @@ export const RetirementDashboard = ({
 
                 /* Chart Specifics */
                 #printable-chart { 
-                    height: 250px !important; 
-                    border: 1px solid #000 !important;
+                    height: 800px !important; 
+                    border: none !important;
                     box-shadow: none !important;
-                    border-radius: 8px !important;
                     break-inside: avoid;
+                    page-break-inside: avoid;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    overflow: visible !important;
                 }
                 
                 /* Data Table Specifics */
@@ -204,6 +219,10 @@ export const RetirementDashboard = ({
                 
                 /* Hide everything else */
                 .print-hidden, header, nav, footer, .fixed, .sticky { display: none !important; }
+
+                /* Custom Responsive Print Logic */
+                body.print-desktop .print-desktop-only { display: block !important; }
+                body.print-mobile .print-mobile-only { display: block !important; }
                 `}
             </style>
 
@@ -325,7 +344,7 @@ export const RetirementDashboard = ({
                         `}>
                             {/* Mobile Close Button Header */}
                             <div className="xl:hidden flex items-center justify-between p-4 border-b border-slate-100 bg-white sticky top-0 z-10">
-                                <span className="font-bold text-slate-400 text-sm">ปรับแต่งแผน Plans</span>
+                                <span></span>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-slate-100 text-slate-500" onClick={() => setIsSidebarOpen(false)}>
                                     <PanelLeftClose className="w-4 h-4" />
                                 </Button>
@@ -703,6 +722,59 @@ export const RetirementDashboard = ({
                             {/* Main Dashboard Grid (Chart Container) - Moved OUT of Carousel for Full Width Vertical Stack on Mobile */}
                             {/* Main Dashboard Grid (Chart Container) - Moved OUT of Carousel for Full Width Vertical Stack on Mobile */}
                             {/* Main Dashboard Grid (Chart Container) - Moved OUT of Carousel for Full Width Vertical Stack on Mobile */}
+                            {/* PRINT ONLY: Plan Summary */}
+                            <div className="hidden print:block mb-6 p-4 border border-slate-300 rounded-xl bg-slate-50 text-sm">
+                                <h3 className="font-bold text-slate-900 border-b border-slate-300 pb-2 mb-3 uppercase tracking-wide">Plan Summary</h3>
+                                <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                                    <div className="grid grid-cols-2">
+                                        <span className="text-slate-500">Current Age:</span>
+                                        <span className="font-bold text-slate-800">{form.currentAge} ปี</span>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <span className="text-slate-500">Retire Age:</span>
+                                        <span className="font-bold text-slate-800">{form.retireAge} ปี</span>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <span className="text-slate-500">Life Expectancy:</span>
+                                        <span className="font-bold text-slate-800">{form.lifeExpectancy} ปี</span>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <span className="text-slate-500">Current Savings:</span>
+                                        <span className="font-bold text-slate-800">฿{form.currentSavings}</span>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <span className="text-slate-500">Monthly Saving:</span>
+                                        <span className="font-bold text-slate-800">฿{form.monthlySaving}</span>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <span className="text-slate-500">Expected Return:</span>
+                                        <span className="font-bold text-slate-800">{form.expectedReturn}%</span>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <span className="text-slate-500">Legacy Fund:</span>
+                                        <span className="font-bold text-slate-800">฿{form.legacyFund || "0"}</span>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <span className="text-slate-500">Sum Assured:</span>
+                                        <span className="font-bold text-slate-800">
+                                            ฿{formatNumber(form.insurancePlans.reduce((sum, p) => sum + (Number(String(p.sumAssured).replace(/,/g, "")) || 0), 0))}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <span className="text-slate-500">Post-Retire Income:</span>
+                                        <span className="font-bold text-slate-800">฿{form.retirePension || "0"} / mo</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 border-t border-slate-200 pt-2 mt-1">
+                                        <span className="text-slate-500 font-bold">Target Fund:</span>
+                                        <span className="font-bold text-blue-600">฿{formatNumber2(result.targetFund)}</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 border-t border-slate-200 pt-2 mt-1">
+                                        <span className="text-slate-500 font-bold">Projected Fund:</span>
+                                        <span className={`font-bold ${result.status === 'enough' ? 'text-emerald-600' : 'text-red-600'}`}>฿{formatNumber2(result.projectedFund)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Main Dashboard Grid (Chart Container) - Moved INTO Carousel for Unified Flow */}
                             <div className="min-w-full md:min-w-0 snap-center flex flex-col gap-8 mb-8 print:break-inside-avoid px-0 md:px-0">
                                 {/* Main Chart Area */}
@@ -736,13 +808,30 @@ export const RetirementDashboard = ({
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                                                 Export Excel
                                             </button>
-                                            <button className="px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5" onClick={handlePrint}>
+                                            <button className="px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5"
+                                                onClick={() => {
+                                                    // Detect width and set class
+                                                    if (window.innerWidth < 768) {
+                                                        document.body.classList.add('print-mobile');
+                                                        document.body.classList.remove('print-desktop');
+                                                    } else {
+                                                        document.body.classList.add('print-desktop');
+                                                        document.body.classList.remove('print-mobile');
+                                                    }
+
+                                                    // Allow small delay for redraw if needed, then print
+                                                    setTimeout(() => {
+                                                        window.print();
+                                                        // Cleanup after print dialog closes (though js pauses, this runs after)
+                                                        // Actually better to leave it or clean up on focus return, but simple add/remove is fine for next click.
+                                                    }, 100);
+                                                }}>
                                                 Print
                                             </button>
                                         </div>
                                     </div>
-                                    <div id="printable-chart" className="w-full relative h-[600px] md:h-[500px] print:h-[250px] bg-white/40 backdrop-blur-sm rounded-3xl border border-white/60 shadow-[inset_0_2px_15px_rgba(0,0,0,0.02)] p-4 md:p-6 overflow-hidden">
-                                        <div className="hidden md:block w-full h-full">
+                                    <div id="printable-chart" className="w-full relative h-[600px] md:h-[500px] print:h-[800px] bg-white rounded-3xl border border-slate-100 p-4 md:p-6 print:p-0 print:border-none print:shadow-none overflow-hidden print:overflow-visible">
+                                        <div className="hidden md:block print:hidden print-desktop-only w-full h-full">
                                             <ProjectionChart
                                                 inputs={inputs}
                                                 result={result}
@@ -753,7 +842,7 @@ export const RetirementDashboard = ({
                                                 chartTickInterval={chartTickInterval}
                                             />
                                         </div>
-                                        <div className="block md:hidden w-full h-full">
+                                        <div className="block md:hidden print:hidden print-mobile-only w-full h-full">
                                             <MobileProjectionChart
                                                 inputs={inputs}
                                                 result={result}
@@ -812,19 +901,23 @@ export const RetirementDashboard = ({
                                                 <table className="w-full text-left table-fixed">
                                                     <thead className="bg-gray-100 print:bg-gray-100 font-bold border-b border-black">
                                                         <tr>
-                                                            <th className="py-1 px-1 text-center border-r border-black uppercase w-[15%]">Age</th>
-                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[25%]">Principal</th>
-                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[25%]">Savings</th>
-                                                            <th className="py-1 px-1 text-right uppercase w-[35%]">Target</th>
+                                                            <th className="py-1 px-1 text-center border-r border-black uppercase w-[10%]">Age</th>
+                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[20%]">Savings</th>
+                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[20%]">Target</th>
+                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[15%]">Insur.</th>
+                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[15%]">CashFlow</th>
+                                                            <th className="py-1 px-1 text-right uppercase w-[20%]">Legacy</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-black">
                                                         {dataSlice.map((row: any) => (
                                                             <tr key={row.age} className="border-b border-black last:border-0">
                                                                 <td className="py-0.5 px-1 text-center font-bold border-r border-black">{row.age}</td>
-                                                                <td className="py-0.5 px-1 text-right border-r border-black">{formatNumber(row.principal)}</td>
                                                                 <td className="py-0.5 px-1 text-right font-bold border-r border-black">{formatNumber(row.savings)}</td>
-                                                                <td className="py-0.5 px-1 text-right">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
+                                                                <td className="py-0.5 px-1 text-right border-r border-black">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
+                                                                <td className="py-0.5 px-1 text-right border-r border-black">{row.sumAssured > 0 ? formatNumber(row.sumAssured) : "-"}</td>
+                                                                <td className="py-0.5 px-1 text-right border-r border-black">{row.cashFlow > 0 ? formatNumber(row.cashFlow) : "-"}</td>
+                                                                <td className="py-0.5 px-1 text-right">{row.legacy > 0 ? formatNumber(row.legacy) : "-"}</td>
                                                             </tr>
                                                         ))}
                                                     </tbody>
@@ -835,9 +928,10 @@ export const RetirementDashboard = ({
                                 </div>
                                 <div className="text-[8px] mt-2 flex justify-between items-center border-t border-black pt-2 uppercase font-medium">
                                     <div className="flex gap-4">
-                                        <span>* Principal: เงินต้นสะสม</span>
                                         <span>* Savings: เงินออมรวม</span>
-                                        <span>* Target: เป้าหมาย</span>
+                                        <span>* Insur.: ทุนประกัน</span>
+                                        <span>* CashFlow: กระแสเงินสด/เดือน</span>
+                                        <span>* Legacy: มรดก</span>
                                     </div>
                                     <span>Generated by Financial Planner App</span>
                                 </div>
@@ -845,11 +939,11 @@ export const RetirementDashboard = ({
 
 
 
-                            <div className="contents md:grid md:grid-cols-2 md:gap-8 print:hidden">
-                                <div className="min-w-full md:min-w-0 snap-center w-full">
+                            <div className="contents md:grid md:grid-cols-2 md:gap-8 print:grid print:grid-cols-2 print:gap-4 print:mt-8 print:break-before-auto">
+                                <div className="min-w-full md:min-w-0 snap-center w-full print:break-inside-avoid">
                                     <AllocationWidget inputs={inputs} />
                                 </div>
-                                <div className="min-w-full md:min-w-0 snap-center w-full">
+                                <div className="min-w-full md:min-w-0 snap-center w-full print:break-inside-avoid">
                                     <MonteCarloWidget
                                         mcResult={mcResult}
                                         mcSimulations={mcSimulations}

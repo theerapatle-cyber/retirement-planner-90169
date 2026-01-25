@@ -318,7 +318,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                             value={value}
                             onChange={field ? handleChange(field) : () => { }}
                             disabled={disabled}
-                            className={`flex-1 min-w-0 h-full text-base font-bold bg-transparent border-none p-0 focus:ring-0 text-center text-slate-700 ${disabled ? 'text-slate-400' : ''}`}
+                            className={`flex-1 min-w-0 h-full text-sm font-bold bg-transparent border-none p-0 focus:ring-0 text-center text-slate-700 ${disabled ? 'text-slate-400' : ''}`}
                         />
                         {suffix && <span className="text-xs font-semibold text-slate-400 ml-2 select-none">{suffix}</span>}
                     </div>
@@ -356,49 +356,48 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
     const renderPersonalStep = () => (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="flex flex-col items-center justify-center gap-6 py-4">
+            <div className="flex flex-col items-center justify-center gap-4 py-2">
                 <div className="relative group/avatar cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                    <div className={`w-32 h-32 rounded-full border-4 border-white shadow-2xl shadow-slate-200 flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-105 ${gender === 'male' ? 'bg-indigo-50' : 'bg-pink-50'}`}>
+                    <div className={`w-24 h-24 rounded-full border-4 border-white shadow-xl shadow-slate-200 flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-105 ${gender === 'male' ? 'bg-indigo-50' : 'bg-pink-50'}`}>
                         {avatarImage ? (
                             <img src={avatarImage} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
-                            <span className="text-5xl select-none filter drop-shadow-sm">{gender === 'male' ? '👨🏻' : '👩🏻'}</span>
+                            <span className="text-4xl select-none filter drop-shadow-sm">{gender === 'male' ? '👨🏻' : '👩🏻'}</span>
                         )}
                     </div>
-                    <div className="absolute bottom-0 right-0 bg-slate-800 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-4 border-white transition-transform group-hover:rotate-12">
-                        <Camera size={16} />
+                    <div className="absolute bottom-0 right-0 bg-slate-800 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-white transition-transform group-hover:rotate-12">
+                        <Camera size={14} />
                     </div>
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                 </div>
 
-                <div className="flex bg-slate-100/80 p-1.5 rounded-full shadow-inner w-64 relative border border-slate-200/50 backdrop-blur-sm">
+                <div className="flex bg-slate-100/80 p-1 rounded-full shadow-inner w-56 relative border border-slate-200/50 backdrop-blur-sm">
                     {/* Sliding Background for animation effect could be added here, but simple conditional formatting works well too */}
                     <button
                         onClick={() => setGender('male')}
-                        className={`flex-1 py-3 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 relative z-10 ${gender === 'male' ? 'bg-white text-indigo-600 shadow-md ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 relative z-10 ${gender === 'male' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
                     >
-                        {gender === 'male' && <span className="w-2 h-2 rounded-full bg-indigo-500 absolute left-4 hidden sm:block"></span>}
+                        {gender === 'male' && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 absolute left-3 hidden sm:block"></span>}
                         ชาย
                     </button>
                     <button
                         onClick={() => setGender('female')}
-                        className={`flex-1 py-3 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 relative z-10 ${gender === 'female' ? 'bg-white text-pink-500 shadow-md ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all duration-300 flex items-center justify-center gap-2 relative z-10 ${gender === 'female' ? 'bg-white text-pink-500 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
                     >
-                        {gender === 'female' && <span className="w-2 h-2 rounded-full bg-pink-500 absolute left-4 hidden sm:block"></span>}
+                        {gender === 'female' && <span className="w-1.5 h-1.5 rounded-full bg-pink-500 absolute left-3 hidden sm:block"></span>}
                         หญิง
                     </button>
                 </div>
 
                 {/* Name Input */}
                 <div className="w-64 relative z-20">
-                    <Label className="text-slate-500 font-bold text-xs mb-1.5 block text-center">ชื่อของคุณ / ชื่อแผน</Label>
                     <div className="relative">
                         <input
                             type="text"
                             value={form.planName || ''}
                             onChange={(e) => handleChange('planName')(e)}
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-center shadow-sm hover:border-indigo-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50/50 transition-all text-slate-700 font-bold text-sm outline-none placeholder:text-slate-300"
-                            placeholder="ระบุชื่อเพื่อระบุตัวตน..."
+                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-center shadow-sm hover:border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50/50 transition-all text-slate-700 font-bold text-sm outline-none placeholder:text-slate-300 placeholder:text-xs"
+                            placeholder="ระบุชื่อแผนของคุณ..."
                         />
                     </div>
                 </div>

@@ -8,7 +8,7 @@ interface AllocationWidgetProps {
 
 export const AllocationWidget: React.FC<AllocationWidgetProps> = ({ inputs }) => {
     return (
-        <div className="bg-white rounded-[24px] md:rounded-[32px] p-5 md:p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-[0_25px_70px_-15px_rgba(0,0,0,0.08)] transition-all duration-500">
+        <div className="bg-white rounded-[24px] md:rounded-[32px] p-5 md:p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-[0_25px_70px_-15px_rgba(0,0,0,0.08)] transition-all duration-500 print:shadow-none print:border print:border-slate-300 print:rounded-xl">
             <div className="mb-6 md:mb-8 relative z-10 flex items-center gap-3">
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100 text-base md:text-lg">📊</div>
                 <div>
@@ -46,7 +46,7 @@ interface MonteCarloWidgetProps {
 
 export const MonteCarloWidget: React.FC<MonteCarloWidgetProps> = ({ mcResult, mcSimulations, onClick }) => {
     return (
-        <div onClick={onClick} className="rounded-[24px] md:rounded-[32px] p-5 md:p-8 shadow-[0_20px_60px_-15px_rgba(255,100,100,0.15)] bg-gradient-to-br from-white to-rose-50 border border-slate-100/50 flex flex-col justify-between gap-2 relative overflow-hidden group hover:shadow-[0_25px_70px_-15px_rgba(255,100,100,0.25)] hover:-translate-y-1 transition-all duration-500 cursor-pointer min-h-[220px] md:min-h-[300px]">
+        <div onClick={onClick} className="rounded-[24px] md:rounded-[32px] p-5 md:p-8 shadow-[0_20px_60px_-15px_rgba(255,100,100,0.15)] bg-gradient-to-br from-white to-rose-50 border border-slate-100/50 flex flex-col justify-between gap-2 relative overflow-hidden group hover:shadow-[0_25px_70px_-15px_rgba(255,100,100,0.25)] hover:-translate-y-1 transition-all duration-500 cursor-pointer min-h-[220px] md:min-h-[300px] print:shadow-none print:border print:border-slate-300 print:rounded-xl print:min-h-0">
             <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-rose-100/30 to-transparent pointer-events-none"></div>
             <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-4 md:mb-6">

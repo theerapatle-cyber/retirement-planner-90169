@@ -113,6 +113,7 @@ export type RetirementInputs = {
     retireExtraExpense: number;
     retireSpendTrendPercent: number;
     retireSpecialAnnual: number;
+    retirePension: number;
     legacyFund: number;
     returnMode: "avg" | "custom";
     allocations: {
