@@ -148,14 +148,19 @@ export const RetirementDashboard = ({
             const principal = principalStats ? principalStats[i] : 0;
             const target = Number(label) <= Number(inputs.retireAge) ? required[i] : 0;
 
-            // Get Sum Assured for this age
+            // Get Sum Assured and Cash Flow for this age
             let sumAssured = 0;
+            let insuranceCashFlow = 0;
             if (insuranceChartData) {
                 const idx = insuranceChartData.labels.indexOf(age);
-                if (idx !== -1) sumAssured = (insuranceChartData.datasets[0].data[idx] as number) || 0;
+                if (idx !== -1) {
+                    sumAssured = (insuranceChartData.datasets[0].data[idx] as number) || 0;
+                    // Assuming dataset[1] is cash flow (inflows)
+                    insuranceCashFlow = (insuranceChartData.datasets[1]?.data[idx] as number) || 0;
+                }
             }
 
-            return { age, savings, principal, target, sumAssured };
+            return { age, savings, principal, target, sumAssured, insuranceCashFlow };
         });
     }, [inputs, result, insuranceChartData]);
 
@@ -174,12 +179,13 @@ export const RetirementDashboard = ({
                 }
                 
                 /* Reset Main Layout for Print */
+                /* Reset Main Layout for Print */
                 .print-no-padding { padding: 0 !important; margin: 0 !important; }
                 .print-reset-height { min-height: 0 !important; height: auto !important; overflow: visible !important; }
                 
                 @page {
                     size: A4 landscape;
-                    margin: 10mm;
+                    margin: 5mm; /* Reduced margins for mobile/iPad fit */
                 }
                 
                 /* Layout Grid for Single Page */
@@ -193,8 +199,8 @@ export const RetirementDashboard = ({
 
                 /* Chart Specifics */
                 #printable-chart { 
-                    height: auto !important;
-                    min-height: 500px !important; 
+                    height: 350px !important; /* Fixed smaller height for print to fit table */
+                    min-height: 300px !important; 
                     border: none !important;
                     box-shadow: none !important;
                     break-inside: avoid;
@@ -203,6 +209,7 @@ export const RetirementDashboard = ({
                     max-width: 100% !important;
                     overflow: visible !important;
                     display: block !important;
+                    margin-bottom: 10px !important;
                 }
                 
                 #printable-chart canvas {
@@ -215,8 +222,8 @@ export const RetirementDashboard = ({
                 /* Data Table Specifics */
                 #print-data-table { 
                     display: block !important; 
-                    margin-top: 20px !important;
-                    font-size: 10px;
+                    margin-top: 10px !important;
+                    font-size: 9px; /* Slightly smaller font */
                     width: 100%;
                 }
                 
@@ -286,10 +293,10 @@ export const RetirementDashboard = ({
             <div className="w-full px-3 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10 print:px-0 print:space-y-4 pt-[72px]">
 
                 {/* Print Only Header */}
-                <div className="hidden print:block mb-8 border-b-2 border-slate-800 pb-4">
+                <div className="hidden print:block mb-4 border-b-2 border-slate-800 pb-2">
                     <div className="flex justify-between items-end">
                         <div>
-                            <h1 className="text-3xl font-black text-slate-900 uppercase">Retirement Plan Report</h1>
+                            <h1 className="text-2xl font-black text-slate-900 uppercase">Retirement Plan Report</h1>
                             <p className="text-slate-500 text-sm mt-1 font-medium">รายงานวางแผนเกษียณอายุสำหรับ: {user?.name || "Guest User"}</p>
                         </div>
                         <div className="text-right">
@@ -839,7 +846,7 @@ export const RetirementDashboard = ({
                                             </button>
                                         </div>
                                     </div>
-                                    <div id="printable-chart" className="w-full relative h-[600px] md:h-[600px] print:h-auto print:min-h-[600px] bg-white rounded-3xl border border-slate-100 p-4 md:p-6 print:p-0 print:border-none print:shadow-none overflow-hidden print:overflow-visible print:break-inside-avoid">
+                                    <div id="printable-chart" className="w-full relative h-[600px] md:h-[600px] print:h-[350px] print:min-h-0 bg-white rounded-3xl border border-slate-100 p-4 md:p-6 print:p-0 print:border-none print:shadow-none overflow-hidden print:overflow-visible print:break-inside-avoid">
                                         <div className="hidden md:block print:hidden print-desktop-only w-full h-full">
                                             <ProjectionChart
                                                 inputs={inputs}
@@ -941,10 +948,11 @@ export const RetirementDashboard = ({
                                                 <table className="w-full text-left table-fixed">
                                                     <thead className="bg-gray-100 print:bg-gray-100 font-bold border-b border-black">
                                                         <tr>
-                                                            <th className="py-1 px-1 text-center border-r border-black uppercase w-[15%]">Age</th>
-                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[25%]">Principal</th>
-                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[25%]">Savings</th>
-                                                            <th className="py-1 px-1 text-right uppercase w-[35%]">Target</th>
+                                                            <th className="py-1 px-1 text-center border-r border-black uppercase w-[10%]">Age</th>
+                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">Principal</th>
+                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">Savings</th>
+                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">CashFlow</th>
+                                                            <th className="py-1 px-1 text-right uppercase w-[24%]">Target</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-black">
@@ -953,6 +961,7 @@ export const RetirementDashboard = ({
                                                                 <td className="py-0.5 px-1 text-center font-bold border-r border-black">{row.age}</td>
                                                                 <td className="py-0.5 px-1 text-right border-r border-black">{formatNumber(row.principal)}</td>
                                                                 <td className="py-0.5 px-1 text-right font-bold border-r border-black">{formatNumber(row.savings)}</td>
+                                                                <td className="py-0.5 px-1 text-right border-r border-black">{row.insuranceCashFlow > 0 ? formatNumber(row.insuranceCashFlow) : "-"}</td>
                                                                 <td className="py-0.5 px-1 text-right">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
                                                             </tr>
                                                         ))}
@@ -966,6 +975,7 @@ export const RetirementDashboard = ({
                                     <div className="flex gap-4">
                                         <span>* Principal: เงินต้นสะสม</span>
                                         <span>* Savings: เงินออมรวม</span>
+                                        <span>* CashFlow: เงินคืนประกัน</span>
                                         <span>* Target: เป้าหมาย</span>
                                     </div>
                                     <span>Generated by Financial Planner App</span>
