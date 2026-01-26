@@ -151,6 +151,9 @@
 
   body {
     @apply bg-background text-foreground antialiased font-sans;
+    overflow-x: hidden;
+    /* Prevent horizontal scroll/wobble on mobile */
+    width: 100%;
   }
 }
 
@@ -170,8 +173,10 @@
 
   /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 }
 

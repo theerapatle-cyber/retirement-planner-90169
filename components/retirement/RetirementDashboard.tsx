@@ -534,7 +534,7 @@ export const RetirementDashboard = ({
                                                         <p className="text-sm lg:text-base font-bold text-white/90 uppercase tracking-wide">เงินออมที่จะมี (Projected)</p>
                                                         <div className="w-2 h-2 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]"></div>
                                                     </div>
-                                                    <p className="text-2xl lg:text-4xl xl:text-[42px] font-black tracking-tighter text-white drop-shadow-sm leading-none">
+                                                    <p className="text-3xl lg:text-4xl xl:text-[42px] font-black tracking-tighter text-white drop-shadow-sm leading-none">
                                                         ฿{formatNumber(result.projectedFund)}
                                                     </p>
                                                 </div>

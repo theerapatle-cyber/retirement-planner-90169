@@ -389,8 +389,8 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     </button>
                 </div>
 
-                {/* Name Input */}
                 <div className="w-64 relative z-20">
+                    <Label className="text-slate-500 font-bold text-xs mb-1.5 block text-center">ชื่อของคุณ หรือ ชื่อแผน</Label>
                     <div className="relative">
                         <input
                             type="text"
@@ -1069,7 +1069,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
     // --- MAIN RENDER ---
     return (
-        <div className={`w-full font-sans relative ${isEmbedded ? 'h-full' : 'max-w-2xl mx-auto pb-12'}`}>
+        <div className={`w-full font-sans relative ${isEmbedded ? 'h-full' : 'max-w-2xl mx-auto pb-12 overflow-x-hidden'}`}>
 
             {/* Ambient Background Effects (Conditional) */}
             {!isEmbedded && (

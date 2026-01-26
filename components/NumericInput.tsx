@@ -39,11 +39,17 @@ export function NumericInput({
         onChange(formatted);
     };
 
+    const valueStr = String(value);
+    const length = valueStr.length;
+    let fontSizeClass = "";
+    if (length > 14) fontSizeClass = "text-[10px]";
+    else if (length > 10) fontSizeClass = "text-xs";
+
     return (
         <>
             <Input
                 {...props}
-                className={cn("cursor-pointer select-none", className)}
+                className={cn("cursor-pointer select-none transition-all", className, fontSizeClass)}
                 value={value}
                 readOnly
                 onClick={(e) => {
