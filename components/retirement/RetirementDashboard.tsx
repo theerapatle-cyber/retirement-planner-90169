@@ -193,14 +193,16 @@ export const RetirementDashboard = ({
 
                 /* Chart Specifics */
                 #printable-chart { 
-                    height: 500px !important; 
+                    height: auto !important;
+                    min-height: 500px !important; 
                     border: none !important;
                     box-shadow: none !important;
                     break-inside: avoid;
                     page-break-inside: avoid;
                     width: 100% !important;
                     max-width: 100% !important;
-                    overflow: hidden !important; /* changes from visible to hidden to clip correctly if needed, but 'contain' on canvas helps */
+                    overflow: visible !important;
+                    display: block !important;
                 }
                 
                 #printable-chart canvas {
@@ -371,7 +373,12 @@ export const RetirementDashboard = ({
                                     addInsurancePlan={addInsurancePlan}
                                     removeInsurancePlan={removeInsurancePlan}
                                     updateInsurancePlan={updateInsurancePlan}
-                                    onViewTable={() => setShowInsuranceTable(true)}
+                                    onViewTable={(id) => {
+                                        if (id) {
+                                            setForm(prev => ({ ...prev, selectedPlanId: id }));
+                                        }
+                                        setShowInsuranceTable(true);
+                                    }}
                                     savingMode={savingMode}
                                     setSavingMode={setSavingMode}
                                     returnMode={returnMode}
@@ -466,7 +473,8 @@ export const RetirementDashboard = ({
                         {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
                         {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
                         {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
-                        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-4 px-3 -mx-3 pb-4 items-start md:pb-0 md:px-0 md:mx-0 md:block md:space-y-6 no-scrollbar">
+                        {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
+                        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-4 px-3 -mx-3 pb-4 items-start md:pb-0 md:px-0 md:mx-0 md:block md:space-y-6 md:overflow-visible no-scrollbar">
 
                             {/* Hero Summary Card (Redesigned) */}
                             <div className={`min-w-full md:min-w-0 snap-center relative rounded-[24px] lg:rounded-[32px] p-4 sm:p-5 lg:p-8 xl:p-10 overflow-hidden font-sans shadow-xl lg:shadow-2xl transition-all duration-500 group print:hidden ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981] shadow-emerald-900/40' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444] shadow-red-900/40'}`}>
@@ -542,7 +550,7 @@ export const RetirementDashboard = ({
                             </div>
 
                             {/* Key Metrics Grid (Redesigned) */}
-                            <div className="min-w-full snap-center flex flex-col gap-3 relative print:hidden">
+                            <div className="min-w-full md:min-w-0 snap-center flex flex-col gap-3 relative print:hidden">
                                 {/* Grid Background Decoration */}
                                 <div className="hidden md:block absolute inset-0 -m-8 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
 
@@ -831,7 +839,7 @@ export const RetirementDashboard = ({
                                             </button>
                                         </div>
                                     </div>
-                                    <div id="printable-chart" className="w-full relative h-[600px] md:h-[600px] print:h-[500px] bg-white rounded-3xl border border-slate-100 p-4 md:p-6 print:p-0 print:border-none print:shadow-none overflow-hidden print:overflow-visible print:break-inside-avoid">
+                                    <div id="printable-chart" className="w-full relative h-[600px] md:h-[600px] print:h-auto print:min-h-[600px] bg-white rounded-3xl border border-slate-100 p-4 md:p-6 print:p-0 print:border-none print:shadow-none overflow-hidden print:overflow-visible print:break-inside-avoid">
                                         <div className="hidden md:block print:hidden print-desktop-only w-full h-full">
                                             <ProjectionChart
                                                 inputs={inputs}
@@ -854,42 +862,38 @@ export const RetirementDashboard = ({
                                                 chartTickInterval={chartTickInterval}
                                             />
                                         </div>
+
+                                        {/* Financial Highlights Table - Hidden on Desktop, Visible on Print (Inside Container) */}
+                                        <div className="hidden print:block mt-4 w-full pt-2 border-t border-slate-300">
+                                            <h3 className="text-lg font-bold text-black mb-2 px-1">สรุปรายการสำคัญ (Financial Summary)</h3>
+                                            <div className="overflow-hidden rounded-xl border border-slate-400 bg-white">
+                                                <table className="w-full border-collapse text-xs">
+                                                    <thead>
+                                                        <tr className="bg-slate-100 border-b border-slate-400">
+                                                            <th className="py-2.5 px-3 text-left font-bold text-black w-1/5 border-r border-slate-300">รายการ (Item)</th>
+                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/5 border-r border-slate-300">เงินออม (Savings)</th>
+                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/5 border-r border-slate-300">เป้าหมาย (Target)</th>
+                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/5 border-r border-slate-300">ทุนประกัน (Sum Assured)</th>
+                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/5">มรดก (Legacy)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr className="">
+                                                            <td className="py-3 px-3 font-bold text-black border-r border-slate-300">มูลค่า (Value)</td>
+                                                            <td className="py-3 px-3 text-right font-bold text-black border-r border-slate-300">฿{formatNumber2(result.projectedFund)}</td>
+                                                            <td className="py-3 px-3 text-right font-bold text-black border-r border-slate-300">฿{formatNumber2(result.targetFund)}</td>
+                                                            <td className="py-3 px-3 text-right font-bold text-black border-r border-slate-300">
+                                                                ฿{formatNumber(form.insurancePlans.reduce((sum, p) => sum + (Number(String(p.sumAssured).replace(/,/g, "")) || 0), 0))}
+                                                            </td>
+                                                            <td className="py-3 px-3 text-right font-bold text-black">฿{formatNumber(form.legacyFund || 0)}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    {/* PRINT ONLY: Financial Highlights Table */}
-                                    <div className="hidden print:block mt-4 w-full">
-                                        <table className="w-full border-collapse text-sm">
-                                            <thead>
-                                                <tr className="bg-slate-100 border-b-2 border-slate-300">
-                                                    <th className="py-2 px-3 text-left font-bold text-slate-700 w-1/5">รายการ (Item)</th>
-                                                    <th className="py-2 px-3 text-right font-bold text-slate-700 w-1/5">เงินออม (Savings)</th>
-                                                    <th className="py-2 px-3 text-right font-bold text-slate-700 w-1/5">เป้าหมาย (Target)</th>
-                                                    <th className="py-2 px-3 text-right font-bold text-slate-700 w-1/5">ทุนประกัน (Sum Assured)</th>
-                                                    <th className="py-2 px-3 text-right font-bold text-slate-700 w-1/5">มรดก (Legacy)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr className="border-b border-slate-200">
-                                                    <td className="py-3 px-3 font-bold text-slate-900">มูลค่า (Value)</td>
-                                                    <td className="py-3 px-3 text-right font-bold text-emerald-600">฿{formatNumber2(result.projectedFund)}</td>
-                                                    <td className="py-3 px-3 text-right font-bold text-slate-800">฿{formatNumber2(result.targetFund)}</td>
-                                                    <td className="py-3 px-3 text-right font-bold text-orange-500">
-                                                        ฿{formatNumber(form.insurancePlans.reduce((sum, p) => sum + (Number(String(p.sumAssured).replace(/,/g, "")) || 0), 0))}
-                                                    </td>
-                                                    <td className="py-3 px-3 text-right font-bold text-rose-500">฿{formatNumber(form.legacyFund || 0)}</td>
-                                                </tr>
-                                                <tr className="border-b border-slate-200 bg-slate-50/50">
-                                                    <td className="py-3 px-3 font-bold text-slate-900 border-r border-slate-200">กระแสเงินสด (Cash Flow)</td>
-                                                    <td colSpan={4} className="py-3 px-3 text-left text-slate-600 font-medium">
-                                                        <span className="font-bold text-slate-800">฿{formatNumber(form.retirePension || 0)}</span> / เดือน (หลังเกษียณ)
-                                                        {form.insurancePlans.length > 0 && (
-                                                            <span className="ml-4 text-xs text-slate-400">* ไม่รวมเงินคืนตามกรมธรรม์ประกันชีวิต</span>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+
                                     <div className="mt-8 flex flex-wrap items-center justify-center gap-4 pt-6 print:hidden">
                                         <button
                                             onClick={() => setShowSumAssured(!showSumAssured)}
