@@ -16,7 +16,7 @@ import {
     ScriptableContext,
     ChartData
 } from "chart.js";
-import { Line } from "react-chartjs-2";
+import { Line, Chart } from "react-chartjs-2";
 import { formatNumber } from "@/lib/utils";
 import { buildProjectionSeries } from "@/lib/retirement-calculation";
 import { CalculationResult, MonteCarloResult, RetirementInputs } from "@/types/retirement";
@@ -266,18 +266,14 @@ ChartJS.register(goalLabelPlugin, legacyLabelPlugin, crosshairPlugin, agePeriodP
 interface ProjectionChartProps {
     inputs: RetirementInputs;
     result: CalculationResult;
-    mcResult: MonteCarloResult;
+    mcResult: MonteCarloResult | null;
     showSumAssured: boolean;
     showActualSavings: boolean;
     insuranceChartData: InsuranceChartData | null;
     chartTickInterval: number;
+    viewMode?: 'line' | 'bar';
 }
 
-import { Chart } from "react-chartjs-2";
-
-// ... existing imports ...
-
-// ... existing code ...
 
 export const ProjectionChart: React.FC<ProjectionChartProps> = ({
     inputs,
@@ -286,7 +282,8 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
     showSumAssured,
     showActualSavings,
     insuranceChartData,
-    chartTickInterval
+    chartTickInterval,
+    viewMode = 'line'
 }) => {
     // Mobile Detection State
     const [isMobile, setIsMobile] = React.useState(false);
@@ -305,8 +302,8 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
 
     const projectionChart = useMemo(() => {
         const { labels, actual, required, actualHistory } = buildProjectionSeries(inputs, result);
-        const p5Series = mcResult.p5Series || labels.map(() => 0);
-        const p95Series = mcResult.p95Series || labels.map(() => 0);
+        const p5Series = mcResult?.p5Series || labels.map(() => 0);
+        const p95Series = mcResult?.p95Series || labels.map(() => 0);
         const sumAssuredSeries = labels.map(ageStr => {
             const age = Number(ageStr);
             if (!insuranceChartData) return 0;
@@ -314,6 +311,35 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
             if (idx !== -1) return insuranceChartData.datasets[0].data[idx] as number || 0;
             return 0;
         });
+
+        // Filter data for Bar view to reduce crowding
+        const indicesToKeep = labels.map((_, i) => i).filter(i => {
+            if (viewMode === 'line' || isMobile) return true;
+            const age = Number(labels[i]);
+            // Always keep first and last, otherwise filter by interval
+            return i === 0 || i === labels.length - 1 || age % chartTickInterval === 0;
+        });
+
+        const filteredLabels = indicesToKeep.map(i => labels[i]);
+        const filteredActual = indicesToKeep.map(i => actual[i]);
+        const filteredP5 = indicesToKeep.map(i => p5Series[i]);
+        const filteredP95 = indicesToKeep.map(i => p95Series[i]);
+        const filteredSumAssured = indicesToKeep.map(i => sumAssuredSeries[i]);
+        const filteredRequired = indicesToKeep.map(i => Math.min(i, required.length - 1)).map(j => required[j]); // Safety check for required mapping
+        // Note: required logic below uses map on labels originally, we should replicate that logic on filteredLabels
+
+        const _requiredMapped = indicesToKeep.map(originalIndex => {
+            // Replicate original logic: Number(labels[i]) <= Number(inputs.retireAge) ? val : null
+            // required array from buildProjectionSeries matches labels length usually
+            return Number(labels[originalIndex]) <= Number(inputs.retireAge) ? required[originalIndex] : null;
+        });
+
+        const _legacyMapped = indicesToKeep.map(originalIndex => {
+            return Number(labels[originalIndex]) >= Number(inputs.retireAge) ? inputs.legacyFund : null;
+        });
+
+        // Use these filtered series in the return object BUT carefully
+        const finalLabels = filteredLabels;
 
         const maxActual = Math.max(...actual);
         const maxRequired = Math.max(...required);
@@ -328,7 +354,14 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
             ticks: {
                 maxRotation: 0, minRotation: 0, autoSkip: false, maxTicksLimit: chartTickInterval === 1 ? 200 : undefined,
                 font: { size: chartTickInterval === 1 ? 10 : (isMobile ? 10 : 12) },
-                callback: function (this: any, val: any) { const label = this.getLabelForValue(val as number); const age = Number(label); if (age % (isMobile ? chartTickInterval * 2 : chartTickInterval) === 0) return label; return ""; }
+                callback: function (this: any, val: any) {
+                    const label = this.getLabelForValue(val as number);
+                    const age = Number(label);
+                    // In Desktop Bar view, we already filtered the data, so show every label remaining.
+                    if (viewMode === 'bar' && !isMobile) return label;
+                    if (age % (isMobile ? chartTickInterval * 2 : chartTickInterval) === 0) return label;
+                    return "";
+                }
             },
         };
 
@@ -348,26 +381,40 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
 
         return {
             data: {
-                labels,
+                labels: finalLabels,
                 datasets: [
-                    { label: "P5", data: p5Series, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: "+1", tension: 0.4, order: 5, hidden: isMobile, type: 'line' as const },
-                    { label: "P95", data: p95Series, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: false, tension: 0.4, order: 6, hidden: isMobile, type: 'line' as const },
+                    { label: "P5", data: filteredP5, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: "+1", tension: 0.4, order: 5, hidden: isMobile, type: 'line' as const },
+                    { label: "P95", data: filteredP95, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: false, tension: 0.4, order: 6, hidden: isMobile, type: 'line' as const },
                     {
                         label: "เงินออมคาดว่าจะมี",
-                        data: actual,
+                        data: filteredActual,
                         borderColor: "#10B981",
                         // Bar specific style
-                        backgroundColor: isMobile ? "#10B981" : (context: any) => {
-                            const ctx = context.chart.ctx;
-                            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                            gradient.addColorStop(0, "rgba(16, 185, 129, 0.2)"); gradient.addColorStop(1, "rgba(16, 185, 129, 0.0)"); return gradient;
+                        backgroundColor: (context: any) => {
+                            if (viewMode === 'bar' && !isMobile) {
+                                const ctx = context.chart.ctx;
+                                const gradient = ctx.createLinearGradient(0, 0, 0, context.chart.height);
+                                gradient.addColorStop(0, "rgba(16, 185, 129, 0.8)");
+                                gradient.addColorStop(1, "rgba(16, 185, 129, 0.2)");
+                                return gradient;
+                            }
+                            // Mobile or Line View
+                            if (viewMode === 'line' || isMobile) {
+                                const ctx = context.chart.ctx;
+                                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                                gradient.addColorStop(0, "rgba(16, 185, 129, 0.2)");
+                                gradient.addColorStop(1, "rgba(16, 185, 129, 0.0)");
+                                return gradient;
+                            }
+                            return "#10B981";
                         },
-                        borderWidth: isMobile ? 0 : 3,
-                        borderRadius: isMobile ? 4 : 0,
-                        barThickness: isMobile ? 8 : undefined, // Thinner bars on mobile
+                        borderWidth: (viewMode === 'bar' && !isMobile) ? 0 : (isMobile ? 0 : 3),
+                        borderRadius: (viewMode === 'bar' && !isMobile) ? 4 : (isMobile ? 4 : 0),
+                        barThickness: (viewMode === 'bar' && !isMobile) ? 'flex' : (isMobile ? 8 : undefined),
+                        maxBarThickness: 60,
                         tension: 0.4,
                         fill: true,
-                        pointRadius: 3,
+                        pointRadius: (viewMode === 'bar' && !isMobile) ? 0 : 3,
                         pointHoverRadius: 6,
                         pointBackgroundColor: "#ffffff",
                         pointBorderColor: "#10B981",
@@ -376,14 +423,15 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         pointHoverBorderColor: "#10B981",
                         pointHoverBorderWidth: 3,
                         order: 1,
-                        hidden: !showActualSavings
+                        hidden: !showActualSavings,
+                        type: (viewMode === 'bar' && !isMobile) ? 'bar' as const : 'line' as const
                     },
                     {
                         label: "เงินที่เก็บได้จริง",
-                        data: actualHistory,
+                        data: actualHistory.filter((_, i) => indicesToKeep.includes(i)),
                         borderColor: "#2563eb",
                         backgroundColor: "transparent",
-                        pointRadius: 3,
+                        pointRadius: 4,
                         pointHoverRadius: 6,
                         pointBackgroundColor: "#ffffff",
                         pointBorderColor: "#2563eb",
@@ -395,14 +443,11 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                     },
                     {
                         label: "เป้าหมาย",
-                        data: required.map((val, i) => Number(labels[i]) <= Number(inputs.retireAge) ? val : null),
+                        data: _requiredMapped,
                         borderColor: "#2563eb",
                         borderDash: [6, 6],
                         backgroundColor: "#2563eb",
-                        borderWidth: isMobile ? 2 : 0, // Visible line on mobile (since plugin might not draw perpendicular well on rotated axis? Plugin logic needs checking. Actually plugin draws specific lines. If rotated, plugin might break. I should rely on dataset line for mobile target).
-                        // Wait, plugin draws horizontal line on vertical chart. On horizontal chart, it should draw vertical line. 
-                        // GoalLabelPlugin logic relies on axis 'x' and 'y'. If I swap them, plugin might need update or disable.
-                        // I will DISABLE GoalLabelPlugin on mobile and use this dataset line as the visual indicator.
+                        borderWidth: (viewMode === 'bar' && !isMobile) ? 2 : (isMobile ? 2 : 0),
 
                         pointRadius: 0,
                         pointBackgroundColor: "#ffffff",
@@ -417,7 +462,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                     },
                     {
                         label: "มรดก",
-                        data: labels.map((age, i) => Number(age) >= Number(inputs.retireAge) ? inputs.legacyFund : null),
+                        data: _legacyMapped,
                         borderColor: "#EF4444",
                         borderDash: [5, 5],
                         backgroundColor: "transparent",
@@ -431,12 +476,12 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                     },
                     {
                         label: "ทุนประกัน",
-                        data: sumAssuredSeries,
+                        data: filteredSumAssured,
                         borderColor: "#F97316",
-                        backgroundColor: "transparent",
-                        borderWidth: 2,
+                        backgroundColor: (viewMode === 'bar' && !isMobile) ? "rgba(249, 115, 22, 0.4)" : "transparent",
+                        borderWidth: (viewMode === 'bar' && !isMobile) ? 0 : 2,
                         stepped: false,
-                        pointRadius: 3,
+                        pointRadius: (viewMode === 'bar' && !isMobile) ? 0 : 3,
                         pointHoverRadius: 6,
                         pointBackgroundColor: "#ffffff",
                         pointBorderColor: "#F97316",
@@ -444,10 +489,13 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         pointHoverBackgroundColor: "#ffffff",
                         pointHoverBorderColor: "#F97316",
                         pointHoverBorderWidth: 3,
+                        borderRadius: (viewMode === 'bar' && !isMobile) ? 4 : 0,
+                        barThickness: (viewMode === 'bar' && !isMobile) ? 'flex' : undefined,
+                        maxBarThickness: 60,
                         fill: false,
                         order: 3,
                         hidden: !showSumAssured,
-                        type: 'line' as const
+                        type: (viewMode === 'bar' && !isMobile) ? 'bar' as const : 'line' as const
                     },
                 ],
             },
@@ -482,18 +530,23 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                     legacyLabelPlugin: { legacyValue: inputs.legacyFund, display: !isMobile }, // Disable on Mobile
                     agePeriodPlugin: { tickInterval: chartTickInterval },
                 },
+                categoryPercentage: 0.6,
+                barPercentage: 0.9,
                 scales: {
-                    x: isMobile ? moneyScaleConfig : ageScaleConfig,
+                    x: {
+                        ... (isMobile ? moneyScaleConfig : ageScaleConfig),
+                        stacked: (viewMode === 'bar' && !isMobile) ? false : false // Ensure side-by-side
+                    },
                     y: isMobile ? ageScaleConfig : moneyScaleConfig,
                 },
             },
         };
-    }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData, chartTickInterval, isMobile]);
+    }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData, chartTickInterval, isMobile, viewMode]);
 
     return (
         <Chart
-            type={isMobile ? 'bar' : 'line'}
-            data={projectionChart.data}
+            type={isMobile ? 'bar' : (viewMode === 'bar' ? 'bar' : 'line')}
+            data={projectionChart.data as any}
             options={{
                 ...projectionChart.options,
                 maintainAspectRatio: false,

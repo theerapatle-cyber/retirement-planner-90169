@@ -308,12 +308,12 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         type="button"
                         onClick={field ? changeBy(field, -step) : undefined}
                         disabled={disabled}
-                        className="w-12 h-12 rounded-full bg-white/50 border border-slate-300 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
+                        className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm"
                     >
                         <Minus size={18} strokeWidth={2.5} />
                     </button>
 
-                    <div className={`flex-1 relative bg-white border border-slate-300 rounded-full h-12 flex items-center px-4 transition-all duration-300 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50/50 shadow-sm hover:shadow-md focus-within:bg-white backdrop-blur-sm ${disabled ? 'bg-slate-50/50 opacity-70' : ''}`}>
+                    <div className={`flex-1 relative bg-white border border-slate-200 rounded-full h-12 flex items-center px-4 transition-all duration-300 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50 shadow-sm hover:shadow-md ${disabled ? 'bg-slate-50 opacity-70' : ''}`}>
                         <NumericInput
                             value={value}
                             onChange={field ? handleChange(field) : () => { }}
@@ -327,7 +327,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         type="button"
                         onClick={field ? changeBy(field, step) : undefined}
                         disabled={disabled}
-                        className="w-12 h-12 rounded-full bg-white/50 border border-slate-300 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm backdrop-blur-sm"
+                        className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm"
                     >
                         <Plus size={18} strokeWidth={2.5} />
                     </button>
@@ -357,8 +357,8 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
     const renderPersonalStep = () => (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="flex flex-col items-center justify-center gap-4 py-2">
-                <div className="relative group/avatar cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                    <div className={`w-24 h-24 rounded-full border-4 border-white shadow-xl shadow-slate-200 flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-105 ${gender === 'male' ? 'bg-indigo-50' : 'bg-pink-50'}`}>
+                <div className="relative group/avatar cursor-pointer mb-2" onClick={() => fileInputRef.current?.click()}>
+                    <div className={`w-28 h-28 rounded-full border-4 border-white shadow-xl shadow-slate-100 flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-105 ${gender === 'male' ? 'bg-indigo-50' : 'bg-pink-50'}`}>
                         {avatarImage ? (
                             <img src={avatarImage} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
@@ -371,7 +371,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                 </div>
 
-                <div className="flex bg-slate-100/80 p-1 rounded-full shadow-inner w-56 relative border border-slate-200/50 backdrop-blur-sm">
+                <div className="flex bg-slate-100 p-1 rounded-full w-56 relative border border-slate-200">
                     {/* Sliding Background for animation effect could be added here, but simple conditional formatting works well too */}
                     <button
                         onClick={() => setGender('male')}
@@ -474,7 +474,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
             </div>
 
             <div className="space-y-6 px-3">
-                <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 space-y-6">
+                <div className="space-y-6">
                     <InputControl
                         label="เงินออมปัจจุบัน (บาท)"
                         value={form.currentSavings}
@@ -527,7 +527,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     </div>
                 </div>
 
-                <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 space-y-6">
+                <div className="space-y-6 pt-6 border-t border-slate-100/50">
                     <div className="space-y-4">
                         <InputControl
                             label="ผลตอบแทนที่คาดหวัง (% ต่อปี)"
@@ -664,8 +664,6 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         />
                     </div>
                 </div>
-
-
             </div>
 
             {/* Insurance Section - Detailed List (Screenshot Match) */}
@@ -1017,7 +1015,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     tooltip="Pro,Premium plan อัตราผลตอบแทนที่คาดว่าจะได้รับจากเงินก้อนที่เหลืออยู่หลังเกษียณ เช่น 4%"
                 />
 
-                <div className="bg-amber-50/50 p-6 rounded-3xl border border-amber-100/50 space-y-4">
+                <div className="p-4 space-y-4 pt-6 border-t border-slate-100/50">
                     <InputControl
                         label="ค่าใช้จ่ายหลังเกษียณ (ต่อเดือน ไม่คิดเงินเฟ้อ) โดยทั่วไปมักเป็น 80% ของค่าใช้จ่ายปัจจุบัน"
                         value={form.retireExtraExpense}
@@ -1069,7 +1067,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
     // --- MAIN RENDER ---
     return (
-        <div className={`w-full font-sans relative ${isEmbedded ? 'h-full' : 'max-w-2xl mx-auto pb-12 overflow-x-hidden'}`}>
+        <div className={`w-full font-sans relative ${isEmbedded ? 'h-full pb-32' : 'max-w-2xl mx-auto pb-12 overflow-x-hidden'}`}>
 
             {/* Ambient Background Effects (Conditional) */}
             {!isEmbedded && (

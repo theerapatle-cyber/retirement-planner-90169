@@ -120,6 +120,8 @@ export const RetirementDashboard = ({
     const [showMonteCarloDetails, setShowMonteCarloDetails] = React.useState(false);
     const [isMonteCarloOpen, setIsMonteCarloOpen] = React.useState(false);
     const [chartTickInterval, setChartTickInterval] = React.useState<number>(5);
+    const [viewMode, setViewMode] = React.useState<'line' | 'bar'>('line');
+    const [showMC, setShowMC] = React.useState(true);
 
     // Responsive Sidebar Logic:
     // - Desktop (>=1280): Auto-open sidebar
@@ -413,8 +415,10 @@ export const RetirementDashboard = ({
                     `}>
 
                         {/* RIGHT HEADER: Financial Results Summary + Buttons */}
-                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 pt-6 print:hidden">
-                            <div>
+                        <div className="sticky top-0 z-30 flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 py-4 -mx-4 px-4 md:mx-0 md:px-0 bg-slate-50 relative overflow-hidden md:static md:bg-transparent md:border-none md:p-0 print:hidden transition-all duration-200">
+                            {/* Mobile Grid Background */}
+                            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none md:hidden" />
+                            <div className="relative z-10">
                                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">สรุปผลลัพธ์ทางการเงิน</h2>
                                 <p className="text-slate-500 text-sm font-medium mt-0.5">ภาพรวมวางแผนการรับมือเกษียณ</p>
                             </div>
@@ -806,14 +810,39 @@ export const RetirementDashboard = ({
                                             <p className="text-sm text-slate-500 font-medium pl-4.5">Wealth Projection & Goal Analysis</p>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-3">
-                                            <div className="flex bg-slate-100/80 p-1.5 rounded-2xl backdrop-blur-sm mr-4">
+                                            {/* View Mode Toggle - Hidden on Mobile */}
+                                            <div className="hidden md:flex bg-white/50 p-1 rounded-xl backdrop-blur-sm border border-slate-200 shadow-sm">
+                                                <button
+                                                    onClick={() => setViewMode('line')}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 flex items-center gap-1.5 ${viewMode === 'line'
+                                                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
+                                                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
+                                                        }`}
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>
+                                                    กราฟเส้น
+                                                </button>
+                                                <button
+                                                    onClick={() => setViewMode('bar')}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 flex items-center gap-1.5 ${viewMode === 'bar'
+                                                        ? "bg-emerald-500 text-white shadow-md shadow-emerald-200"
+                                                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
+                                                        }`}
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" x2="12" y1="20" y2="10" /><line x1="18" x2="18" y1="20" y2="4" /><line x1="6" x2="6" y1="20" y2="16" /></svg>
+                                                    กราฟแท่ง
+                                                </button>
+                                            </div>
+
+                                            {/* Interval Selection */}
+                                            <div className="flex bg-white/50 p-1 rounded-xl backdrop-blur-sm border border-slate-200 shadow-sm">
                                                 {[1, 5, 10].map((interval) => (
                                                     <button
                                                         key={interval}
                                                         onClick={() => setChartTickInterval(interval)}
-                                                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${interval === 1 ? 'hidden md:block' : ''} ${chartTickInterval === interval
-                                                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                                                            : "text-slate-500 hover:bg-white hover:shadow-sm"
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${interval === 1 ? 'hidden md:block' : ''} ${chartTickInterval === interval
+                                                            ? "bg-slate-800 text-white shadow-md shadow-slate-200"
+                                                            : "text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
                                                             }`}
                                                     >
                                                         {interval} ปี
@@ -851,18 +880,19 @@ export const RetirementDashboard = ({
                                             <ProjectionChart
                                                 inputs={inputs}
                                                 result={result}
-                                                mcResult={mcResult}
+                                                mcResult={showMC ? mcResult : null}
                                                 showSumAssured={showSumAssured}
                                                 showActualSavings={showActualSavings}
                                                 insuranceChartData={insuranceChartData}
                                                 chartTickInterval={chartTickInterval}
+                                                viewMode={viewMode}
                                             />
                                         </div>
                                         <div className="block md:hidden print:hidden print-mobile-only w-full h-full">
                                             <MobileProjectionChart
                                                 inputs={inputs}
                                                 result={result}
-                                                mcResult={mcResult}
+                                                mcResult={showMC ? mcResult : null}
                                                 showSumAssured={showSumAssured}
                                                 showActualSavings={showActualSavings}
                                                 insuranceChartData={insuranceChartData}
@@ -901,84 +931,95 @@ export const RetirementDashboard = ({
                                     </div>
 
 
-                                    <div className="mt-8 flex flex-wrap items-center justify-center gap-4 pt-6 print:hidden">
+                                    {/* Chart Control Toggles - Redesigned (Pill Style) */}
+                                    <div className="mt-8 flex flex-col md:flex-row items-center justify-center gap-3 pt-6 print:hidden">
+
+                                        {/* Sum Assured Toggle - Orange */}
                                         <button
                                             onClick={() => setShowSumAssured(!showSumAssured)}
-                                            className={`px-5 py-2.5 rounded-full text-sm font-bold border-2 transition-all duration-300 flex items-center gap-2 ${showSumAssured
-                                                ? "bg-orange-50 border-orange-200 text-orange-600 shadow-sm hover:bg-orange-100"
+                                            className={`w-full md:w-auto px-6 py-3 rounded-full text-sm font-bold border transition-all duration-300 flex items-center justify-center gap-3 ${showSumAssured
+                                                ? "bg-white border-orange-200 text-orange-600 shadow-sm ring-2 ring-orange-100 ring-offset-1"
                                                 : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
                                                 }`}
                                         >
-                                            <div className={`w-2.5 h-2.5 rounded-full ${showSumAssured ? "bg-orange-500" : "bg-slate-300"}`}></div>
+                                            <div className={`w-3 h-3 rounded-full ${showSumAssured ? "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" : "bg-slate-300"}`}></div>
                                             แสดงทุนประกัน
                                         </button>
 
+                                        {/* Actual Savings Toggle - Blue */}
                                         <button
                                             onClick={() => setShowActualSavings(!showActualSavings)}
-                                            className={`px-5 py-2.5 rounded-full text-sm font-bold border-2 transition-all duration-300 flex items-center gap-2 ${showActualSavings
-                                                ? "bg-blue-50 border-blue-200 text-blue-600 shadow-sm hover:bg-blue-100"
+                                            className={`w-full md:w-auto px-6 py-3 rounded-full text-sm font-bold border transition-all duration-300 flex items-center justify-center gap-3 ${showActualSavings
+                                                ? "bg-white border-blue-200 text-blue-600 shadow-sm ring-2 ring-blue-100 ring-offset-1"
                                                 : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
                                                 }`}
                                         >
-                                            <div className={`w-2.5 h-2.5 rounded-full ${showActualSavings ? "bg-blue-600" : "bg-slate-300"}`}></div>
+                                            <div className={`w-3 h-3 rounded-full ${showActualSavings ? "bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]" : "bg-slate-300"}`}></div>
                                             แสดงเงินที่เก็บได้จริง
                                         </button>
 
-                                        <div className="px-5 py-2.5 rounded-full text-sm font-bold border-2 border-emerald-100 bg-emerald-50/50 text-emerald-600 flex items-center gap-2 cursor-default">
-                                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
+                                        {/* Monte Carlo Toggle - Green */}
+                                        <button
+                                            onClick={() => setShowMC(!showMC)}
+                                            className={`w-full md:w-auto px-6 py-3 rounded-full text-sm font-bold border transition-all duration-300 flex items-center justify-center gap-3 ${showMC
+                                                ? "bg-white border-emerald-200 text-emerald-600 shadow-sm ring-2 ring-emerald-100 ring-offset-1"
+                                                : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
+                                                }`}
+                                        >
+                                            <div className={`w-3 h-3 rounded-full ${showMC ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" : "bg-slate-300"}`}></div>
                                             Monte Carlo Simulation P5-P95
+                                        </button>
+                                    </div>
+
+                                    {/* PRINT ONLY: Chart Data Table */}
+                                    <div id="print-data-table" className="hidden print:block mt-6 font-mono text-black">
+                                        <h3 className="text-[10px] font-bold uppercase tracking-widest mb-2 border-b border-black pb-1 inline-block">DATA TABLE (YEARLY ANALYSIS)</h3>
+                                        <div className="grid grid-cols-3 gap-4 text-[8px] leading-tight">
+                                            {/* Generate 3 Columns */}
+                                            {Array.from({ length: 3 }).map((_, colIndex) => {
+                                                const chunkSize = Math.ceil(printData.length / 3);
+                                                const start = colIndex * chunkSize;
+                                                const end = start + chunkSize;
+                                                const dataSlice = printData.slice(start, end);
+
+                                                return (
+                                                    <div key={colIndex} className="border border-black">
+                                                        <table className="w-full text-left table-fixed">
+                                                            <thead className="bg-gray-100 print:bg-gray-100 font-bold border-b border-black">
+                                                                <tr>
+                                                                    <th className="py-1 px-1 text-center border-r border-black uppercase w-[10%]">Age</th>
+                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">Principal</th>
+                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">Savings</th>
+                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">CashFlow</th>
+                                                                    <th className="py-1 px-1 text-right uppercase w-[24%]">Target</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y divide-black">
+                                                                {dataSlice.map((row: any) => (
+                                                                    <tr key={row.age} className="border-b border-black last:border-0">
+                                                                        <td className="py-0.5 px-1 text-center font-bold border-r border-black">{row.age}</td>
+                                                                        <td className="py-0.5 px-1 text-right border-r border-black">{formatNumber(row.principal)}</td>
+                                                                        <td className="py-0.5 px-1 text-right font-bold border-r border-black">{formatNumber(row.savings)}</td>
+                                                                        <td className="py-0.5 px-1 text-right border-r border-black">{row.insuranceCashFlow > 0 ? formatNumber(row.insuranceCashFlow) : "-"}</td>
+                                                                        <td className="py-0.5 px-1 text-right">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="text-[8px] mt-2 flex justify-between items-center border-t border-black pt-2 uppercase font-medium">
+                                            <div className="flex gap-4">
+                                                <span>* Principal: เงินต้นสะสม</span>
+                                                <span>* Savings: เงินออมรวม</span>
+                                                <span>* CashFlow: เงินคืนประกัน</span>
+                                                <span>* Target: เป้าหมาย</span>
+                                            </div>
+                                            <span>Generated by Financial Planner App</span>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            {/* PRINT ONLY: Chart Data Table */}
-                            <div id="print-data-table" className="hidden print:block mt-6 font-mono text-black">
-                                <h3 className="text-[10px] font-bold uppercase tracking-widest mb-2 border-b border-black pb-1 inline-block">DATA TABLE (YEARLY ANALYSIS)</h3>
-                                <div className="grid grid-cols-3 gap-4 text-[8px] leading-tight">
-                                    {/* Generate 3 Columns */}
-                                    {Array.from({ length: 3 }).map((_, colIndex) => {
-                                        const chunkSize = Math.ceil(printData.length / 3);
-                                        const start = colIndex * chunkSize;
-                                        const end = start + chunkSize;
-                                        const dataSlice = printData.slice(start, end);
-
-                                        return (
-                                            <div key={colIndex} className="border border-black">
-                                                <table className="w-full text-left table-fixed">
-                                                    <thead className="bg-gray-100 print:bg-gray-100 font-bold border-b border-black">
-                                                        <tr>
-                                                            <th className="py-1 px-1 text-center border-r border-black uppercase w-[10%]">Age</th>
-                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">Principal</th>
-                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">Savings</th>
-                                                            <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">CashFlow</th>
-                                                            <th className="py-1 px-1 text-right uppercase w-[24%]">Target</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-black">
-                                                        {dataSlice.map((row: any) => (
-                                                            <tr key={row.age} className="border-b border-black last:border-0">
-                                                                <td className="py-0.5 px-1 text-center font-bold border-r border-black">{row.age}</td>
-                                                                <td className="py-0.5 px-1 text-right border-r border-black">{formatNumber(row.principal)}</td>
-                                                                <td className="py-0.5 px-1 text-right font-bold border-r border-black">{formatNumber(row.savings)}</td>
-                                                                <td className="py-0.5 px-1 text-right border-r border-black">{row.insuranceCashFlow > 0 ? formatNumber(row.insuranceCashFlow) : "-"}</td>
-                                                                <td className="py-0.5 px-1 text-right">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                                <div className="text-[8px] mt-2 flex justify-between items-center border-t border-black pt-2 uppercase font-medium">
-                                    <div className="flex gap-4">
-                                        <span>* Principal: เงินต้นสะสม</span>
-                                        <span>* Savings: เงินออมรวม</span>
-                                        <span>* CashFlow: เงินคืนประกัน</span>
-                                        <span>* Target: เป้าหมาย</span>
-                                    </div>
-                                    <span>Generated by Financial Planner App</span>
                                 </div>
                             </div>
 

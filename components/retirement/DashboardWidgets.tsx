@@ -39,7 +39,7 @@ export const AllocationWidget: React.FC<AllocationWidgetProps> = ({ inputs }) =>
 };
 
 interface MonteCarloWidgetProps {
-    mcResult: MonteCarloResult;
+    mcResult: MonteCarloResult | null;
     mcSimulations: number;
     onClick: () => void;
 }
@@ -63,7 +63,7 @@ export const MonteCarloWidget: React.FC<MonteCarloWidgetProps> = ({ mcResult, mc
                         <span className="text-xs md:text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">ความน่าจะเป็น (Success Rate)</span>
                         <div className="flex items-baseline gap-2">
                             <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-700 tracking-tighter filter drop-shadow-sm transition-all group-hover:scale-105 origin-left duration-300">
-                                {Math.round(mcResult.probability * 100)}%
+                                {Math.round((mcResult?.probability || 0) * 100)}%
                             </h2>
                         </div>
                     </div>
@@ -72,7 +72,7 @@ export const MonteCarloWidget: React.FC<MonteCarloWidgetProps> = ({ mcResult, mc
                             <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                             มิดเดียนผลลัพธ์ (P50)
                         </p>
-                        <span className="font-mono text-lg md:text-xl font-bold text-slate-700 tracking-tight block">฿{formatNumber(mcResult.p50)}</span>
+                        <span className="font-mono text-lg md:text-xl font-bold text-slate-700 tracking-tight block">฿{formatNumber(mcResult?.p50 || 0)}</span>
                     </div>
                 </div>
             </div>

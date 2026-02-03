@@ -36,7 +36,7 @@ ChartJS.register(
 interface MobileProjectionChartProps {
     inputs: RetirementInputs;
     result: CalculationResult;
-    mcResult: MonteCarloResult;
+    mcResult: MonteCarloResult | null;
     showSumAssured: boolean;
     showActualSavings: boolean;
     insuranceChartData: InsuranceChartData | null;
@@ -87,8 +87,8 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
         const filteredRequired = filterByIndices(required);
 
         // MC Series
-        const p5Series = mcResult.p5Series ? filterByIndices(mcResult.p5Series) : filteredLabels.map(() => 0);
-        const p95Series = mcResult.p95Series ? filterByIndices(mcResult.p95Series) : filteredLabels.map(() => 0);
+        const p5Series = mcResult?.p5Series ? filterByIndices(mcResult.p5Series) : filteredLabels.map(() => 0);
+        const p95Series = mcResult?.p95Series ? filterByIndices(mcResult.p95Series) : filteredLabels.map(() => 0);
 
         // Insurance Series
         const sumAssuredSeries = labels.map(ageStr => {
