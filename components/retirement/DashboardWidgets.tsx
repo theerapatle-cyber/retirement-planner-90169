@@ -75,7 +75,7 @@ export const MonteCarloWidget: React.FC<MonteCarloWidgetProps> = ({ mcResult, mc
                         <span className="text-xs md:text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">ความน่าจะเป็น (Success Rate)</span>
                         <div className="flex items-baseline gap-2">
                             <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-700 tracking-tighter filter drop-shadow-sm transition-all group-hover:scale-105 origin-left duration-300">
-                                {Math.round((mcResult?.probability || 0) * 100)}%
+                                {Math.round(mcResult?.probability || 0)}%
                             </h2>
                         </div>
                     </div>

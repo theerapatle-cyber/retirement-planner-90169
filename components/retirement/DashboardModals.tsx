@@ -768,7 +768,7 @@ export const MonteCarloDetailsModal: React.FC<MonteCarloDetailsModalProps> = ({ 
                     </div>
                     <div className="mt-6 flex flex-col items-center justify-center bg-slate-900 text-white rounded-3xl p-6 shadow-lg shadow-slate-200">
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">ความน่าจะเป็นที่จะสำเร็จ</span>
-                        <span className="text-4xl font-black tracking-tight">{formatNumber2(mcResult.probability * 100, 0)}%</span>
+                        <span className="text-4xl font-black tracking-tight">{formatNumber2(mcResult.probability, 0)}%</span>
                         <span className="text-[10px] text-slate-500 mt-2">Success Rate from 1,000+ simulations</span>
                     </div>
                 </div>
