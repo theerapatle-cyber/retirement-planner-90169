@@ -20,7 +20,7 @@ import { buildProjectionSeries } from "@/lib/retirement-calculation";
 import { CalculationResult, MonteCarloResult, RetirementInputs } from "@/types/retirement";
 import { InsuranceChartData } from "./DashboardCharts"; // Import shared interface
 
-// Register ChartJS components
+// Register ChartJS components (ลงทะเบียน Component กราฟที่ต้องใช้)
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -34,15 +34,16 @@ ChartJS.register(
 );
 
 interface MobileProjectionChartProps {
-    inputs: RetirementInputs;
-    result: CalculationResult;
-    mcResult: MonteCarloResult | null;
-    showSumAssured: boolean;
-    showActualSavings: boolean;
-    insuranceChartData: InsuranceChartData | null;
-    chartTickInterval: number;
+    inputs: RetirementInputs; // ข้อมูล Input ทั้งหมด
+    result: CalculationResult; // ผลลัพธ์การคำนวณ
+    mcResult: MonteCarloResult | null; // ผลลัพธ์ Monte Carlo (ถ้ามี)
+    showSumAssured: boolean; // แสดงกราฟทุนประกันหรือไม่
+    showActualSavings: boolean; // แสดงกราฟเงินออมหรือไม่
+    insuranceChartData: InsuranceChartData | null; // ข้อมูลกราฟประกัน
+    chartTickInterval: number; // ระยะห่างปี (เช่น ทุก 1 ปี, 5 ปี)
 }
 
+// --- MobileProjectionChart: กราฟคาดการณ์สำหรับมือถือ (แสดงแนวตั้ง/แนวนอนได้) ---
 export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
     inputs,
     result,
@@ -53,44 +54,52 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
     chartTickInterval
 }) => {
     // Mode State: 'horizontal' (Bar Chart) vs 'vertical' (Column Chart)
+    // สำหรับ Mobile จะใช้ Vertical เป็นหลัก แต่เตรียมไว้เผื่อปรับเปลี่ยน
     const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
 
-    // Formatting Helpers
+    // Formatting Helpers (ตัวช่วยจัดรูปแบบตัวเลข)
     const valFormatter = (val: number) => {
         if (val >= 1000000) return (val / 1000000).toFixed(1) + "M";
         if (val >= 1000) return (val / 1000).toFixed(0) + "k";
         return String(val);
     };
 
+    // Enforce minimum interval of 5 years on mobile/vertical charts to prevent overcrowding
+    // บังคับให้แสดงผลทุก 5 ปี หากเลือก 1 ปี เพื่อไม่ให้กราฟบนจอมือถือแน่นเกินไป
+    // If user selects 1 Year on desktop, mobile will still show 5 Years.
+    const effectiveInterval = chartTickInterval === 1 ? 5 : chartTickInterval;
+
     const chartData = useMemo(() => {
+        // เตรียมข้อมูลชุดข้อมูล (Series)
         const { labels, actual, required } = buildProjectionSeries(inputs, result);
 
         // Logic: Keep Current Age, Retirement Age, End Age, and every Nth year
+        // กรองข้อมูลแสดงเฉพาะปีที่ต้องการ: ปีปัจจุบัน, ปีเกษียณ, ปีสุดท้าย, และตามจำนวนปีที่เลือก (เช่น ทุก 5 ปี)
         const indicesToKeep: number[] = [];
         labels.forEach((ageStr, index) => {
             const age = Number(ageStr);
             const isStart = index === 0;
             const isEnd = index === labels.length - 1;
             const isRetirement = age === Number(inputs.retireAge);
-            const isInterval = age % chartTickInterval === 0;
+            const isInterval = age % effectiveInterval === 0;
 
             if (isStart || isEnd || isRetirement || isInterval) {
                 indicesToKeep.push(index);
             }
         });
 
-        // Helper to filter array by indices
+        // Helper to filter array by indices (ฟังก์ชันช่วยกรองอาร์เรย์ตาม Index ที่เลือก)
         const filterByIndices = (arr: any[]) => arr.filter((_, i) => indicesToKeep.includes(i));
 
         const filteredLabels = filterByIndices(labels);
         const filteredActual = filterByIndices(actual);
         const filteredRequired = filterByIndices(required);
 
-        // MC Series
+        // MC Series (เตรียมข้อมูล Monte Carlo ถ้ามี)
         const p5Series = mcResult?.p5Series ? filterByIndices(mcResult.p5Series) : filteredLabels.map(() => 0);
         const p95Series = mcResult?.p95Series ? filterByIndices(mcResult.p95Series) : filteredLabels.map(() => 0);
 
-        // Insurance Series
+        // Insurance Series (เตรียมข้อมูลประกัน)
         const sumAssuredSeries = labels.map(ageStr => {
             const age = Number(ageStr);
             if (!insuranceChartData) return 0;
@@ -99,7 +108,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
         });
         const filteredSumAssured = filterByIndices(sumAssuredSeries);
 
-        // Calculate suggested Max
+        // Calculate suggested Max (คำนวณค่าสูงสุดแกน Y เพื่อให้กราฟดูสมดุล)
         const maxActual = Math.max(...actual);
         const maxRequired = Math.max(...required);
         const maxSumAssured = showSumAssured ? Math.max(...sumAssuredSeries) : 0;
@@ -159,7 +168,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                         borderColor: "transparent",
                         borderWidth: 0,
                         borderRadius: 6,
-                        barThickness: orientation === 'horizontal' ? (chartTickInterval === 1 ? 8 : 20) : undefined, // Fixed thickness for horizontal view
+                        barThickness: orientation === 'horizontal' ? (effectiveInterval === 1 ? 8 : 20) : undefined, // Fixed thickness for horizontal view
                         barPercentage: orientation === 'vertical' ? 0.6 : undefined,
                         categoryPercentage: orientation === 'vertical' ? 0.8 : undefined,
                         order: 2,
@@ -182,7 +191,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                         },
                         borderColor: "transparent",
                         borderRadius: 4,
-                        barThickness: orientation === 'horizontal' ? (chartTickInterval === 1 ? 4 : 12) : undefined,
+                        barThickness: orientation === 'horizontal' ? (effectiveInterval === 1 ? 4 : 12) : undefined,
                         barPercentage: orientation === 'vertical' ? 0.6 : undefined,
                         categoryPercentage: orientation === 'vertical' ? 0.8 : undefined,
                         order: 3,
@@ -192,10 +201,12 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                         yAxisID: 'y',
                     },
 
-                    // 4. Goal
+                    // 5. Goal (เป้าหมายเกษียณ)
                     {
                         label: "เป้าหมาย",
                         // Only show goal at Retirement Age for Horizontal mode
+                        // แนวนอน: แสดงจุดเดียวที่อายุเกษียณ
+                        // แนวตั้ง: แสดงเป็นเส้นตั้งแต่อายุเริ่มต้นถึงเกษียณ
                         data: filteredRequired.map((val, i) => {
                             const age = Number(filteredLabels[i]);
                             const retireAge = Number(inputs.retireAge);
@@ -219,7 +230,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                         spanGaps: true
                     },
 
-                    // 5. Legacy
+                    // 6. Legacy (มรดก)
                     {
                         label: "มรดก",
                         data: filteredLabels.map((age, i) => Number(age) >= Number(inputs.retireAge) ? inputs.legacyFund : null),
@@ -238,7 +249,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                indexAxis: orientation === 'horizontal' ? 'y' as const : 'x' as const, // Toggle Axis!
+                indexAxis: orientation === 'horizontal' ? 'y' as const : 'x' as const, // สลับแกนตามโหมด (แนวนอน/แนวตั้ง)
                 layout: {
                     padding: { left: 0, right: 10, top: 10, bottom: 0 }
                 },
@@ -346,7 +357,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                 },
             } as ChartOptions
         };
-    }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData, chartTickInterval, orientation]);
+    }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData, effectiveInterval, orientation]);
 
     // Calculate Scroll Width for Vertical Mode
     const minVerticalWidth = Math.max(window.innerWidth - 32, chartData.data.labels.length * 50);
@@ -354,10 +365,10 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
     return (
         <div className="w-full h-full flex flex-col relative">
 
-            {/* Header: Legend + Toggle */}
+            {/* Header: Legend + Toggle (ส่วนหัวและปุ่มสลับมุมมอง) */}
             <div className="flex flex-col items-center gap-2 mb-2 px-2 shrink-0">
 
-                {/* 1. View Toggle Switch */}
+                {/* 1. View Toggle Switch (ปุ่มสลับแนวนอน/แนวตั้ง) */}
                 <div className="flex bg-slate-100 p-1 rounded-lg print:hidden">
                     <button
                         onClick={() => setOrientation('horizontal')}
@@ -379,7 +390,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                     </button>
                 </div>
 
-                {/* 2. Legend */}
+                {/* 2. Legend (คำอธิบายสีกราฟ) */}
                 <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
                     {showActualSavings && (
                         <div className="flex items-center gap-1.5">
@@ -410,7 +421,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                 </div>
             </div>
 
-            {/* Chart Container based on Orientation */}
+            {/* Chart Container based on Orientation (พื้นที่แสดงกราฟ) */}
             <div className={`flex-1 w-full relative min-h-0 ${orientation === 'vertical' ? 'overflow-x-auto pb-2 custom-scrollbar' : ''}`}>
                 {orientation === 'vertical' ? (
                     <div style={{ width: `${minVerticalWidth}px`, height: '100%' }} className="relative">

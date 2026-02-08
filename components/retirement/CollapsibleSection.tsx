@@ -1,5 +1,6 @@
 import React from "react";
 
+// --- CollapsibleSection: ส่วนที่สามารถพับเก็บได้ (Accordion) ---
 export const CollapsibleSection = ({
     title,
     icon,
@@ -7,11 +8,11 @@ export const CollapsibleSection = ({
     defaultOpen = false,
     children
 }: {
-    title: string;
-    icon?: React.ReactNode;
-    iconColorClass?: string;
-    defaultOpen?: boolean;
-    children: React.ReactNode;
+    title: string;          // หัวข้อ
+    icon?: React.ReactNode; // ไอคอน (ถ้ามี)
+    iconColorClass?: string; // Class สีของไอคอน
+    defaultOpen?: boolean;  // เปิดเริ่มต้นหรือไม่
+    children: React.ReactNode; // เนื้อหาข้างใน
 }) => {
     const [isOpen, setIsOpen] = React.useState(defaultOpen);
 

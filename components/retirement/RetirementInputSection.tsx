@@ -8,35 +8,40 @@ import { User, Briefcase, Home, Plus, Minus, Camera, Calculator, X, ChevronDown,
 import { Button } from "@/components/ui/button";
 import { calculateRetirement, buildRetirementInputs } from "@/lib/retirement-calculation";
 
+// ----------------------------------------------------------------------
+// Props Definition (นิยามข้อมูลที่ได้รับ)
+// ----------------------------------------------------------------------
 interface RetirementInputSectionProps {
-    user: { name: string } | null;
-    form: FormState;
-    handleChange: (field: keyof FormState) => (e: any) => void;
-    changeBy: (field: keyof FormState, delta: number) => () => void;
-    gender: "male" | "female";
-    setGender: (g: "male" | "female") => void;
-    addInsurancePlan: () => void;
-    removeInsurancePlan: (id: string) => void;
-    updateInsurancePlan: (index: number, key: keyof InsurancePlan, value: any) => void;
-    onViewTable: (planId?: string) => void;
-    savingMode: "flat" | "step5";
+    user: { name: string } | null; // ข้อมูลผู้ใช้งาน
+    form: FormState; // สถานะฟอร์มข้อมูลทั้งหมด
+    handleChange: (field: keyof FormState) => (e: any) => void; // ฟังก์ชันจัดการการเปลี่ยนแปลงข้อมูล
+    changeBy: (field: keyof FormState, delta: number) => () => void; // ฟังก์ชันเพิ่ม/ลดค่าทีละนิด (+/-)
+    gender: "male" | "female"; // เพศ
+    setGender: (g: "male" | "female") => void; // ฟังก์ชันเปลี่ยนเพศ
+    addInsurancePlan: () => void; // เพิ่มแผนประกัน
+    removeInsurancePlan: (id: string) => void; // ลบแผนประกัน
+    updateInsurancePlan: (index: number, key: keyof InsurancePlan, value: any) => void; // อัปเดตแผนประกัน
+    onViewTable: (planId?: string) => void; // เปิดดูตารางกรมธรรม์
+    savingMode: "flat" | "step5"; // โหมดการออม (คงที่ / เพิ่มทุก 5 ปี)
     setSavingMode: (mode: "flat" | "step5") => void;
-    returnMode: "avg" | "custom";
+    returnMode: "avg" | "custom"; // โหมดผลตอบแทน (เฉลี่ย / กำหนดเอง)
     setReturnMode: (mode: "avg" | "custom") => void;
-    allocations: Allocation[];
-    addAllocation: () => void;
-    removeAllocation: (id: number) => void;
-    updateAllocation: (id: number, field: keyof Allocation) => (e: any) => void;
-    onCalculate: () => void;
-    isEmbedded?: boolean;
-    relation?: string;
-    setRelation?: (r: string) => void;
+    allocations: Allocation[]; // พอร์ตการลงทุน
+    addAllocation: () => void; // เพิ่มสินทรัพย์
+    removeAllocation: (id: number) => void; // ลบสินทรัพย์
+    updateAllocation: (id: number, field: keyof Allocation) => (e: any) => void; // อัปเดตสินทรัพย์
+    onCalculate: () => void; // คำนวณผลลัพธ์ใหม่
+    isEmbedded?: boolean; // กรณีฝังใน Sidebar (แสดงผล Compact)
+    relation?: string; // ความสัมพันธ์ (กรณี Family Plan)
+    setRelation?: (r: string) => void; // เปลี่ยนความสัมพันธ์
 }
 
 // --- Portal Tooltip Component (Moved Outside) ---
+// Tooltip ที่แสดงผลแบบ Portal (ลอยเหนือ Layer อื่นๆ)
 const PortalTooltip = ({ text, rect, onCheck, onLeave }: { text: string, rect: DOMRect, onCheck: () => void, onLeave: () => void }) => {
     const [visible, setVisible] = useState(false);
 
+    // แสดงผลเมื่อ Component ถูก Mount
     useEffect(() => {
         requestAnimationFrame(() => setVisible(true));
     }, []);
@@ -46,6 +51,7 @@ const PortalTooltip = ({ text, rect, onCheck, onLeave }: { text: string, rect: D
 
     if (typeof document === 'undefined') return null;
 
+    // createPortal: เรนเดอร์ Tooltip ไปที่ body โดยตรง เพื่อไม่ให้โดน Parent Component บัง
     return createPortal(
         <div
             className={`fixed inset-0 z-[9999] pointer-events-none transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
@@ -66,7 +72,7 @@ const PortalTooltip = ({ text, rect, onCheck, onLeave }: { text: string, rect: D
                         คำแนะนำ
                     </div>
                     {text}
-                    {/* Arrow */}
+                    {/* Arrow (ลูกศรชี้) */}
                     <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-8 border-transparent border-t-white/95 drop-shadow-sm"></div>
                 </div>
             </div>
@@ -125,6 +131,7 @@ const TooltipWrapper = ({ text }: { text: string }) => {
     );
 };
 
+// --- RetirementInputSection: ส่วนกรอกข้อมูลเกษียณ (Input Form) ---
 export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
     user,
     form,
@@ -149,29 +156,30 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
     relation,
     setRelation
 }) => {
-    const [step, setStep] = useState(1);
-    const [expandedSections, setExpandedSections] = useState<{ [key: number]: boolean }>({ 1: true, 2: true, 3: true });
+    const [step, setStep] = useState(1); // ขั้นตอนปัจจุบัน (1, 2, 3)
+    const [expandedSections, setExpandedSections] = useState<{ [key: number]: boolean }>({ 1: true, 2: true, 3: true }); // สถานะการเปิด/ปิดแต่ละส่วน (Accordion)
 
     const toggleSection = (section: number) => {
         setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
 
-    // Scroll to top when step changes
+    // Scroll to top when step changes (เลื่อนหน้าจอไปบนสุดเมื่อเปลี่ยนขั้นตอน)
     React.useEffect(() => {
         window.scrollTo(0, 0);
     }, [step]);
 
-    const [avatarImage, setAvatarImage] = useState<string | null>(null);
-    const [showMonteCarlo, setShowMonteCarlo] = useState(true);
-    const [isRelationOpen, setIsRelationOpen] = useState(false);
-    const [showInsuranceHelp, setShowInsuranceHelp] = useState(false);
+    const [avatarImage, setAvatarImage] = useState<string | null>(null); // รูปโปรไฟล์ (ถ้ามี)
+    const [showMonteCarlo, setShowMonteCarlo] = useState(true); // แสดงส่วน Monte Carlo หรือไม่
+    const [isRelationOpen, setIsRelationOpen] = useState(false); // ควบคุม Dropdown ความสัมพันธ์
+    const [showInsuranceHelp, setShowInsuranceHelp] = useState(false); // แสดง Help ของประกัน
 
-    // Validation State
-    const [showValidationModal, setShowValidationModal] = useState(false);
-    const [missingFields, setMissingFields] = useState<string[]>([]);
+    // Validation State (ตรวจสอบความถูกต้องของข้อมูล)
+    const [showValidationModal, setShowValidationModal] = useState(false); // แสดง Modal แจ้งเตือนข้อมูลไม่ครบ
+    const [missingFields, setMissingFields] = useState<string[]>([]); // รายการฟิลด์ที่ขาดหายไป
 
+    // ฟังก์ชันตรวจสอบความถูกต้องก่อนคำนวณ (Validation Logic)
     const handleCalculateCheck = () => {
-        // 1. Build Inputs to check the potential result
+        // 1. Build Inputs to check the potential result (เตรียมข้อมูลอินพุตสำหรับจำลองผลลัพธ์)
         const inputs = buildRetirementInputs({
             form,
             gender,
@@ -180,22 +188,21 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
             allocations
         });
 
-        // 2. Calculate to see Target Fund
+        // 2. Calculate to see Target Fund (คำนวณเงินเป้าหมายเพื่อดูว่าสมเหตุสมผลหรือไม่)
         const result = calculateRetirement(inputs);
 
-        // 3. Validation Logic
-        // If Target Fund <= 0, it means either they possess enough (Pension > Expense) OR they forgot to fill expenses/ages
-        // The user specifically wants to warn if value is <= 0.
+        // 3. Validation Logic (ตรวจสอบเงื่อนไขความถูกต้อง)
+        // ถ้าเป้าหมาย <= 0 อาจแปลว่ารวยมาก หรือ ลืมกรอกค่าใช้จ่าย/อายุ
         if (result.targetFund <= 0) {
             const missing: string[] = [];
 
-            // Check Expenses
+            // Check Expenses (ตรวจสอบค่าใช้จ่าย)
             const expenseVal = Number(form.retireExtraExpense.replace(/,/g, ""));
             if (!expenseVal || expenseVal <= 0) {
                 missing.push("ค่าใช้จ่ายหลังเกษียณ (เช่น 15,000 / เดือน)");
             }
 
-            // Check Ages
+            // Check Ages (ตรวจสอบช่วงอายุ)
             const current = Number(form.currentAge);
             const retire = Number(form.retireAge);
             const life = Number(form.lifeExpectancy);
@@ -207,34 +214,24 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                 missing.push("อายุขัย ต้องมากกว่า อายุเกษียณ");
             }
 
-            // Check if pure missing info caused the zero.
-            // If they have expenses but high pension, we might optionally let it pass, 
-            // but for now, if target <= 0, let's just show what MIGHT be missing or wrong.
-            // If expenses are filled and ages are correct, but target is still 0 (Super Rich), 
-            // we might just warn "Target is 0 because Income > Expense".
-
+            // ถ้ามีข้อมูลขาดหาย ให้แจ้งเตือน
             if (missing.length > 0) {
                 setMissingFields(missing);
                 setShowValidationModal(true);
-                return; // Stop here
+                return; // หยุดการทำงาน ไม่ไปต่อ
             } else if (result.targetFund <= 0 && expenseVal > 0) {
-                // Case: Valid inputs but really rich. 
-                // Maybe show a different message? or just let it pass?
-                // The user prompt is specific: "If value < 0... popup warning to fill data".
-                // This implies "Missing Data" scenario.
-                // If data is NOT missing, we should probably let them proceed to see their "Financial Freedom".
-                // So if missing.length === 0, we proceed.
+                // กรณีข้อมูลครบแต่เป้าหมายเป็น 0 (อาจจะรวยอยู่แล้ว) -> ปล่อยผ่านให้ดูผลลัพธ์ได้เลย
             }
         }
 
-        // Proceed if valid
+        // Proceed if valid (ถ้าผ่านเงื่อนไข ให้เรียกฟังก์ชันคำนวณจริงจาก Component แม่)
         onCalculate();
     };
 
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Auto-calculate expected return from allocations if in custom mode
+    // Auto-calculate expected return from allocations if in custom mode (คำนวณผลตอบแทนคาดหวังอัตโนมัติจากสินทรัพย์)
     React.useEffect(() => {
         if (returnMode === 'custom') {
             const weightedReturn = allocations.reduce((acc, item) => {
@@ -254,6 +251,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         }
     }, [allocations, returnMode, form.expectedReturn, handleChange]);
 
+    // ฟังก์ชันอัปโหลดรูปโปรไฟล์ (Avatar Upload)
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -265,10 +263,12 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         }
     };
 
+    // ฟังก์ชันเปลี่ยนหน้า (Navigation)
     const nextStep = () => setStep(prev => Math.min(prev + 1, 3));
     const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
     const goToStep = (s: number) => setStep(s);
 
+    // ฟังก์ชันอัปเดตค่าประกัน (+/-)
     const changeInsuranceBy = (index: number, field: keyof InsurancePlan, delta: number) => () => {
         const currentValueStr = String(form.insurancePlans[index][field] || "0");
         const currentVal = parseInt(currentValueStr.replace(/,/g, "")) || 0;
@@ -276,6 +276,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         updateInsurancePlan(index, field, newVal.toLocaleString());
     };
 
+    // ฟังก์ชันอัปเดตค่าสินทรัพย์ (+/-)
     const changeAllocationBy = (id: number, field: keyof Allocation, delta: number) => () => {
         const allocation = allocations.find(a => a.id === id);
         if (!allocation) return;
@@ -285,7 +286,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         updateAllocation(id, field)({ target: { value: newVal } });
     };
 
-    // --- Modern Unified Input Control ---
+    // --- Modern Unified Input Control (คอมโพเนนต์ช่องกรอกข้อมูลแบบรวมศูนย์) ---
     const InputControl = ({
         label, value, field, suffix, disabled = false, icon: Icon, subLabel, badge, step = 1, tooltip
     }: {
@@ -352,11 +353,12 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         </div>
     );
 
-    // --- Steps ---
+    // --- Steps (ส่วนแสดงผลแต่ละขั้นตอน) ---
 
+    // 1. Personal Details (ข้อมูลส่วนตัว)
     const renderPersonalStep = () => (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="flex flex-col items-center justify-center gap-4 py-2">
+            <div className="flex flex-col items-center justify-center gap-4 py-4">
                 <div className="relative group/avatar cursor-pointer mb-2" onClick={() => fileInputRef.current?.click()}>
                     <div className={`w-28 h-28 rounded-full border-4 border-white shadow-xl shadow-slate-100 flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-105 ${gender === 'male' ? 'bg-indigo-50' : 'bg-pink-50'}`}>
                         {avatarImage ? (
@@ -458,7 +460,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                 )}
             </div>
 
-            <div className="grid gap-6 px-3">
+            <div className="grid gap-6 px-5">
                 <InputControl label="อายุปัจจุบัน (ปี)" value={form.currentAge} field="currentAge" icon={User} />
                 <InputControl label="อายุที่ต้องการเกษียณ (ปี)" value={form.retireAge} field="retireAge" icon={Settings2} />
                 <InputControl label="จะอยู่ถึงอายุ (ปี)" value={form.lifeExpectancy} field="lifeExpectancy" icon={RotateCcw} />
@@ -466,6 +468,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         </div>
     );
 
+    // 2. Financial Info (ข้อมูลการเงินปัจจุบัน)
     const renderFinancialStep = () => (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="text-center pb-2 flex items-center justify-center gap-2">
@@ -473,7 +476,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                 <h2 className="text-xl font-bold text-slate-800">ปัจจุบัน</h2>
             </div>
 
-            <div className="space-y-6 px-3">
+            <div className="space-y-6 px-5">
                 <div className="space-y-6">
                     <InputControl
                         label="เงินออมปัจจุบัน (บาท)"
@@ -666,9 +669,9 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                 </div>
             </div>
 
-            {/* Insurance Section - Detailed List (Screenshot Match) */}
+            {/* Insurance Section - Detailed List (ส่วนจัดการประกันชีวิต) */}
             <div className="pt-6 mt-6 border-t border-slate-100 relative">
-                <div className="flex items-center gap-2 mb-4 pl-2">
+                <div className="flex items-center gap-2 mb-4 pl-5">
                     <h3 className="font-bold text-slate-700 text-lg">ประกันชีวิต</h3>
                     <button
                         onClick={() => setShowInsuranceHelp(true)}
@@ -983,6 +986,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         </div >
     );
 
+    // 3. Retirement Goal (เป้าหมายเกษียณ)
     const renderGoalStep = () => (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="text-center pb-2 flex items-center justify-center gap-2">
@@ -1065,11 +1069,11 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
     );
 
 
-    // --- MAIN RENDER ---
+    // --- MAIN RENDER (ส่วนแสดงผลหลัก) ---
     return (
         <div className={`w-full font-sans relative ${isEmbedded ? 'h-full pb-32' : 'max-w-2xl mx-auto pb-12 overflow-x-hidden'}`}>
 
-            {/* Ambient Background Effects (Conditional) */}
+            {/* Ambient Background Effects (Conditional - เอฟเฟกต์พื้นหลัง) */}
             {!isEmbedded && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120%] h-full -z-10 pointer-events-none overflow-hidden">
                     <div className="absolute top-[10%] left-[10%] w-96 h-96 bg-slate-200/50 rounded-full mix-blend-multiply filter blur-[80px] opacity-40 animate-pulse"></div>
@@ -1078,7 +1082,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                 </div>
             )}
 
-            {/* STEP INDICATOR (Hidden if embedded) */}
+            {/* STEP INDICATOR (Hidden if embedded) - แถบแสดงขั้นตอน (ซ่อนเมื่ออยู่ใน Sidebar) */}
             {!isEmbedded && (
                 <div className={`mb-8 p-1.5 bg-slate-50/80 rounded-full border border-slate-200/60 backdrop-blur-sm sticky top-4 z-30 shadow-sm mx-4`}>
                     <div className="relative flex justify-between">
@@ -1107,11 +1111,12 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                 </div>
             )}
 
-            {/* MAIN CARD */}
+            {/* MAIN CARD (การ์ดหลักสำหรับกรอกข้อมูล) */}
             <div className={`bg-white/95 backdrop-blur-xl flex flex-col relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-100/50 ${isEmbedded ? 'p-5 rounded-3xl shadow-md shadow-slate-300/50 border border-slate-300 ring-1 ring-white/50' : 'p-6 md:p-10 rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 min-h-[600px] mx-2'}`}>
 
                 {/* Content */}
                 <div className="flex-1 relative z-10 pb-8 space-y-8">
+                    {/* Step 1: Personal Details */}
                     {(isEmbedded || step === 1) && (
                         <div className={isEmbedded ? "border-b border-slate-100 pb-8" : ""}>
                             {isEmbedded ? (
@@ -1197,7 +1202,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                 )}
             </div>
 
-            {/* Validation Modal */}
+            {/* Validation Modal (หน้าต่างแจ้งเตือนข้อมูลไม่ครบ) */}
             {showValidationModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">

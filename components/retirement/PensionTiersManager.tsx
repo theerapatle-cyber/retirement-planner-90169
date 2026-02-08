@@ -9,14 +9,16 @@ interface PensionTiersManagerProps {
     updateInsurancePlan: (index: number, field: keyof InsurancePlan, value: any) => void;
 }
 
+// --- PensionTiersManager: จัดการช่วงเงินบำนาญ (Multi-tier Pension) ---
 export const PensionTiersManager: React.FC<PensionTiersManagerProps> = ({
     plan,
     planIndex,
     updateInsurancePlan,
 }) => {
+    // เพิ่มช่วงบํานาญใหม่ (Add new tier)
     const handleAddTier = () => {
         const tiers = plan.pensionTiers ? [...plan.pensionTiers] : [];
-        // Default to starting after the last tier ends, or after pensionStartAge
+        // เริ่มต้นต่อจากช่วงสุดท้าย หรือจากปีที่เริ่มรับบำนาญ
         const lastEnd = tiers.length > 0
             ? Number(tiers[tiers.length - 1].endAge)
             : Number(plan.pensionStartAge) - 1;
@@ -29,6 +31,7 @@ export const PensionTiersManager: React.FC<PensionTiersManagerProps> = ({
         updateInsurancePlan(planIndex, "pensionTiers", tiers);
     };
 
+    // อัปเดตข้อมูลในแต่ละช่วง (Update tier details)
     const handleUpdateTier = (tierIndex: number, field: keyof NonNullable<InsurancePlan['pensionTiers']>[0], value: any) => {
         const tiers = plan.pensionTiers ? [...plan.pensionTiers] : [];
         if (!tiers[tierIndex]) return;

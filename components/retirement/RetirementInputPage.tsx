@@ -30,6 +30,7 @@ interface RetirementInputPageProps {
     onBack?: () => void;
 }
 
+// --- RetirementInputPage: หน้ากรอกข้อมูลเกษียณ (Wrapper Component) ---
 export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
     user,
     form,

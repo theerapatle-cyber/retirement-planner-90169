@@ -11,6 +11,7 @@ interface ProfileSettingsModalProps {
     onSave: (data: { name: string; password?: string; avatar?: string }) => void;
 }
 
+// --- ProfileSettingsModal: Modal สำหรับแก้ไขข้อมูลส่วนตัว ---
 export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onClose, user, onSave }) => {
     const [name, setName] = useState(user?.name || "");
     const [password, setPassword] = useState(user?.password || "");
@@ -28,6 +29,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOp
 
     if (!isOpen) return null;
 
+    // ฟังก์ชันจัดการการอัปโหลดรูปโปรไฟล์
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -56,7 +58,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOp
                 </div>
 
                 <div className="px-8 pb-8 space-y-6">
-                    {/* Avatar Upload */}
+                    {/* Avatar Upload (ส่วนอัปโหลดรูป) */}
                     <div className="flex flex-col items-center gap-4">
                         <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                             <div className="w-28 h-28 rounded-full border-[6px] border-slate-50 shadow-sm overflow-hidden bg-slate-100 flex items-center justify-center">

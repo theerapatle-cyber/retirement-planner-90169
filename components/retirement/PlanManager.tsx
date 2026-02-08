@@ -29,6 +29,7 @@ interface PlanManagerProps {
 
 // ... existing interfaces ...
 
+// --- PlanManager: ระบบจัดการแผนการเงิน (บันทึก/โหลด) ---
 export const PlanManager: React.FC<PlanManagerProps> = ({ currentData, onLoad }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [plans, setPlans] = useState<SavedPlan[]>([]);
@@ -37,7 +38,7 @@ export const PlanManager: React.FC<PlanManagerProps> = ({ currentData, onLoad })
     const [profileName, setProfileName] = useState("Default");
     const [isEditingProfile, setIsEditingProfile] = useState(false);
 
-    // Load from LocalStorage on mount
+    // โหลดข้อมูลแผนทั้งหมดจาก LocalStorage เมื่อเริ่มต้น
     useEffect(() => {
         const saved = localStorage.getItem('retirementPlans');
         if (saved) {
@@ -51,6 +52,7 @@ export const PlanManager: React.FC<PlanManagerProps> = ({ currentData, onLoad })
         if (profile) setProfileName(profile);
     }, []);
 
+    // ฟังก์ชันบันทึกแผนปัจจุบัน (Save Current Plan)
     const savePlan = () => {
         if (!planName.trim()) return;
 

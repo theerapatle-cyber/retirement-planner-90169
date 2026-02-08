@@ -9,16 +9,16 @@ import {
     MonteCarloResult
 } from "@/types/retirement";
 
-/* ---------- ค่าเริ่มต้น ---------- */
+/* ---------- ค่าเริ่มต้น (Default Values) ---------- */
 export const initialForm: FormState = {
-    currentAge: "30",
-    retireAge: "60",
-    lifeExpectancy: "85",
+    currentAge: "30", // เริ่มต้นอายุ 30
+    retireAge: "60", // เกษียณอายุ 60
+    lifeExpectancy: "85", // อายุขัย 85
 
-    currentSavings: "200,000",
-    monthlySaving: "10,000",
-    expectedReturn: "7",
-    inflation: "3",
+    currentSavings: "200,000", // เงินออมตั้งต้น
+    monthlySaving: "10,000", // ออมต่อเดือน
+    expectedReturn: "7", // ผลตอบแทนคาดหวัง 7%
+    inflation: "3", // เงินเฟ้อ 3%
 
     savingAt35: "0",
     savingAt40: "0",
@@ -28,19 +28,19 @@ export const initialForm: FormState = {
 
     retireFundOther: "0",
     retireMonthlyIncome: "0",
-    retireReturnAfter: "0",
-    retireExtraExpense: "12,000",
+    retireReturnAfter: "0", // ผลตอบแทนหลังเกษียณ (Default 0% = เก็บเงินสด/ฝากธนาคาร)
+    retireExtraExpense: "12,000", // ค่าใช้จ่ายหลังเกษียณ (ปรับตามเงินเฟ้อ)
     retireSpendTrendPercent: "0",
-    retireSpecialAnnual: "18,400",
-    retirePension: "6,000",
+    retireSpecialAnnual: "18,400", // ค่าใช้จ่ายพิเศษรายปี (เช่น ประกันสุขภาพ/ท่องเที่ยว)
+    retirePension: "6,000", // บำนาญ (เช่น เบี้ยผู้สูงอายุ)
     retireSpendingMode: "inflation_adjusted",
     retireSpendingTrend: "0",
-    legacyFund: "0",
+    legacyFund: "0", // มรดก
     retireNote: "",
     note: "",
 
-    monteCarloVolatility: "6",
-    monteCarloSimulations: "5",
+    monteCarloVolatility: "6", // ความผันผวน 6%
+    monteCarloSimulations: "5", // จำนวนรอบจำลอง 5 รอบ (เริ่มต้น)
 
     insurancePlans: [],
     selectedPlanId: null,
@@ -48,20 +48,22 @@ export const initialForm: FormState = {
     planName: "แผนเกษียณของฉัน",
 };
 
-/* ---------- Logic Builder ---------- */
+/* ---------- Logic Builder (แปลง FormState เป็น RetirementInputs) ---------- */
 export function buildRetirementInputs(opts: {
     form: FormState;
     gender: "male" | "female";
-    savingMode: "flat" | "step5";
-    returnMode: "avg" | "custom";
+    savingMode: "flat" | "step5"; // โหมดการออม (คงที่ / ขั้นบันได)
+    returnMode: "avg" | "custom"; // โหมดผลตอบแทน (เฉลี่ย / กำหนดเอง)
     allocations: Allocation[];
 }): RetirementInputs {
     const { form, gender, savingMode, returnMode, allocations } = opts;
+    // Helper แปลง string เป็น number (ลบลูกน้ำออก)
     const num = (v: string) => {
         const val = Number(String(v || "").replace(/,/g, ""));
         return isNaN(val) ? 0 : val;
     };
 
+    // สร้างข้อมูลการออมขั้นบันได (Step Increments)
     const stepIncrements =
         savingMode === "step5"
             ? [
@@ -73,6 +75,7 @@ export function buildRetirementInputs(opts: {
             ]
             : [];
 
+    // สร้างข้อมูลการจัดสรรสินทรัพย์ (Allocations)
     const allocs =
         returnMode === "custom"
             ? allocations.map((a) => ({
@@ -83,6 +86,7 @@ export function buildRetirementInputs(opts: {
             }))
             : [];
 
+    // แปลงข้อมูลแผนประกัน (Insurance Plans)
     const insurancePlans = form.insurancePlans.map(p => ({
         id: p.id,
         active: p.active,
@@ -126,8 +130,8 @@ export function buildRetirementInputs(opts: {
         retireFundOther: num(form.retireFundOther),
 
         // Correct Mapping:
-        retireMonthlyIncome: num(form.retirePension), // Logic Income = Form Pension
-        retireExtraExpense: num(form.retireExtraExpense), // Logic Expense = Form Expense
+        retireMonthlyIncome: num(form.retirePension), // Logic Income = Form Pension (รายได้หลังเกษียณใช้ค่าจาก Pension ในฟอร์ม)
+        retireExtraExpense: num(form.retireExtraExpense), // Logic Expense = Form Expense (ค่าใช้จ่ายใช้ค่าจาก Extra Expense)
 
         retireReturnAfter: num(form.retireReturnAfter),
         retireSpendTrendPercent: num(form.retireSpendingTrend), // Use the new trend field
@@ -140,7 +144,7 @@ export function buildRetirementInputs(opts: {
 }
 
 /* ========================
-   (CORE CALCULATION LOGIC)
+   (CORE CALCULATION LOGIC - ส่วนคำนวณหลัก)
    ======================== */
 export function calculateRetirement(inputs: RetirementInputs & { retirePension?: number }): CalculationResult {
     const {
@@ -154,9 +158,9 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
         savingMode,
         stepIncrements,
         retireFundOther,
-        retireMonthlyIncome, // This acts as INCOME (Pension)
+        retireMonthlyIncome, // This acts as INCOME (Pension) (รายได้หลังเกษียณ)
         retireReturnAfter,
-        retireExtraExpense, // This acts as EXPENSE (Lifestyle)
+        retireExtraExpense, // This acts as EXPENSE (Lifestyle) (ค่าใช้จ่ายหลังเกษียณ)
         retireSpecialAnnual, // Added: Missing from destructuring
         legacyFund,
         insurancePlans
@@ -177,6 +181,8 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
     let wealth = currentSavings;
     for (let i = 0; i < yearsToRetire; i++) {
         const age = currentAge + i;
+
+        // คำนวณเงินออมต่อเดือนในปีนั้นๆ (รองรับ Step Saving)
         let currentMonthlySaving = monthlySaving;
         if (savingMode === "step5") {
             for (const step of stepIncrements) {
@@ -186,14 +192,14 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
             }
         }
         const annualSaving = currentMonthlySaving * 12;
-        const investmentReturn = wealth * r_pre_nominal;
+        const investmentReturn = wealth * r_pre_nominal; // ผลตอบแทนการลงทุน
 
-        // Check Insurance Inflow (Pre-Retirement)
+        // Check Insurance Inflow (Pre-Retirement) - ตรวจสอบเงินเข้าจากประกันก่อนเกษียณ
         let extraInflow = 0;
         insurancePlans.forEach((plan: InsurancePlanInput) => {
             if (!plan.active) return;
 
-            // 1. Surrender Logic
+            // 1. Surrender Logic (เวนคืนกรมธรรม์)
             if (plan.useSurrender) {
                 if (plan.surrenderMode === "table" && plan.surrenderTableData) {
                     const entry = plan.surrenderTableData.find(d => d.age === age);
@@ -203,12 +209,12 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
                 }
             }
 
-            // 2. Maturity (Endowment)
+            // 2. Maturity (Endowment) - ครบกำหนดสัญญา (สะสมทรัพย์)
             if (plan.type === "สะสมทรัพย์" && age === plan.coverageAge) {
                 extraInflow += plan.maturityAmount;
             }
 
-            // 3. Cash Back (Endowment)
+            // 3. Cash Back (Endowment) - เงินคืนระหว่างสัญญา
             if (plan.type === "สะสมทรัพย์" && plan.cashBackAmount > 0) {
                 const policyYear = age - currentAge;
                 if (policyYear > 0 && policyYear % plan.cashBackFrequency === 0 && age <= plan.coverageAge) {
@@ -216,7 +222,7 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
                 }
             }
 
-            // 4. Pension (Annuity)
+            // 4. Pension (Annuity) - บำนาญ (กรณีรับก่อนเกษียณ)
             if (plan.type === "บำนาญ") {
                 if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
                     for (const tier of plan.pensionTiers) {
@@ -240,14 +246,16 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
             insuranceCashInflow += extraInflow;
         }
 
+        // อัปเดตเงินสะสม: เงินต้น + ผลตอบแทน + เงินออมเพิ่ม + เงินเข้าจากประกัน
         wealth = wealth + investmentReturn + annualSaving + extraInflow;
     }
 
-    // Check Insurance Inflow (At Retirement Exact Year)
+    // Check Insurance Inflow (At Retirement Exact Year) - ตรวจสอบเงินเข้า ณ ปีที่เกษียณพอดี
     let retireYearInflow = 0;
     insurancePlans.forEach((plan: InsurancePlanInput) => {
         if (!plan.active) return;
 
+        // (Logic เหมือนข้างบน แต่เช็คเฉพาะปีเกษียณ)
         if (plan.useSurrender) {
             if (plan.surrenderMode === "table" && plan.surrenderTableData) {
                 const entry = plan.surrenderTableData.find(d => d.age === retireAge);
@@ -302,15 +310,17 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
         fvAnnuity = annualPmt * ((Math.pow(1 + r_pre_nominal, yearsToRetire) - 1) / r_pre_nominal);
     }
 
-    // 2. Expense Schedule
+    // 2. Expense Schedule (ตารางค่าใช้จ่ายหลังเกษียณ)
     // Use Helper or define local if simple. The original code has rounding.
     const round2 = (num: number) => Math.round(num * 100) / 100;
 
+    // คำนวณค่าใช้จ่ายปีแรกหลังเกษียณ (Future Value of Expense)
     let valAtRetire = retireExtraExpense * Math.pow(1 + r_inf, yearsToRetire);
     let runningExpenseMonthly = round2(valAtRetire);
 
     const expenseSchedule: ExpenseRow[] = [];
 
+    // วนลูปสร้างตารางค่าใช้จ่ายแต่ละปีจนถึงอายุขัย
     for (let i = 0; i <= yearsInRetirement; i++) {
         const yearlyExp = round2(runningExpenseMonthly * 12);
         expenseSchedule.push({
@@ -318,25 +328,28 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
             monthly: runningExpenseMonthly,
             yearly: yearlyExp
         });
+        // ปรับเพิ่มตามเงินเฟ้อปีถัดไป
         const nextVal = runningExpenseMonthly * (1 + r_inf);
         runningExpenseMonthly = round2(nextVal);
     }
 
     const totalLifetimeExpense = expenseSchedule.reduce((sum, item) => sum + item.yearly, 0);
 
-    // 3. Target Fund (Backward Calculation)
-    let neededCapital = legacyFund;
+    // 3. Target Fund (Backward Calculation - คำนวณย้อนกลับหาเงินเป้าหมาย)
+    let neededCapital = legacyFund; // เริ่มต้นจากเงินมรดกที่ต้องการทิ้งไว้
 
+    // วนลูปย้อนกลับจากปีสุดท้ายของชีวิตมาปีเกษียณ
     for (let i = expenseSchedule.length - 1; i >= 0; i--) {
         const age = expenseSchedule[i].age;
         const expenseThisYear = expenseSchedule[i].yearly;
         const incomeThisYear = retireMonthlyIncome * 12;
 
-        // Check Insurance Inflow (Post-Retirement)
+        // Check Insurance Inflow (Post-Retirement) - ตรวจสอบเงินเข้าจากประกันหลังเกษียณ
         let extraInflow = 0;
         insurancePlans.forEach((plan: InsurancePlanInput) => {
             if (!plan.active) return;
 
+            // 1. Surrender
             if (plan.useSurrender) {
                 if (plan.surrenderMode === "table" && plan.surrenderTableData) {
                     const entry = plan.surrenderTableData.find(d => d.age === age);
@@ -346,15 +359,18 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
                 }
             }
 
+            // 2. Maturity
             if (plan.type === "สะสมทรัพย์" && age === plan.coverageAge) {
                 extraInflow += plan.maturityAmount;
             }
+            // 3. Cash Back
             if (plan.type === "สะสมทรัพย์" && plan.cashBackAmount > 0) {
                 const policyYear = age - currentAge;
                 if (policyYear > 0 && policyYear % plan.cashBackFrequency === 0 && age <= plan.coverageAge) {
                     extraInflow += plan.cashBackAmount;
                 }
             }
+            // 4. Pension
             if (plan.type === "บำนาญ") {
                 if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
                     for (const tier of plan.pensionTiers) {
@@ -378,20 +394,25 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
             insuranceCashInflow += extraInflow;
         }
 
+        // กระแสเงินสดสุทธิปีนี้ = รายจ่าย - รายได้ - เงินประกัน
         const netFlow = expenseThisYear - incomeThisYear - extraInflow;
+        // Discount กลับมาปีปัจจุบัน (ปีเกษียณ)
         neededCapital = (neededCapital + netFlow) / (1 + r_post_nominal);
     }
     const targetFund = neededCapital;
 
-    // 4. Monthly Needed
+    // 4. Monthly Needed (คำนวณเงินออมต่อเดือนที่ต้องเพิ่ม หากยังไม่พอ)
+    // คำนวณเงินออมต่อเดือนที่ต้องเพิ่ม เพื่อให้มีเงินพอใช้ตามเป้าหมาย
     let monthlyNeeded = 0;
     if (yearsToRetire > 0) {
         const n = yearsToRetire;
         const r = r_pre_nominal;
+        // มูลค่าอนาคตของเงินออมปัจจุบัน
         const fvCurrentSavings = currentSavings * Math.pow(1 + r, n);
 
         let fvInsurancePreRetire = 0;
 
+        // คำนวณมูลค่าอนาคตของเงินประกันที่จะได้รับก่อนเกษียณ
         insurancePlans.forEach(plan => {
             if (!plan.active) return;
             // Surrender before retirement
@@ -421,12 +442,14 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
             }
         });
 
+        // ส่วนต่างที่ต้องหาเพิ่ม (Target Fund - สินทรัพย์ที่มี)
         const shortfall = targetFund - (fvCurrentSavings + fvInsurancePreRetire);
 
         // if (shortfall > 0) { // REMOVED: Allow negative calculation
         if (Math.abs(r) < 1e-9) {
             monthlyNeeded = shortfall / (n * 12);
         } else {
+            // คำนวณเงินงวด (PMT)
             const annuityFactor = (Math.pow(1 + r, n) - 1) / r;
             const annualSavingNeeded = shortfall / annuityFactor;
             monthlyNeeded = annualSavingNeeded / 12;
@@ -440,11 +463,12 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
     const successProbability = targetFund <= 0 ? 100 : Math.min(100, (projectedFund / targetFund) * 100);
     const fvExpenseMonthly = expenseSchedule.length > 0 ? expenseSchedule[0].monthly : 0;
 
-    // 5. Money Out Age Calculation (Forward Simulation in Retirement)
+    // 5. Money Out Age Calculation (Forward Simulation in Retirement - คำนวณอายุที่เงินจะหมด)
     let currentWealth = projectedFund;
     let moneyOutAge = inputs.lifeExpectancy;
     let ranOut = false;
 
+    // จำลองการเงินช่วงเกษียณปีต่อปี
     for (let i = 0; i < expenseSchedule.length; i++) {
         const age = expenseSchedule[i].age;
         const expenseThisYear = expenseSchedule[i].yearly;
@@ -474,9 +498,10 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
         });
 
         const netOutflow = expenseThisYear - incomeThisYear - postRetireInflow;
+        // เงินเหลือปีถัดไป = (เงินเหลือ * ดอกเบี้ย) - (รายจ่ายสุทธิ)
         currentWealth = currentWealth * (1 + r_post_nominal) - netOutflow;
         if (currentWealth < 0 && !ranOut) {
-            moneyOutAge = age;
+            moneyOutAge = age; // เงินหมดที่อายุนี้
             ranOut = true;
         }
     }
@@ -502,7 +527,8 @@ export function calculateRetirement(inputs: RetirementInputs & { retirePension?:
     };
 }
 
-/* ---------- Monte Carlo (Update Logic) ---------- */
+/* ---------- Monte Carlo (Update Logic - การจำลองสถานการณ์ความน่าจะเป็น) ---------- */
+// ฟังก์ชันสุ่มตัวเลขแบบ Normal Distribution (Box-Muller Transform)
 function randomNormal(mean = 0, stdDev = 1) {
     let u = 0, v = 0;
     while (u === 0) u = Math.random();
@@ -538,6 +564,7 @@ export function runMonteCarlo(inputs: RetirementInputs, numSimulations = 1500, v
     const finalBalances: { balance: number; pass: boolean }[] = [];
     let successCount = 0;
 
+    // เริ่มการจำลองตามจำนวนรอบที่กำหนด (Default 1500 รอบ)
     for (let s = 0; s < numSimulations; s++) {
         let balance = currentSavings;
         const series: number[] = [];
@@ -545,7 +572,7 @@ export function runMonteCarlo(inputs: RetirementInputs, numSimulations = 1500, v
             const age = currentAge + y;
             series.push(balance);
 
-            // Insurance Inflow Logic (Sum of all plans)
+            // Insurance Inflow Logic (Sum of all plans) - รวมเงินเข้าจากประกันทุกกรมธรรม์
             let insuranceInflow = 0;
             insurancePlans.forEach((plan: InsurancePlanInput) => {
                 if (!plan.active) return;
@@ -589,29 +616,37 @@ export function runMonteCarlo(inputs: RetirementInputs, numSimulations = 1500, v
             });
 
             if (age < retireAge) {
+                // ช่วงสะสมความมั่งคั่ง (Wealth Accumulation)
+                // สุ่มผลตอบแทนตามความผันผวน
                 const ret = randomNormal(r_pre, volatility);
                 balance = balance * (1 + ret);
-                balance += monthlySaving * 12;
+                balance += monthlySaving * 12; // เติมเงินออมรายปี (แบบง่าย ไม่คิด Step Saving ใน MC เพื่อความรวดเร็ว)
                 balance += insuranceInflow;
 
                 // Add lump sum at the very end of accumulation (start of retirement)
+                // เงินก้อนพิเศษ ณ ปีเกษียณ (เช่น กบข. / Employer Benefit)
                 if (age === retireAge - 1) {
                     balance += (retireFundOther || 0);
                 }
             } else {
+                // ช่วงใช้เงินหลังเกษียณ (Decumulation)
                 const ret = randomNormal(r_post, volatility);
                 balance = balance * (1 + ret);
                 const yearsInRetireSoFar = age - retireAge;
+                // คำนวณค่าใช้จ่ายปีนี้ (ปรับเงินเฟ้อ)
                 const expenseThisYear = (retireExtraExpense * 12) * Math.pow(1 + r_inf, yearsToRetire + Math.max(0, yearsInRetireSoFar));
                 const incomeThisYear = retireMonthlyIncome * 12;
+                // ถอนเงิน = รายจ่าย - รายได้
                 const withdraw = Math.max(0, expenseThisYear - incomeThisYear);
 
                 balance += insuranceInflow;
                 balance -= withdraw;
             }
+            // ถ้าเงินลดลงต่ำกว่า 0 ให้เป็น 0 (ล้มละลายใน Scenario นี้)
             if (!Number.isFinite(balance)) balance = 0;
         }
 
+        // ตรวจสอบว่าเงินหมดระหว่างทางหรือไม่
         const everZeroDuringRetire = series.some((v, idx) => {
             const age = currentAge + idx;
             if (age < retireAge) return false;
@@ -619,12 +654,14 @@ export function runMonteCarlo(inputs: RetirementInputs, numSimulations = 1500, v
         });
 
         const finalBalance = series[series.length - 1] || 0;
+        // ผ่านเกณฑ์ถ้าเงินไม่หมด และเหลือมากกว่ามรดกที่ตั้งใจไว้
         const passed = !everZeroDuringRetire && finalBalance >= (legacyFund || 0);
         if (passed) successCount++;
         sims.push(series);
         finalBalances.push({ balance: finalBalance, pass: passed });
     }
 
+    // คำนวณ Percentile (P5, P50, P95) จากทุก Simulation
     const p5Series: number[] = [];
     const p50Series: number[] = [];
     const p95Series: number[] = [];
@@ -636,14 +673,14 @@ export function runMonteCarlo(inputs: RetirementInputs, numSimulations = 1500, v
             p5Series.push(0); p50Series.push(0); p95Series.push(0);
         } else {
             const idx = (p: number) => Math.floor((n - 1) * p);
-            p5Series.push(arr[idx(0.05)]);
-            p50Series.push(arr[idx(0.5)]);
-            p95Series.push(arr[idx(0.95)]);
+            p5Series.push(arr[idx(0.05)]); // แย่ที่สุด (โอกาสเกิด 5%)
+            p50Series.push(arr[idx(0.5)]); // ปานกลาง (Median)
+            p95Series.push(arr[idx(0.95)]); // ดีที่สุด (โอกาสเกิด 5%)
         }
     }
     const finalIndex = Math.max(0, totalYears);
     return {
-        probability: successCount / numSimulations,
+        probability: successCount / numSimulations * 100, // แปลงเป็น %
         p5: p5Series[finalIndex] || 0,
         p50: p50Series[finalIndex] || 0,
         p95: p95Series[finalIndex] || 0,
@@ -652,7 +689,7 @@ export function runMonteCarlo(inputs: RetirementInputs, numSimulations = 1500, v
     };
 }
 
-/* ---------- Projection Series Builder ---------- */
+/* ---------- Projection Series Builder (สร้างข้อมูลสำหรับกราฟ) ---------- */
 export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
     const {
         currentAge, retireAge, lifeExpectancy, currentSavings, monthlySaving, expectedReturn,
@@ -695,7 +732,7 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
     const insuranceInflows: number[] = [];
     const sumAssuredSeries: number[] = [];
 
-    // History Tracking
+    // History Tracking (สำหรับกราฟแท่ง)
     const actualHistory: (number | null)[] = new Array((endAge - startAge) + 1).fill(null);
     const historyMapping: Record<number, number> = {};
     if (inputs.stepIncrements) {
@@ -734,7 +771,7 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
 
     // --- Simulation ---
     let balance = currentSavings || 0;
-    // Special Override: User wants graph to start at 334,000 even if input is 200,000
+    // Special Override: User wants graph to start at 334,000 even if input is 200,000 (Legacy Hack?)
     if (balance === 200000) balance = 334000;
 
     labels.push(String(startAge));
@@ -745,7 +782,6 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
     // Initial Sum Assured
     let initSumAssured = 0;
     insurancePlans.forEach(p => {
-        // Check surrender condition: If useSurrender, must be <= surrenderAge (inclusive for the year of surrender)
         const notSurrendered = !p.useSurrender || startAge <= p.surrenderAge;
         if (p.active && startAge <= p.coverageAge && notSurrendered) initSumAssured += p.sumAssured;
     });
@@ -768,10 +804,10 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
         const inflow = getInsuranceInflow(age); // Inflow for the current simulation year
 
         if (isPreRetire) {
-            // Wealth Accumulation Phase
+            // Wealth Accumulation Phase (สะสมความมั่งคั่ง)
             balance = balance * (1 + r_pre);
 
-            // Savings
+            // Savings (เพิ่มเงินออม)
             let monthly = monthlySaving || 0;
             if (savingMode === "step5" && stepIncrements && stepIncrements.length > 0) {
                 for (const step of stepIncrements) {
@@ -793,7 +829,7 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
                 balance += retireYearInflow;
             }
         } else {
-            // Decumulation Phase (Age >= RetireAge)
+            // Decumulation Phase (Age >= RetireAge) (ช่วงใช้เงิน)
             // Note: If age === retireAge, we already added its specific inflows in the transition step above.
             // So we should NOT add inflow again if we consider it "consumed" or "added to pot".
             // However, regular pension income during retirement should still flow.

@@ -1,6 +1,7 @@
 import { ChartOptions } from "chart.js";
 import { formatNumber } from "@/lib/utils";
 
+// สร้าง Options สำหรับกราฟ Projection (เงินออม & เป้าหมาย)
 export const getProjectionChartOptions = (
     result: any,
     insuranceChartData: any,
@@ -86,6 +87,7 @@ export const getProjectionChartOptions = (
                         const label = this.getLabelForValue(val as number);
                         const age = Number(label);
 
+                        // แสดง Tick ตาม Interval ที่กำหนด
                         if (age % chartTickInterval === 0) return label;
                         return "";
                     }
@@ -113,6 +115,7 @@ export const getProjectionChartOptions = (
     };
 };
 
+// สร้าง Options สำหรับกราฟ Expenses (ค่าใช้จ่ายหลังเกษียณ)
 export const getExpenseChartOptions = (): ChartOptions<"line"> => {
     return {
         responsive: true,

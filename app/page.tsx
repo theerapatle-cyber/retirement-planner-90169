@@ -11,6 +11,7 @@ import { RetirementInputPage } from "@/components/retirement/RetirementInputPage
 import { InsuranceTableModal } from "@/components/retirement/DashboardModals";
 import { ProfileSettingsModal } from "@/components/retirement/ProfileSettingsModal";
 
+// --- HomePage: หน้าหลัก (Entry Point) ควบคุมการเปลี่ยนหน้า (Routing Logic) ---
 export default function HomePage() {
   const {
     state,
@@ -19,6 +20,7 @@ export default function HomePage() {
     handlers
   } = useRetirementApp();
 
+  // ดึง State ที่จำเป็นออกมาใช้
   const {
     user, planType, familyMembers, currentMemberId, showFamilyResult,
     form, gender, inputStep, showResult,
@@ -55,12 +57,12 @@ export default function HomePage() {
     window.scrollTo(0, 0);
   }, [user, planType, showFamilyResult, showResult, inputStep, currentMemberId]);
 
-  // 1. Unauthenticated -> Login Screen
+  // 1. Unauthenticated -> Login Screen (ยังไม่ล็อกอิน -> หน้าล็อกอิน)
   if (!user) {
     return <LoginScreen onLogin={handleLogin} />;
   }
 
-  // 2. No Plan Selected -> Plan Selection Screen
+  // 2. No Plan Selected -> Plan Selection Screen (เลือกแผน: ส่วนตัว / ครอบครัว)
   if (!planType) {
     return (
       <PlanSelectionScreen
@@ -80,7 +82,7 @@ export default function HomePage() {
     );
   }
 
-  // 3. Family Dashboard (Full Page Overlay for Overview)
+  // 3. Family Dashboard (หน้าภาพรวมครอบครัว)
   const activeFamilyMembers = familyMembers.filter(m => !m.isDraft);
   if (planType === "family" && showFamilyResult && activeFamilyMembers.length > 0) {
     return (
@@ -103,7 +105,7 @@ export default function HomePage() {
     );
   }
 
-  // 4. Input Page (Individual View)
+  // 4. Input Page (หน้ากรอกข้อมูลส่วนตัว)
   if (!showResult && !showFamilyResult) {
     return (
       <>
@@ -171,7 +173,7 @@ export default function HomePage() {
     );
   }
 
-  // 5. Main Retirement Dashboard (Individual View)
+  // 5. Main Retirement Dashboard (หน้าแดชบอร์ดผลลัพธ์ส่วนบุคคล)
   if (showResult) {
     return (
       <>

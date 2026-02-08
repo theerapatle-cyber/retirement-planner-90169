@@ -14,7 +14,7 @@ import {
     ChartType
 } from "chart.js";
 
-/* ---------- Chart.js Register ---------- */
+/* ---------- Chart.js Register (ลงทะเบียนส่วนประกอบของกราฟ) ---------- */
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -40,6 +40,7 @@ declare module 'chart.js' {
 }
 
 
+// Plugin: แสดงเส้นเป้าหมายแนวนอน (Goal Line) พร้อมป้ายชื่อ
 export const goalLabelPlugin: Plugin<'line'> = {
     id: 'goalLabelPlugin',
     afterDraw: (chart, args, options) => {
@@ -48,11 +49,12 @@ export const goalLabelPlugin: Plugin<'line'> = {
         if (goalValue === undefined || goalValue === 0 || !labelText) return;
 
         const yPos = y.getPixelForValue(goalValue);
+        // ตรวจสอบว่าเส้นอยู่ในพื้นที่กราฟหรือไม่
         if (yPos < top || yPos > bottom) return;
 
         ctx.save();
 
-        // 1. Draw Horizontal Dashed Line (Blue)
+        // 1. วาดเส้นประแนวนอน (สีฟ้า)
         ctx.beginPath();
         ctx.setLineDash([6, 6]);
         ctx.lineWidth = 2;
@@ -61,7 +63,7 @@ export const goalLabelPlugin: Plugin<'line'> = {
         ctx.lineTo(right, yPos);
         ctx.stroke();
 
-        // Label Styling
+        // Label Styling (ตกแต่งป้ายชื่อ)
         const displayLabel = labelText;
         ctx.font = 'bold 12px "Inter", "Prompt", sans-serif';
         const textWidth = ctx.measureText(displayLabel).width;
@@ -70,11 +72,11 @@ export const goalLabelPlugin: Plugin<'line'> = {
         const boxWidth = textWidth + (paddingX * 2);
         const boxHeight = 26;
 
-        // Position: Place it a bit to the right of the Y-axis
+        // Position: วางตำแหน่งป้ายชื่อ (เยื้องขวานิดหน่อย)
         const xPos = left + ((right - left) * 0.10);
         const yPosBox = yPos - (boxHeight / 2);
 
-        // Draw background pill (white)
+        // Draw background pill (พื้นหลังสีขาว)
         ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
         ctx.shadowBlur = 4;
         ctx.setLineDash([]); // Reset dash for box
@@ -84,12 +86,12 @@ export const goalLabelPlugin: Plugin<'line'> = {
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Border (Blue dashed match)
+        // Border (ขอบสีฟ้าเหมือนเส้น)
         ctx.strokeStyle = '#2563eb'; // Blue-600
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Text
+        // Text (ข้อความ)
         ctx.fillStyle = '#2563eb'; // Blue-600
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -99,6 +101,7 @@ export const goalLabelPlugin: Plugin<'line'> = {
     }
 };
 
+// Plugin: แสดงเส้น Crosshair ตามเมาส์ (แนวตั้งและแนวนอน)
 export const crosshairPlugin = {
     id: 'crosshair',
     afterDraw: (chart: any) => {
@@ -110,7 +113,7 @@ export const crosshairPlugin = {
 
             ctx.save();
 
-            // Vertical line (Dashed)
+            // Vertical line (เส้นแนวตั้ง - เส้นประ)
             ctx.beginPath();
             ctx.setLineDash([4, 4]);
             ctx.lineWidth = 1.5;
@@ -119,7 +122,8 @@ export const crosshairPlugin = {
             ctx.lineTo(x, bottom);
             ctx.stroke();
 
-            // Horizontal line (Optional, dashed)
+            // Horizontal line (เส้นแนวนอน - เส้นทึบในขณะนี้ แต่วาดทับด้วย moveTo..lineTo?)
+            // จริงๆ มันคือการวาดเส้นแนวนอนตัดจุด
             ctx.beginPath();
             ctx.moveTo(left, y);
             ctx.lineTo(right, y);

@@ -1,5 +1,6 @@
 import React from "react";
 
+// ปุ่มเพิ่ม/ลดค่าแบบเล็ก (ใช้ใน Input Group)
 export const SmallStepButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ children, ...props }) => (
     <button
         {...props}
@@ -10,7 +11,7 @@ export const SmallStepButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElem
     </button>
 );
 
-// ปุ่มกลมใหญ่ขึ้นนิดนึงสำหรับในฟอร์มประกัน (ตามรูป)
+// ปุ่มเพิ่ม/ลดค่าแบบกลม (ใช้ใน Form ประกัน)
 export const RoundStepButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ children, ...props }) => (
     <button
         {...props}

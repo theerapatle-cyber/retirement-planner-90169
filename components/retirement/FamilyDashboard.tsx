@@ -6,19 +6,19 @@ import { buildRetirementInputs, calculateRetirement } from "@/lib/retirement-cal
 import { formatNumber } from "@/lib/utils";
 
 interface FamilyDashboardProps {
-    familyMembers: MemberProfile[];
-    currentMemberId: string;
-    form: FormState;
-    gender: "male" | "female";
-    savingMode: "flat" | "step5";
-    returnMode: "avg" | "custom";
-    allocations: Allocation[];
-    setPlanType: (type: "individual" | "family" | null) => void;
-    setShowFamilyResult: (show: boolean) => void;
-    handleSwitchMember: (id: string) => void;
-    handleAddMember: () => void;
-    handleRemoveMember: (id: string, e?: React.MouseEvent) => void;
-    getFamilySummary: () => {
+    familyMembers: MemberProfile[]; // รายชื่อสมาชิกในครอบครัว
+    currentMemberId: string; // ID ของสมาชิกที่กำลังดูข้อมูล
+    form: FormState; // ข้อมูลฟอร์มปัจจุบัน
+    gender: "male" | "female"; // เพศปัจจุบัน
+    savingMode: "flat" | "step5"; // โหมดการออม
+    returnMode: "avg" | "custom"; // โหมดผลตอบแทน
+    allocations: Allocation[]; // การจัดพอร์ตปัจจุบัน
+    setPlanType: (type: "individual" | "family" | null) => void; // ฟังก์ชันเปลี่ยนประเภทแผน
+    setShowFamilyResult: (show: boolean) => void; // ฟังก์ชันแสดง/ซ่อนผลลัพธ์ครอบครัว
+    handleSwitchMember: (id: string) => void; // ฟังก์ชันสลับสมาชิก
+    handleAddMember: () => void; // ฟังก์ชันเพิ่มสมาชิกใหม่
+    handleRemoveMember: (id: string, e?: React.MouseEvent) => void; // ฟังก์ชันลบสมาชิก
+    getFamilySummary: () => { // ฟังก์ชันคำนวณภาพรวมครอบครัว
         totalTarget: number;
         totalProjected: number;
         totalGap: number;
@@ -26,9 +26,10 @@ interface FamilyDashboardProps {
         totalMonthlySavingsCurrent: number;
         totalMonthlyNeeded: number;
     };
-    setShowResult: (show: boolean) => void;
+    setShowResult: (show: boolean) => void; // ฟังก์ชันแสดง/ซ่อนผลลัพธ์เดี่ยว
 }
 
+// --- FamilyDashboard: หน้าภาพรวมแผนการเงินครอบครัว ---
 export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
     familyMembers,
     currentMemberId,
@@ -50,7 +51,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-900 animate-in fade-in duration-700 relative overflow-hidden">
-            {/* Background Decor - Exact match to Input Section */}
+            {/* Background Decor - Exact match to Input Section (ลวดลายพื้นหลัง) */}
             <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.4]"
                 style={{
                     backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%23cbd5e1'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e")`,
@@ -90,13 +91,11 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
 
             <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
 
-                {/* 1. STATUS HEADER */}
-                {/* 1. STATUS HEADER */}
-                {/* 1. STATUS HEADER */}
+                {/* 1. STATUS HEADER (ส่วนแสดงสถานะหลัก) */}
                 <div className="relative -mx-4 px-4 sm:px-0">
                     <div className="flex gap-4 overflow-x-auto pb-0 snap-x snap-mandatory lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:pb-0 no-scrollbar">
 
-                        {/* Status Card */}
+                        {/* Status Card (สถานะภาพรวม) */}
                         <div className="min-w-[85vw] sm:min-w-[45vw] lg:min-w-0 snap-center">
                             <div className="bg-white rounded-[24px] lg:rounded-[32px] p-6 lg:p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ease-out group relative overflow-hidden flex flex-col items-center text-center justify-center min-h-[160px] lg:min-h-[180px] h-full">
                                 <div className={`w-12 h-12 lg:w-16 lg:h-16 rounded-2xl lg:rounded-3xl flex items-center justify-center mb-3 lg:mb-4 shadow-inner ${summary.totalGap >= 0 ? "bg-emerald-50 text-emerald-500" : "bg-red-50 text-red-500"}`}>
@@ -118,7 +117,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             </div>
                         </div>
 
-                        {/* Target Card */}
+                        {/* Target Card (เป้าหมายรวม) */}
                         <div className="min-w-[85vw] sm:min-w-[45vw] lg:min-w-0 snap-center">
                             <div className="bg-white rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ease-out relative overflow-hidden flex flex-col justify-center min-h-[160px] lg:min-h-[180px] h-full">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-bl-[100px] -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
@@ -133,7 +132,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             </div>
                         </div>
 
-                        {/* Projected Card */}
+                        {/* Projected Card (เงินออมคาดการณ์รวม) */}
                         <div className="min-w-[85vw] sm:min-w-[45vw] lg:min-w-0 snap-center">
                             <div className="bg-white rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ease-out relative overflow-hidden flex flex-col justify-center min-h-[160px] lg:min-h-[180px] h-full">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-bl-[100px] -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
@@ -148,7 +147,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             </div>
                         </div>
 
-                        {/* Gap Card */}
+                        {/* Gap Card (ส่วนต่าง) */}
                         <div className="min-w-[85vw] sm:min-w-[45vw] lg:min-w-0 snap-center">
                             <div className={`rounded-[24px] lg:rounded-[32px] p-6 lg:p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ease-out relative overflow-hidden flex flex-col justify-center min-h-[160px] lg:min-h-[180px] h-full ${summary.totalGap >= 0 ? "bg-gradient-to-br from-[#10b981] to-[#059669] text-white" : "bg-gradient-to-br from-red-500 to-red-600 text-white"}`}>
                                 <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
@@ -171,7 +170,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                     </div>
                 </div>
 
-                {/* 2. AI INSIGHT & PERFORMANCE */}
+                {/* 2. AI INSIGHT & PERFORMANCE (บทวิเคราะห์ AI) */}
                 <div className="bg-white rounded-[40px] p-8 lg:p-12 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-500">
                     <div className="flex items-center gap-4 mb-10">
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center text-amber-600 shadow-inner">
@@ -281,7 +280,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                     </div>
                 </div>
 
-                {/* 3. MEMBER BREAKDOWN */}
+                {/* 3. MEMBER BREAKDOWN (รายละเอียดรายบุคคล) */}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between px-2">
                         <h4 className="text-xl font-black text-slate-800 flex items-center gap-3">
@@ -492,6 +491,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                         </div>
                     </div>
                 </div>
+                {/* PRINT REPORT SECTION (ส่วนสำหรับพิมพ์รายงาน) */}
                 <div id="family-print-report" className="hidden print:block bg-white p-8 font-mono text-black">
                     {/* Print Header */}
                     <div className="flex justify-between items-start border-b-2 border-black pb-4 mb-6">

@@ -21,9 +21,9 @@ import { formatNumber } from "@/lib/utils";
 import { buildProjectionSeries } from "@/lib/retirement-calculation";
 import { CalculationResult, MonteCarloResult, RetirementInputs } from "@/types/retirement";
 
-// Define strict type for Insurance Chart Data structure
+// Define strict type for Insurance Chart Data structure (นิยามโครงสร้างข้อมูลกราฟประกัน)
 export interface InsuranceChartData {
-    labels: number[];
+    labels: number[]; // อายุ
     datasets: {
         label: string;
         data: (number | null)[];
@@ -46,7 +46,9 @@ ChartJS.register(
     Filler
 );
 
-// Chart Plugins
+// Chart Plugins (ปลั๊กอินเสริมสำหรับกราฟ)
+
+// Crosshair Plugin: แสดงเส้นตัดกากบาทเมื่อเอาเมาส์ชี้ (ช่วยให้อ่านค่ากราฟง่ายขึ้น)
 const crosshairPlugin = {
     id: 'crosshair',
     afterDraw: (chart: any) => {
@@ -58,17 +60,18 @@ const crosshairPlugin = {
 
             ctx.save();
             ctx.beginPath();
-            ctx.setLineDash([4, 4]);
+            ctx.setLineDash([4, 4]); // เส้นประ
             ctx.lineWidth = 1;
             ctx.strokeStyle = '#64748b'; // Slate 500 (Grey)
 
             // Vertical Line (Point -> Bottom) - "Lines meet at the point"
-            // Starts at y (dataset value) going down to bottom axis
+            // เส้นแนวตั้งจากจุดข้อมูลลงมาที่แกน X
             ctx.moveTo(x, y);
             ctx.lineTo(x, bottom);
             ctx.stroke();
 
             // Horizontal Line (Value Line)
+            // เส้นแนวนอนจากแกน Y มาที่จุดข้อมูล
             ctx.beginPath();
             ctx.moveTo(left, y);
             // Draw to the point (x)
@@ -80,10 +83,11 @@ const crosshairPlugin = {
     }
 };
 
+// Goal Label Plugin: แสดงเส้นเป้าหมายและป้ายกำกับ (เส้นประสีฟ้า)
 const goalLabelPlugin = {
     id: "goalLabelPlugin",
     afterDraw: (chart: any, args: any, options: any) => {
-        if (options.display === false) return; // Check display option
+        if (options.display === false) return; // Check display option (ตรวจสอบว่าต้องแสดงหรือไม่)
 
         const { ctx, scales: { x, y } } = chart;
         const goalVal = options.goalValue;
@@ -94,13 +98,13 @@ const goalLabelPlugin = {
         const xStart = x.left;
         let xEnd = x.right;
 
-        // Limit line to retire age if possible
+        // Limit line to retire age if possible (จำกัดความยาวเส้นถึงอายุเกษียณ ถ้ามีข้อมูล)
         if (retireAge) {
             const px = x.getPixelForValue(String(retireAge));
             if (px !== undefined && px !== null && !isNaN(px)) xEnd = px;
         }
 
-        // Draw Blue Dashed Line
+        // Draw Blue Dashed Line (วาดเส้นประสีฟ้า)
         ctx.save();
         ctx.beginPath();
         ctx.strokeStyle = "#3b82f6"; // Blue 500
@@ -112,7 +116,7 @@ const goalLabelPlugin = {
         ctx.stroke();
         ctx.restore();
 
-        // Draw Label "เป้าหมายทางการเงิน" as a Badge
+        // Draw Label "เป้าหมายทางการเงิน" as a Badge (วาดป้ายกำกับ)
         const text = options.labelText || "เป้าหมายทางการเงิน";
         ctx.save();
         ctx.font = "bold 12px 'Inter', 'Prompt', sans-serif";
@@ -163,6 +167,7 @@ const goalLabelPlugin = {
     }
 };
 
+// Age Period Plugin: แสดงลายน้ำจางๆ สำหรับแบ่งช่วงอายุ (ทุก 5 หรือ 10 ปี)
 const agePeriodPlugin = {
     id: "agePeriodPlugin",
     beforeDatasetsDraw: (chart: any, args: any, options: any) => {
@@ -178,7 +183,7 @@ const agePeriodPlugin = {
             const age = parseInt(label);
             if (isNaN(age)) return;
 
-            // Draw faint line if age matches interval
+            // Draw faint line if age matches interval (วาดเส้นจางๆ ถ้าอายุตรงกับช่วง)
             if (age % interval === 0) {
                 const xPos = x.getPixelForValue(label);
 
@@ -196,6 +201,7 @@ const agePeriodPlugin = {
     }
 };
 
+// Legacy Label Plugin: แสดงป้ายกำกับมรดก (เส้นประสีแดง)
 const legacyLabelPlugin = {
     id: "legacyLabelPlugin",
     afterDraw: (chart: any, args: any, options: any) => {
@@ -263,15 +269,16 @@ const legacyLabelPlugin = {
 ChartJS.register(goalLabelPlugin, legacyLabelPlugin, crosshairPlugin, agePeriodPlugin);
 
 
-interface ProjectionChartProps {
-    inputs: RetirementInputs;
-    result: CalculationResult;
-    mcResult: MonteCarloResult | null;
-    showSumAssured: boolean;
-    showActualSavings: boolean;
-    insuranceChartData: InsuranceChartData | null;
-    chartTickInterval: number;
-    viewMode?: 'line' | 'bar';
+// --- Projection Chart (กราฟคาดการณ์เงินออม) ---
+export interface ProjectionChartProps {
+    inputs: RetirementInputs; // ข้อมูลนำเข้า
+    result: CalculationResult; // ผลลัพธ์คำนวณ
+    mcResult: MonteCarloResult | null; // ผล Monte Carlo (ถ้ามี)
+    showSumAssured: boolean; // แสดงทุนประกันหรือไม่
+    showActualSavings: boolean; // แสดงเงินออมจริงหรือไม่
+    insuranceChartData: InsuranceChartData | null; // ข้อมูลกราฟประกัน
+    chartTickInterval: number; // ระยะห่างช่วงอายุบนแกน X
+    viewMode?: 'line' | 'bar'; // โหมดการแสดงผล (เส้นกราฟ / แท่งกราฟ)
 }
 
 
@@ -312,11 +319,12 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
             return 0;
         });
 
-        // Filter data for Bar view to reduce crowding
+        // Filter data for Bar view to reduce crowding (กรองข้อมูลสำหรับโหมด Bar เพื่อไม่ให้กราฟแน่นเกินไป)
         const indicesToKeep = labels.map((_, i) => i).filter(i => {
-            if (viewMode === 'line' || isMobile) return true;
+            if (viewMode === 'line' || isMobile) return true; // ถ้าเป็น Line หรือ Mobile ให้แสดงหมด (หรือจัดการใน Scale แทน)
             const age = Number(labels[i]);
             // Always keep first and last, otherwise filter by interval
+            // เก็บข้อมูลปีแรก, ปีสุดท้าย, หรือปีที่ตรงกับช่วงเวลาที่เลือก
             return i === 0 || i === labels.length - 1 || age % chartTickInterval === 0;
         });
 
@@ -348,6 +356,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
         const suggestedMax = Math.ceil((maxMain * 1.1) / 1000000) * 1000000;
 
         // Configuration for Scales (Swappable)
+        // ตั้งค่าแกน X และ Y (สลับได้ตามอุปกรณ์)
         const ageScaleConfig = {
             title: { display: true, text: "อายุ (ปี)" },
             grid: { display: false },
@@ -359,6 +368,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                     const age = Number(label);
                     // In Desktop Bar view, we already filtered the data, so show every label remaining.
                     if (viewMode === 'bar' && !isMobile) return label;
+                    // Show label only if it matches interval (แสดงเฉพาะอายุที่ตรงกับช่วงที่กำหนด)
                     if (age % (isMobile ? chartTickInterval * 2 : chartTickInterval) === 0) return label;
                     return "";
                 }
@@ -557,11 +567,13 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
 };
 
 
-interface ExpenseChartProps {
-    result: CalculationResult;
+// --- Expense Chart (กราฟแสดงรายจ่ายหลังเกษียณ) ---
+export interface ExpenseChartProps {
+    result: CalculationResult; // ผลลัพธ์การคำนวณการเงิน
 }
 
 export const ExpenseChart: React.FC<ExpenseChartProps> = ({ result }) => {
+    // Helper to format large numbers (ตัวช่วยจัดรูปแบบตัวเลข: 1M, 1k)
     const valFormatter = (val: number) => {
         if (val >= 1000000) return "B" + (val / 1000000).toFixed(1) + "M";
         if (val >= 1000) return "B" + (val / 1000).toFixed(0) + "k";
@@ -569,9 +581,9 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({ result }) => {
     };
 
     const expenseChart = useMemo(() => {
-        if (!result.expenseSchedule || result.expenseSchedule.length === 0) return null;
-        const labels = result.expenseSchedule.map((r) => String(r.age));
-        const dataMonthly = result.expenseSchedule.map((r) => r.monthly);
+        if (!result.expenseSchedule || result.expenseSchedule.length === 0) return null; // ถ้าไม่มีข้อมูลตารางค่าใช้จ่าย ให้คืนค่า null
+        const labels = result.expenseSchedule.map((r) => String(r.age)); // แกน X: อายุ
+        const dataMonthly = result.expenseSchedule.map((r) => r.monthly); // แกน Y: รายจ่ายต่อเดือน
         return {
             data: {
                 labels,

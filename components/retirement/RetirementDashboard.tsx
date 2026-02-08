@@ -1,9 +1,9 @@
 import React from "react";
 import Link from "next/link";
 import * as XLSX from "xlsx";
-import { ProjectionChart } from "./DashboardCharts";
-import { MobileProjectionChart } from "./MobileProjectionChart";
-import { RetirementInputSection } from "./RetirementInputSection";
+import { ProjectionChart } from "./DashboardCharts"; // กราฟแสดงผลการคาดการณ์ (Projection)
+import { MobileProjectionChart } from "./MobileProjectionChart"; // กราฟสำหรับแสดงผลบนมือถือ
+import { RetirementInputSection } from "./RetirementInputSection"; // ส่วนกรอกข้อมูล (Input Form)
 import {
     InsuranceTableModal,
     ProjectedModal,
@@ -31,14 +31,18 @@ import { PlanManager } from "./PlanManager";
 
 import { buildProjectionSeries } from "@/lib/retirement-calculation";
 
+// ----------------------------------------------------------------------
+// Props Definition (นิยามข้อมูลที่ได้รับจาก Component แม่)
+// ----------------------------------------------------------------------
 interface RetirementDashboardProps {
-    user: { name: string } | null;
-    form: FormState;
+    user: { name: string } | null; // ข้อมูลผู้ใช้งาน
+    form: FormState; // สถานะฟอร์ม (ข้อมูลทั้งหมด)
     setForm: React.Dispatch<React.SetStateAction<FormState>>;
-    inputs: RetirementInputs;
-    result: CalculationResult;
-    mcResult: MonteCarloResult;
-    planType: "individual" | "family" | null;
+    inputs: RetirementInputs; // ข้อมูลอินพุตที่แปลงเป็นตัวเลข
+    result: CalculationResult; // ผลลัพธ์การคำนวณ
+    mcResult: MonteCarloResult; // ผลลัพธ์ Monte Carlo
+    planType: "individual" | "family" | null; // ประเภทแผน
+    // ... (ฟังก์ชันจัดการต่างๆ)
     syncCurrentToFamily: () => void;
     setShowFamilyResult: (show: boolean) => void;
     handleExportExcel: () => void;
@@ -71,6 +75,10 @@ interface RetirementDashboardProps {
     onBack?: () => void;
 }
 
+// ----------------------------------------------------------------------
+// Main Component: RetirementDashboard
+// หน้าแดชบอร์ดหลักสำหรับวางแผนเกษียณ
+// ----------------------------------------------------------------------
 export const RetirementDashboard = ({
     user,
     form,
@@ -107,27 +115,30 @@ export const RetirementDashboard = ({
     onBack
 }: RetirementDashboardProps) => {
 
-    const [showSumAssured, setShowSumAssured] = React.useState(true);
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-    const [showActualSavings, setShowActualSavings] = React.useState(true);
-    const [showInsuranceTable, setShowInsuranceTable] = React.useState(false);
-    const [showProjectedModal, setShowProjectedModal] = React.useState(false);
-    const [showTargetModal, setShowTargetModal] = React.useState(false);
-    const [targetModalTab, setTargetModalTab] = React.useState<"details" | "formula">("details");
-    const [showExpenseModal, setShowExpenseModal] = React.useState(false);
-    const [expenseModalTab, setExpenseModalTab] = React.useState<"details" | "formula">("details");
-    const [projectedModalTab, setProjectedModalTab] = React.useState<"details" | "formula">("details");
-    const [showMonteCarloDetails, setShowMonteCarloDetails] = React.useState(false);
-    const [isMonteCarloOpen, setIsMonteCarloOpen] = React.useState(false);
-    const [chartTickInterval, setChartTickInterval] = React.useState<number>(5);
-    const [viewMode, setViewMode] = React.useState<'line' | 'bar'>('line');
-    const [showMC, setShowMC] = React.useState(true);
+    // ----------------------------------------------------------------------
+    // State Variables (สถานะการทำงานภายใน Component)
+    // ----------------------------------------------------------------------
+    const [showSumAssured, setShowSumAssured] = React.useState(true); // แสดง/ซ่อน ทุนประกันบนกราฟ
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false); // ควบคุมการเปิด/ปิด Sidebar (Mobile/Tablet)
+    const [showActualSavings, setShowActualSavings] = React.useState(true); // แสดง/ซ่อน เงินออมจริงบนกราฟ
+    const [showInsuranceTable, setShowInsuranceTable] = React.useState(false); // แสดง Modal ตารางกรมธรรม์
+    const [showProjectedModal, setShowProjectedModal] = React.useState(false); // แสดง Modal กราฟคาดการณ์
+    const [showTargetModal, setShowTargetModal] = React.useState(false); // แสดง Modal เป้าหมาย
+    const [targetModalTab, setTargetModalTab] = React.useState<"details" | "formula">("details"); // Tab ปัจจุบันของ Target Modal
+    const [showExpenseModal, setShowExpenseModal] = React.useState(false); // แสดง Modal ค่าใช้จ่าย
+    const [expenseModalTab, setExpenseModalTab] = React.useState<"details" | "formula">("details"); // Tab ปัจจุบันของ Expense Modal
+    const [projectedModalTab, setProjectedModalTab] = React.useState<"details" | "formula">("details"); // Tab ปัจจุบันของ Projected Modal
+    const [showMonteCarloDetails, setShowMonteCarloDetails] = React.useState(false); // แสดงรายละเอียด Monte Carlo
+    const [isMonteCarloOpen, setIsMonteCarloOpen] = React.useState(false); // (Deprecated) ควบคุมการเปิด Modal MC
+    const [chartTickInterval, setChartTickInterval] = React.useState<number>(5); // ช่วงระยะเวลาบนแกน X ของกราฟ (1, 5, 10 ปี)
+    const [viewMode, setViewMode] = React.useState<'line' | 'bar'>('line'); // โหมดแสดงผลกราฟ (เส้น/แท่ง)
+    const [showMC, setShowMC] = React.useState(true); // แสดง/ซ่อน พื้นที่ Monte Carlo บนกราฟ
 
-    // Responsive Sidebar Logic:
-    // - Desktop (>=1280): Auto-open sidebar
-    // - iPad/Mobile (<1280): Keep closed (default) to show results first
+    // ----------------------------------------------------------------------
+    // Effects (การทำงานข้างเคียง)
+    // ----------------------------------------------------------------------
+    // เลื่อนหน้าจอไปที่ส่วนผลลัพธ์ (Results Section) เมื่อโหลดหน้าบนมือถือ/แท็บเล็ต
     React.useEffect(() => {
-        // Mobile/Tablet: Scroll to top of results for better UX
         if (window.innerWidth < 1280) {
             const resultsElement = document.getElementById("results-section");
             if (resultsElement) {
@@ -138,11 +149,11 @@ export const RetirementDashboard = ({
         }
     }, []);
 
-    const { insuranceChartData } = useInsuranceLogic(form);
+    const { insuranceChartData } = useInsuranceLogic(form); // ดึงข้อมูลกราฟประกันจาก Hook
 
-    // Compute data for Print Table
+    // เตรียมข้อมูลสำหรับตารางที่จะพิมพ์ (Print Data Preparation)
     const printData = React.useMemo(() => {
-        // Use 'principalStats' for print table, keeping 'actualHistory' for graph
+        // สร้างข้อมูลกราฟ projection ตาม input และผลลัพธ์
         const { labels, actual, required, principalStats } = buildProjectionSeries(inputs, result) as any;
         return labels.map((label: string, i: number) => {
             const age = Number(label);
@@ -150,14 +161,13 @@ export const RetirementDashboard = ({
             const principal = principalStats ? principalStats[i] : 0;
             const target = Number(label) <= Number(inputs.retireAge) ? required[i] : 0;
 
-            // Get Sum Assured and Cash Flow for this age
+            // ดึงข้อมูลทุนประกันและกระแสเงินสดจากประกัน
             let sumAssured = 0;
             let insuranceCashFlow = 0;
             if (insuranceChartData) {
                 const idx = insuranceChartData.labels.indexOf(age);
                 if (idx !== -1) {
                     sumAssured = (insuranceChartData.datasets[0].data[idx] as number) || 0;
-                    // Assuming dataset[1] is cash flow (inflows)
                     insuranceCashFlow = (insuranceChartData.datasets[1]?.data[idx] as number) || 0;
                 }
             }
@@ -315,29 +325,30 @@ export const RetirementDashboard = ({
                 {/* Main Content Flex Container */}
                 <div className="flex flex-col xl:flex-row items-start gap-0 relative">
 
-                    {/* Mobile Backdrop */}
+                    {/* Mobile Backdrop (พื้นหลังสีดำจางๆ เมื่อเปิด Sidebar บนมือถือ) */}
                     <div
                         className={`fixed inset-0 z-30 bg-black/20 backdrop-blur-sm transition-opacity duration-300 xl:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                         onClick={() => setIsSidebarOpen(false)}
                     />
 
-                    {/* LEFT AREA: Sidebar (Sticky, Scrollable independently, Hidden Scrollbar) */}
-                    {/* LEFT AREA: Sidebar (Sticky, Scrollable independently, Hidden Scrollbar) */}
+                    {/* LEFT AREA: Sidebar (ส่วนแถบข้างสำหรับกรอกข้อมูล) */}
+                    {/* - Mobile/Tablet: แสดงเป็น Bottom Sheet (เลื่อนขึ้นจากด้านล่าง) */}
+                    {/* - Desktop: แสดงเป็น Sidebar ปกติด้านซ้าย */}
                     <div className={`
                         fixed z-40 transition-all duration-300 ease-in-out
                         
-                        /* Mobile/Tablet: Centered Modal Overlay */
-                        inset-0 flex items-center justify-center p-4 sm:p-6
+                        /* Mobile & Tablet (<1280px): Bottom Sheet Overlay (ทับจอ) */
+                        inset-0 flex items-end justify-center
                         ${isSidebarOpen
                             ? 'opacity-100 pointer-events-auto visible'
                             : 'opacity-0 pointer-events-none invisible xl:opacity-100 xl:pointer-events-none xl:invisible'}
                         
-                        /* Desktop: Fixed Sidebar (Reset Mobile styles) */
+                        /* Desktop (>=1280px): Fixed Sidebar (ติดด้านซ้าย) */
                         xl:fixed xl:top-[72px] xl:bottom-0 xl:left-0 xl:inset-auto xl:block
                         xl:p-0 xl:flex-none
                         xl:bg-transparent xl:shadow-none
                         
-                        /* Desktop Width & Visibility Transition */
+                        /* Desktop Width & Visibility */
                         ${isSidebarOpen
                             ? 'xl:w-[480px] xl:translate-x-0 xl:visible xl:pointer-events-auto xl:opacity-100 xl:overflow-y-auto no-scrollbar'
                             : 'xl:w-0 xl:-translate-x-full xl:invisible xl:pointer-events-none xl:opacity-0 xl:overflow-hidden'}
@@ -345,82 +356,86 @@ export const RetirementDashboard = ({
                         print:hidden
                     `}>
                         <div className={`
-                            transition-all duration-300 w-full
+                            transition-all duration-500 cubic-bezier(0.32, 0.72, 0, 1) w-full
                             
-                            /* Mobile/Tablet: Card Style */
-                            max-w-md bg-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]
-                            ${isSidebarOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4 xl:scale-100 xl:translate-y-0'}
+                            /* Mobile & Tablet (<1280px): Detailed Bottom Sheet */
+                            max-w-none bg-white rounded-t-[32px] rounded-b-none shadow-[0_-10px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col 
+                            h-[90vh]
+                            
+                            ${isSidebarOpen
+                                ? 'translate-y-0 opacity-100'
+                                : 'translate-y-full opacity-100'}
 
-                            /* Desktop: Reset Card Style */
-                            xl:max-w-none xl:bg-transparent xl:rounded-none xl:shadow-none xl:h-auto xl:max-h-none xl:overflow-visible
+                            /* Desktop (>=1280px): Reset */
+                            xl:max-w-none xl:bg-transparent xl:rounded-none xl:shadow-none xl:h-auto xl:max-h-none xl:overflow-visible xl:translate-y-0 xl:opacity-100
                         `}>
-                            {/* Mobile Close Button Header */}
-                            <div className="xl:hidden flex items-center justify-between p-4 border-b border-slate-100 bg-white sticky top-0 z-10">
-                                <span></span>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-slate-100 text-slate-500" onClick={() => setIsSidebarOpen(false)}>
-                                    <PanelLeftClose className="w-4 h-4" />
-                                </Button>
-                            </div>
-
                             {/* Scrollable Content Area */}
-                            <div className="overflow-y-auto p-0 xl:p-0 custom-scrollbar xl:overflow-visible">
+                            <div className="overflow-y-auto p-0 xl:p-0 custom-scrollbar xl:overflow-visible flex flex-col items-center xl:block">
+                                <div className="w-full max-w-2xl xl:max-w-none">
+                                    {/* LEFT HEADER: Adjust Plan */}
+                                    <div className="mb-6 pl-5 pt-6 pr-5 flex items-start justify-between">
+                                        <div>
+                                            <h2 className="text-2xl font-black text-slate-800 tracking-tight">ปรับแผนการเงิน</h2>
+                                            <p className="text-slate-500 text-sm font-medium mt-0.5">กำหนดแผนเกษียณในแบบของคุณ</p>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-9 w-9 xl:hidden rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+                                            onClick={() => setIsSidebarOpen(false)}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="translate-y-[1px]"><path d="m6 9 6 6 6-6" /></svg>
+                                        </Button>
+                                    </div>
 
-                                {/* LEFT HEADER: Adjust Plan */}
-                                <div className="mb-6 pl-3 pt-6">
-                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">ปรับแผนการเงิน</h2>
-                                    <p className="text-slate-500 text-sm font-medium mt-0.5">กำหนดแผนเกษียณในแบบของคุณ</p>
+                                    {/* Inputs Component */}
+                                    <RetirementInputSection
+                                        user={user}
+                                        form={form}
+                                        handleChange={handleChange}
+                                        changeBy={changeBy}
+                                        gender={gender}
+                                        setGender={setGender}
+                                        addInsurancePlan={addInsurancePlan}
+                                        removeInsurancePlan={removeInsurancePlan}
+                                        updateInsurancePlan={updateInsurancePlan}
+                                        onViewTable={(id) => {
+                                            if (id) {
+                                                setForm(prev => ({ ...prev, selectedPlanId: id }));
+                                            }
+                                            setShowInsuranceTable(true);
+                                        }}
+                                        savingMode={savingMode}
+                                        setSavingMode={setSavingMode}
+                                        returnMode={returnMode}
+                                        setReturnMode={setReturnMode}
+                                        allocations={allocations}
+                                        addAllocation={addAllocation}
+                                        removeAllocation={removeAllocation}
+                                        updateAllocation={updateAllocation}
+                                        onCalculate={() => {
+                                            // Defer slightly to allow click animation to finish and ensure smooth transition
+                                            setTimeout(() => setIsSidebarOpen(false), 50);
+                                        }}
+                                        isEmbedded={true}
+                                    />
                                 </div>
-
-                                {/* Inputs Component */}
-                                <RetirementInputSection
-                                    user={user}
-                                    form={form}
-                                    handleChange={handleChange}
-                                    changeBy={changeBy}
-                                    gender={gender}
-                                    setGender={setGender}
-                                    addInsurancePlan={addInsurancePlan}
-                                    removeInsurancePlan={removeInsurancePlan}
-                                    updateInsurancePlan={updateInsurancePlan}
-                                    onViewTable={(id) => {
-                                        if (id) {
-                                            setForm(prev => ({ ...prev, selectedPlanId: id }));
-                                        }
-                                        setShowInsuranceTable(true);
-                                    }}
-                                    savingMode={savingMode}
-                                    setSavingMode={setSavingMode}
-                                    returnMode={returnMode}
-                                    setReturnMode={setReturnMode}
-                                    allocations={allocations}
-                                    addAllocation={addAllocation}
-                                    removeAllocation={removeAllocation}
-                                    updateAllocation={updateAllocation}
-                                    onCalculate={() => {
-                                        // Defer slightly to allow click animation to finish and ensure smooth transition
-                                        setTimeout(() => setIsSidebarOpen(false), 50);
-                                    }}
-                                    isEmbedded={true}
-                                />
                             </div>
                         </div>
                     </div>
-
-
-
-                    {/* RIGHT AREA: Charts & Metrics (Window Scroll) */}
+                    {/* RIGHT AREA: Main Content (ส่วนแสดงผลลัพธ์) */}
                     <div id="results-section" className={`
                         flex-1 min-w-0 space-y-8 transition-all duration-500 ease-in-out pb-20
                         ${isSidebarOpen ? 'xl:ml-[500px] w-full xl:w-[calc(100%-500px)]' : 'ml-0 w-full'}
                     `}>
 
-                        {/* RIGHT HEADER: Financial Results Summary + Buttons */}
-                        <div className="sticky top-0 z-30 flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 py-4 -mx-4 px-4 md:mx-0 md:px-0 bg-slate-50 relative overflow-hidden md:static md:bg-transparent md:border-none md:p-0 print:hidden transition-all duration-200">
+                        {/* RIGHT HEADER: Financial Results Summary + Buttons (หัวข้อสรุปผลลัพธ์ + ปุ่มเครื่องมือ) */}
+                        <div className="sticky top-0 z-30 flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 py-4 -mx-4 px-4 md:mx-0 md:px-0 bg-slate-50 relative overflow-hidden md:static md:bg-transparent md:border-none md:pt-6 md:pb-0 print:hidden transition-all duration-200">
                             {/* Mobile Grid Background */}
                             <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none md:hidden" />
                             <div className="relative z-10">
                                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">สรุปผลลัพธ์ทางการเงิน</h2>
-                                <p className="text-slate-500 text-sm font-medium mt-0.5">ภาพรวมวางแผนการรับมือเกษียณ</p>
+                                <p className="text-slate-500 text-sm font-medium mt-0.5">ภาพรวมวางแผนการรับมือเกษียณ (Financial Overview)</p>
                             </div>
 
                             <div className="flex flex-wrap items-center gap-3">
@@ -560,14 +575,14 @@ export const RetirementDashboard = ({
                                 </div>
                             </div>
 
-                            {/* Key Metrics Grid (Redesigned) */}
+                            {/* Key Metrics Grid (Redesigned) - ตารางแสดงตัวเลขสำคัญ */}
                             <div className="min-w-full md:min-w-0 snap-center flex flex-col gap-3 relative print:hidden">
                                 {/* Grid Background Decoration */}
                                 <div className="hidden md:block absolute inset-0 -m-8 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
 
                                 {/* Grid Container: On mobile, use a vertical stack. On Desktop, use Grid. */}
                                 <div className={`flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-6 relative z-10 ${isSidebarOpen ? 'xl:grid-cols-1 2xl:grid-cols-2' : ''}`}>
-                                    {/* Card 1: Projected Savings */}
+                                    {/* Card 1: Projected Savings (เงินออมที่มี) */}
                                     <div
                                         onClick={() => setShowProjectedModal(true)}
                                         className="w-full bg-white rounded-[24px] lg:rounded-[28px] p-4 sm:p-5 lg:p-7 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-200 relative overflow-hidden group cursor-pointer hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.15)] hover:border-emerald-100 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
@@ -795,9 +810,9 @@ export const RetirementDashboard = ({
                                 </div>
                             </div>
 
-                            {/* Main Dashboard Grid (Chart Container) - Moved INTO Carousel for Unified Flow */}
+                            {/* Main Dashboard Grid (Chart Container) - Moved INTO Carousel for Unified Flow (ส่วนแสดงกราฟหลัก) */}
                             <div className="min-w-full md:min-w-0 snap-center flex flex-col gap-8 mb-8 px-0 md:px-0">
-                                {/* Main Chart Area */}
+                                {/* Main Chart Area (พื้นที่กราฟและการแสดงผล) */}
                                 <div className="w-full bg-white rounded-[32px] p-4 md:p-8 shadow-xl border border-slate-100 relative overflow-hidden">
                                     <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6 print:hidden">
                                         <div>
@@ -971,7 +986,8 @@ export const RetirementDashboard = ({
                                         </button>
                                     </div>
 
-                                    {/* PRINT ONLY: Chart Data Table */}
+                                    {/* PRINT ONLY: Chart Data Table (ตารางข้อมูลสำหรับโหมดพิมพ์) */}
+                                    {/* จะแสดงเฉพาะเมื่อสั่งพิมพ์เท่านั้น (hidden print:block) */}
                                     <div id="print-data-table" className="hidden print:block mt-6 font-mono text-black">
                                         <h3 className="text-[10px] font-bold uppercase tracking-widest mb-2 border-b border-black pb-1 inline-block">DATA TABLE (YEARLY ANALYSIS)</h3>
                                         <div className="grid grid-cols-3 gap-4 text-[8px] leading-tight">
@@ -1047,6 +1063,8 @@ export const RetirementDashboard = ({
             </div>
             {/* End of Main Grid */}
 
+            {/* Modals Placeholder (ส่วนสำหรับวาง Modal/Popup ต่างๆ) */}
+            {/* Modal จะถูก render ซ้อนทับเนื้อหาหลักเมื่อถูกเรียกใช้ */}
             <div id="modals-placeholder">
                 <InsuranceTableModal
                     show={showInsuranceTable}

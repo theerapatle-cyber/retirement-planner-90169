@@ -9,7 +9,7 @@ import { ExpenseChart } from "./DashboardCharts";
 import { PensionTiersManager } from "./PensionTiersManager";
 import { FormState, InsurancePlan, CalculationResult, MonteCarloResult, RetirementInputs } from "@/types/retirement";
 
-// --- Props Interfaces ---
+// --- Props Interfaces (กำหนด Type ของ Props สำหรับ Modal ต่างๆ) ---
 
 interface InsuranceTableModalProps {
     show: boolean;
@@ -51,24 +51,32 @@ interface MonteCarloDetailsModalProps {
     mcSimulations: number;
 }
 
-// --- Hooks ---
+// --- Hooks (Custom Hooks สำหรับจัดการ Logic) ---
 
 export const useInsuranceLogic = (form: FormState) => {
+    // 1. คำนวณความคุ้มครองชีวิต ณ อายุต่างๆ
     const calculateDeathBenefitAtAge = React.useCallback((plan: InsurancePlan, age: number) => {
         const sumAssured = Number(String(plan.sumAssured || 0).replace(/,/g, ""));
         const coverageAge = Number(plan.coverageAge);
         if (age > coverageAge) return 0;
-        if (plan.useSurrender && plan.surrenderAge && age > Number(plan.surrenderAge)) return 0;
+        if (plan.useSurrender && plan.surrenderAge && age > Number(plan.surrenderAge)) return 0; // เวนคืนแล้วไม่มีความคุ้มครอง
+
+        // กรณีบำนาญ: ความคุ้มครองลดลงตามเงินบำนาญที่รับไปแล้ว
         if (plan.type === "บำนาญ") {
             const dbPre = Number(String(plan.deathBenefitPrePension || 0).replace(/,/g, ""));
             let currentDB = sumAssured;
+
+            // ช่วงก่อนรับบำนาญ (สามารถระบุความคุ้มครองพิเศษได้)
             if (age < Number(plan.pensionStartAge) && dbPre > 0) currentDB = dbPre;
+
             let accumulatedPension = 0;
             let startAge = Number(plan.pensionStartAge);
             if (plan.unequalPension && plan.pensionTiers?.length > 0) {
                 const minTierStart = Math.min(...plan.pensionTiers.map(t => Number(t.startAge)));
                 startAge = minTierStart;
             }
+
+            // ช่วงรับบำนาญ: หักเงินบำนาญสะสมออกจากความคุ้มครอง
             if (age >= startAge) {
                 for (let pastAge = startAge; pastAge < age; pastAge++) {
                     let pastAmount = 0;
@@ -91,6 +99,7 @@ export const useInsuranceLogic = (form: FormState) => {
         return sumAssured;
     }, []);
 
+    // 2. เตรียมข้อมูลสำหรับกราฟประกัน
     const insuranceChartData = React.useMemo(() => {
         if (!form.insurancePlans || form.insurancePlans.length === 0) return null;
         const currentAge = Number(String(form.currentAge || 0).replace(/,/g, ""));
@@ -103,15 +112,19 @@ export const useInsuranceLogic = (form: FormState) => {
         const deathBenefit: number[] = [];
         const cashFlow: number[] = [];
         const cashValue: (number | null)[] = [];
+
         for (let age = currentAge; age <= endAge; age++) {
             labels.push(age);
             let totalDeathBenefit = 0;
             let totalFlow = 0;
             let totalCashValue = 0;
             let hasCashValue = false;
+
             form.insurancePlans.forEach(plan => {
                 if (!plan.active) return;
                 totalDeathBenefit += calculateDeathBenefitAtAge(plan, age);
+
+                // Logic: เงินไหลเข้า (Cash Flow)
                 if (plan.type === "สะสมทรัพย์") {
                     const maturity = Number(String(plan.maturityAmount || 0).replace(/,/g, ""));
                     const cashBack = Number(String(plan.cashBackAmount || 0).replace(/,/g, ""));
@@ -122,6 +135,7 @@ export const useInsuranceLogic = (form: FormState) => {
                     if (policyYear > 0 && policyYear % freq === 0 && age <= coverageAge) totalFlow += cashBack;
                 }
                 if (plan.type === "บำนาญ") {
+                    // คำนวณบำนาญรายปี (รองรับขั้นบันได)
                     const sumAssured = Number(String(plan.sumAssured || 0).replace(/,/g, ""));
                     if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
                         for (const tier of plan.pensionTiers) {
@@ -138,11 +152,13 @@ export const useInsuranceLogic = (form: FormState) => {
                         if (age >= start && age <= end) totalFlow += pension;
                     }
                 }
+
+                // Logic: มูลค่าเวนคืน (Surrender Value)
                 if (plan.useSurrender && plan.surrenderAge && age === Number(plan.surrenderAge)) {
                     const sv = Number(String(plan.surrenderValue || 0).replace(/,/g, ""));
                     totalCashValue += sv;
                     hasCashValue = true;
-                    // Add surrender value to total cash flow so it shows in the tooltip
+                    // เพิ่มมูลค่าเวนคืนลงใน Cash Flow เพื่อแสดงใน Tooltip
                     totalFlow += sv;
                 }
             });
@@ -163,14 +179,14 @@ export const useInsuranceLogic = (form: FormState) => {
     return { insuranceChartData, calculateDeathBenefitAtAge };
 };
 
-// --- Components ---
+// --- Components (ส่วนประกอบ UI) ---
 
 export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
     show, onClose, form, updateSurrenderTable
 }) => {
     if (!show) return null;
 
-    // Use selected plan if available, otherwise show all active plans
+    // เลือกแผนที่จะแสดง (ถ้ามี Selected ID ให้แสดงเฉพาะอันนั้น ถ้าไม่มีให้แสดงทั้งหมด)
     const targetPlans = form.selectedPlanId
         ? form.insurancePlans.filter(p => p.id === form.selectedPlanId)
         : form.insurancePlans;
@@ -178,7 +194,7 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in transition-all duration-300">
             <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col max-h-[90vh]">
-                {/* Header */}
+                {/* Header (ส่วนหัวของ Modal) */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-20 shadow-sm">
                     <div>
                         <h3 className="text-lg font-bold text-slate-900">
@@ -194,7 +210,7 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                     </button>
                 </div>
 
-                {/* Content: List of Tables */}
+                {/* Content: List of Tables (เนื้อหา: รายการตาราง) */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50/50 space-y-8">
                     {targetPlans.map((plan) => (
                         <div key={plan.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2">
@@ -218,7 +234,7 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {Array.from({ length: 100 - Number(form.currentAge || 0) + 1 }, (_, i) => Number(form.currentAge || 0) + i).map(age => {
-                                        // Calculations for SINGLE Plan
+                                        // Calculations for SINGLE Plan (คำนวณแยกตามแผน)
                                         const sumAssured = Number(String(plan.sumAssured || 0).replace(/,/g, ""));
                                         const coverageAge = Number(plan.coverageAge);
                                         const surrenderAge = Number(plan.surrenderAge);
@@ -240,7 +256,7 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                         let db = 0;
                                         let sv = 0;
 
-                                        // Surrender Value Logic
+                                        // Surrender Value Logic (มูลค่าเวนคืน)
                                         let rawSv = Number(String(plan.surrenderValue || 0).replace(/,/g, ""));
                                         if (plan.surrenderMode === "table" && plan.surrenderTableData) {
                                             const row = plan.surrenderTableData.find(d => d.age === age);
@@ -248,7 +264,7 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                         }
                                         sv = rawSv;
 
-                                        // Cash Inflow Logic
+                                        // Cash Inflow Logic (เงินไหลเข้า - เงินคืน/บำนาญ/ครบสัญญา)
                                         if (planIsSurrenderYear) {
                                             flow += sv;
                                         } else if (!planIsAfterSurrender && planIsWithinCoverage) {
@@ -276,17 +292,17 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                             }
                                         }
 
-                                        // Death Benefit Logic
+                                        // Death Benefit Logic (ผลประโยชน์มรณกรรม)
                                         if (!planIsAfterSurrender && planIsWithinCoverage) {
                                             db += sumAssured;
                                             if (plan.type === "บำนาญ") {
                                                 if (age < Number(plan.pensionStartAge)) {
-                                                    // Before pension starts: Use Pre-Pension DB if available, else Sum Assured
+                                                    // ก่อนรับบำนาญ: ใช้ความคุ้มครองก่อนบำนาญ (ถ้ามี) มิฉะนั้นใช้ทุนประกันปกติ
                                                     const prePensionDB = Number(String(plan.deathBenefitPrePension || 0).replace(/,/g, ""));
                                                     db = prePensionDB > 0 ? prePensionDB : sumAssured;
                                                 } else {
-                                                    // After pension starts: Reducing DB
-                                                    // Calculate Cumulative Pension Received UP TO Last Year
+                                                    // หลังรับบำนาญ: ความคุ้มครองลดลงตามเงินที่รับไปแล้ว
+                                                    // คำนวณเงินบำนาญสะสมที่รับไปแล้ว
                                                     let cumulativePension = 0;
                                                     const startAge = Number(plan.pensionStartAge);
                                                     for (let a = startAge; a < age; a++) {
@@ -307,7 +323,7 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                             }
                                         }
 
-                                        // Status & Styling Logic
+                                        // Status & Styling Logic (สถานะและการแสดงผลสี)
                                         // Removed exclusion for Pension plans so they can be Red too
                                         const isDeathRow = age === coverageAge && !useSurrender;
                                         const isPostDeathRow = age > coverageAge;
@@ -381,6 +397,7 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
     );
 };
 
+// --- ProjectedModal: แสดงที่มาของเงินออม (Projected Savings Details) ---
 export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, form, result, initialTab = "details" }) => {
     const [tab, setTab] = React.useState<"details" | "formula">(initialTab);
 
@@ -394,6 +411,7 @@ export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, f
     return (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-xl p-4 transition-all duration-500">
             <div className="w-full max-w-2xl rounded-[32px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-black/5">
+                {/* Header */}
                 <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100">
                     <div>
                         <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2"><span className="w-8 h-8 rounded-lg bg-emerald-100/50 flex items-center justify-center text-emerald-600 text-lg">💰</span> ที่มาของเงินออม (Projected Savings)</h3>
@@ -401,12 +419,17 @@ export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, f
                     </div>
                     <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"><CloseIcon className="w-5 h-5" /></button>
                 </div>
+
+                {/* Content */}
                 <div className="max-h-[75vh] overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
+                    {/* Tabs */}
                     <div className="flex gap-2 p-1.5 bg-white/80 backdrop-blur border border-slate-200/60 rounded-2xl mx-8 mt-6 mb-4 shadow-sm sticky top-0 z-10">
                         <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${tab === 'details' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setTab('details')}>รายละเอียด (Details)</button>
                         <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${tab === 'formula' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setTab('formula')}>สูตรคำนวณ (Formula)</button>
                     </div>
+
                     <div className="px-8 pb-8 pt-2">
+                        {/* Tab: Details */}
                         {tab === "details" && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
@@ -423,6 +446,8 @@ export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, f
                                 </div>
                             </div>
                         )}
+
+                        {/* Tab: Formula (สูตรคำนวณ) */}
                         {tab === "formula" && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
@@ -456,6 +481,7 @@ interface TargetModalProps {
     initialTab?: "details" | "formula";
 }
 
+// --- TargetModal: เงินที่ต้องการก่อนเกษียณ (Target Fund Details) ---
 export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result, form, initialTab = "details" }) => {
     const [tab, setTab] = React.useState<"details" | "formula">(initialTab);
 
@@ -470,18 +496,24 @@ export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result,
     return (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-xl p-4 transition-all duration-500">
             <div className="w-full max-w-2xl rounded-[32px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-black/5">
+                {/* Header */}
                 <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100">
                     <div>
                         <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">เงินที่ต้องการก่อนเกษียณ</h3>
                     </div>
                     <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"><CloseIcon className="w-5 h-5" /></button>
                 </div>
+
+                {/* Content */}
                 <div className="max-h-[75vh] overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
+                    {/* Tabs */}
                     <div className="flex gap-2 p-1.5 bg-white/80 backdrop-blur border border-slate-200/60 rounded-2xl mx-8 mt-6 mb-4 shadow-sm sticky top-0 z-10">
                         <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${tab === 'details' ? 'bg-blue-500 text-white shadow-md shadow-blue-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setTab('details')}>รายละเอียด (Details)</button>
                         <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${tab === 'formula' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setTab('formula')}>สูตรคำนวณ (Formula)</button>
                     </div>
+
                     <div className="px-8 pb-8 pt-2">
+                        {/* Tab: Details */}
                         {tab === "details" && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 <p className="text-sm text-slate-600 leading-relaxed bg-white p-6 rounded-3xl border border-blue-100 shadow-sm">
@@ -499,6 +531,8 @@ export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result,
                                 </div>
                             </div>
                         )}
+
+                        {/* Tab: Formula */}
                         {tab === "formula" && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-6">
@@ -593,6 +627,7 @@ export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result,
     );
 };
 
+// --- ExpenseModal: ค่าใช้จ่ายหลังเกษียณ (Future Expense Details) ---
 export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form, result, initialTab = "details" }) => {
     const [tab, setTab] = React.useState<"details" | "formula">(initialTab);
 
@@ -606,6 +641,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form,
     return (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-xl p-4 transition-all duration-500">
             <div className="w-full max-w-2xl rounded-[32px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-black/5">
+                {/* Header */}
                 <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100">
                     <div>
                         <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2"><span className="w-8 h-8 rounded-lg bg-purple-100/50 flex items-center justify-center text-purple-600 text-lg">💸</span> ค่าใช้จ่ายหลังเกษียณ (Future Expense)</h3>
@@ -613,12 +649,16 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form,
                     </div>
                     <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"><CloseIcon className="w-5 h-5" /></button>
                 </div>
+
+                {/* Content */}
                 <div className="max-h-[75vh] overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
+                    {/* Tabs */}
                     <div className="flex gap-2 p-1.5 bg-white/80 backdrop-blur border border-slate-200/60 rounded-2xl mx-8 mt-6 mb-4 shadow-sm sticky top-0 z-10">
                         <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${tab === 'details' ? 'bg-purple-500 text-white shadow-md shadow-purple-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setTab('details')}>รายละเอียด (Details)</button>
                         <button className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${tab === 'formula' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-200' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setTab('formula')}>สูตรคำนวณ (Formula)</button>
                     </div>
                     <div className="px-8 pb-8 pt-2">
+                        {/* Tab: Details */}
                         {tab === "details" && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 <div className="h-[260px] w-full rounded-3xl border border-slate-100 p-6 bg-white shadow-sm flex flex-col">
@@ -668,6 +708,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form,
                                 </div>
                             </div>
                         )}
+
+                        {/* Tab: Formula */}
                         {tab === "formula" && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 space-y-4">
@@ -700,6 +742,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form,
     );
 };
 
+// --- MonteCarloDetailsModal: แสดงผล Monte Carlo Simulation ---
 export const MonteCarloDetailsModal: React.FC<MonteCarloDetailsModalProps> = ({ show, onClose, mcResult, mcSimulations }) => {
     if (!show) return null;
     return (

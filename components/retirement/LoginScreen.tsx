@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+// --- LoginScreen: หน้าจอเข้าสู่ระบบ ---
 export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
     const [name, setName] = React.useState("");
     const [password, setPassword] = React.useState("");
@@ -25,7 +26,7 @@ export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) =>
 
             <div className="w-full max-w-7xl relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-24 items-center">
 
-                {/* --- Left Column: Value Proposition (Open Layout) --- */}
+                {/* --- Left Column: Value Proposition (Open Layout) - ส่วนแสดงจุดเด่นและคำโปรย --- */}
                 <div className="space-y-[3vh] lg:space-y-10 text-center lg:text-left lg:pl-8 order-1 animate-in slide-in-from-top-8 fade-in duration-700">
 
                     {/* Brand Badge */}
@@ -70,7 +71,7 @@ export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) =>
                     </div>
                 </div>
 
-                {/* --- Right Column: Floating Form Card --- */}
+                {/* --- Right Column: Floating Form Card - ส่วนฟอร์มล็อกอินด้านขวา --- */}
                 <div className="order-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200 md:-mt-12 lg:mt-0 w-full flex justify-center">
                     <div className="relative w-[92vw] max-w-md mx-auto bg-white/95 backdrop-blur-2xl p-[6vw] lg:p-10 rounded-[clamp(24px,6vw,32px)] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.3)] ring-1 ring-white/50">
 

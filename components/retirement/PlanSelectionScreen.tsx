@@ -1,5 +1,6 @@
 import React from "react";
 
+// --- PlanSelectionScreen: หน้าเลือกประเภทแผน (ส่วนบุคคล / ครอบครัว) ---
 export const PlanSelectionScreen = ({ onSelect, user }: { onSelect: (type: "individual" | "family") => void, user: { name: string } | null }) => {
     const isGuest = user?.name === "Guest";
 
@@ -31,7 +32,7 @@ export const PlanSelectionScreen = ({ onSelect, user }: { onSelect: (type: "indi
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 px-4">
-                    {/* Option 1: Individual */}
+                    {/* Option 1: Individual (แผนส่วนบุคคล) */}
                     <button
                         onClick={() => onSelect("individual")}
                         className="group relative bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/50 rounded-[32px] p-8 transition-all duration-300 text-left hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20"
@@ -48,7 +49,7 @@ export const PlanSelectionScreen = ({ onSelect, user }: { onSelect: (type: "indi
                         </div>
                     </button>
 
-                    {/* Option 2: Family */}
+                    {/* Option 2: Family (แผนครอบครัว) */}
                     <button
                         onClick={() => !isGuest && onSelect("family")}
                         disabled={isGuest}
