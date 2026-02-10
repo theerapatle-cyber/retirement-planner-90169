@@ -130,9 +130,51 @@ export const RetirementDashboard = ({
     const [projectedModalTab, setProjectedModalTab] = React.useState<"details" | "formula">("details"); // Tab ปัจจุบันของ Projected Modal
     const [showMonteCarloDetails, setShowMonteCarloDetails] = React.useState(false); // แสดงรายละเอียด Monte Carlo
     const [isMonteCarloOpen, setIsMonteCarloOpen] = React.useState(false); // (Deprecated) ควบคุมการเปิด Modal MC
-    const [chartTickInterval, setChartTickInterval] = React.useState<number>(5); // ช่วงระยะเวลาบนแกน X ของกราฟ (1, 5, 10 ปี)
+    const [chartTickInterval, setChartTickInterval] = React.useState<number>(5); // ช่วงระยะเวลาบนแกน X ของกราฟ (1, 2, 5, 10 ปี)
     const [viewMode, setViewMode] = React.useState<'line' | 'bar'>('line'); // โหมดแสดงผลกราฟ (เส้น/แท่ง)
     const [showMC, setShowMC] = React.useState(true); // แสดง/ซ่อน พื้นที่ Monte Carlo บนกราฟ
+
+    // Mobile Carousel Auto-Scroll Logic
+    const carouselRef = React.useRef<HTMLDivElement>(null);
+    const [activeSlide, setActiveSlide] = React.useState(0);
+
+    React.useEffect(() => {
+        const container = carouselRef.current;
+        if (!container) return;
+
+        let timeoutId: NodeJS.Timeout;
+
+        const handleScroll = () => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                // Determine active slide index based on scroll position
+                // Assuming full width slides, index = round(scrollLeft / clientWidth)
+                const slideWidth = container.clientWidth;
+                const scrollLeft = container.scrollLeft;
+                const index = Math.round(scrollLeft / slideWidth);
+
+                if (index !== activeSlide) {
+                    setActiveSlide(index);
+                    // Scroll Window to Top of Container (minus header offset)
+                    // This ensures the new slide content is visible at the top
+                    const rect = container.getBoundingClientRect();
+                    const headerOffset = 140; // Approx sticky header height + padding
+                    const scrollTop = window.scrollY + rect.top - headerOffset;
+
+                    // Only scroll if we are not already near the top (e.g. if user is scrolling down)
+                    // Actually, the request implies "always show top of slide". 
+                    // So if we swipe, we want to snap the view to the top.
+                    window.scrollTo({ top: scrollTop, behavior: 'smooth' });
+                }
+            }, 100); // 100ms debounce
+        };
+
+        container.addEventListener('scroll', handleScroll);
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+            clearTimeout(timeoutId);
+        };
+    }, [activeSlide]);
 
     // ----------------------------------------------------------------------
     // Effects (การทำงานข้างเคียง)
@@ -430,9 +472,8 @@ export const RetirementDashboard = ({
                     `}>
 
                         {/* RIGHT HEADER: Financial Results Summary + Buttons (หัวข้อสรุปผลลัพธ์ + ปุ่มเครื่องมือ) */}
-                        <div className="sticky top-0 z-30 flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 py-4 -mx-4 px-4 md:mx-0 md:px-0 bg-slate-50 relative overflow-hidden md:static md:bg-transparent md:border-none md:pt-6 md:pb-0 print:hidden transition-all duration-200">
-                            {/* Mobile Grid Background */}
-                            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none md:hidden" />
+                        <div className="sticky top-0 z-30 flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 py-4 -mx-4 px-4 md:mx-0 md:px-0 bg-white relative overflow-hidden md:static md:bg-transparent md:border-none md:pt-6 md:pb-0 print:hidden transition-all duration-200">
+
                             <div className="relative z-10">
                                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">สรุปผลลัพธ์ทางการเงิน</h2>
                                 <p className="text-slate-500 text-sm font-medium mt-0.5">ภาพรวมวางแผนการรับมือเกษียณ (Financial Overview)</p>
@@ -500,7 +541,8 @@ export const RetirementDashboard = ({
                         {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
                         {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
                         {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
-                        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-4 px-3 -mx-3 pb-4 items-start md:pb-0 md:px-0 md:mx-0 md:block md:space-y-6 md:overflow-visible no-scrollbar">
+                        {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
+                        <div ref={carouselRef} className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-4 px-3 -mx-3 pb-4 items-start md:pb-0 md:px-0 md:mx-0 md:block md:space-y-6 md:overflow-visible no-scrollbar">
 
                             {/* Hero Summary Card (Redesigned) */}
                             <div className={`min-w-full md:min-w-0 snap-center relative rounded-[24px] lg:rounded-[32px] p-4 sm:p-5 lg:p-8 xl:p-10 overflow-hidden font-sans shadow-xl lg:shadow-2xl transition-all duration-500 group print:hidden ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981] shadow-emerald-900/40' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444] shadow-red-900/40'}`}>
@@ -819,7 +861,7 @@ export const RetirementDashboard = ({
                                             <div className="flex items-center gap-4 mb-1">
                                                 <div className="w-1.5 h-8 bg-slate-800 rounded-full"></div>
                                                 <div>
-                                                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">กราฟการเงินออม</h3>
+                                                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">กราฟเงินออม</h3>
                                                 </div>
                                             </div>
                                             <p className="text-sm text-slate-500 font-medium pl-4.5">Wealth Projection & Goal Analysis</p>
@@ -851,13 +893,16 @@ export const RetirementDashboard = ({
 
                                             {/* Interval Selection */}
                                             <div className="flex bg-white/50 p-1 rounded-xl backdrop-blur-sm border border-slate-200 shadow-sm">
-                                                {[1, 5, 10].map((interval) => (
+                                                {[1, 2, 5, 10].map((interval) => (
                                                     <button
                                                         key={interval}
                                                         onClick={() => setChartTickInterval(interval)}
-                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${interval === 1 ? 'hidden md:block' : ''} ${chartTickInterval === interval
-                                                            ? "bg-slate-800 text-white shadow-md shadow-slate-200"
-                                                            : "text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 
+                                                            ${interval === 1 ? 'hidden xl:block' : ''} 
+                                                            ${interval === 2 ? 'hidden md:block xl:hidden' : ''} 
+                                                            ${chartTickInterval === interval
+                                                                ? "bg-slate-800 text-white shadow-md shadow-slate-200"
+                                                                : "text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
                                                             }`}
                                                     >
                                                         {interval} ปี
@@ -907,11 +952,15 @@ export const RetirementDashboard = ({
                                             <MobileProjectionChart
                                                 inputs={inputs}
                                                 result={result}
-                                                mcResult={showMC ? mcResult : null}
+                                                mcResult={mcResult} // Pass raw result so we know it exists for the toggle button
                                                 showSumAssured={showSumAssured}
+                                                setShowSumAssured={setShowSumAssured}
                                                 showActualSavings={showActualSavings}
+                                                setShowActualSavings={setShowActualSavings}
                                                 insuranceChartData={insuranceChartData}
                                                 chartTickInterval={chartTickInterval}
+                                                showMC={showMC}
+                                                setShowMC={setShowMC}
                                             />
                                         </div>
 
@@ -947,7 +996,7 @@ export const RetirementDashboard = ({
 
 
                                     {/* Chart Control Toggles - Redesigned (Pill Style) */}
-                                    <div className="mt-8 flex flex-col md:flex-row items-center justify-center gap-3 pt-6 print:hidden">
+                                    <div className="mt-8 hidden md:flex md:flex-row items-center justify-center gap-3 pt-6 print:hidden">
 
                                         {/* Sum Assured Toggle - Orange */}
                                         <button

@@ -292,13 +292,18 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
     chartTickInterval,
     viewMode = 'line'
 }) => {
-    // Mobile Detection State
+    // Mobile & Tablet Detection State
     const [isMobile, setIsMobile] = React.useState(false);
+    const [isTablet, setIsTablet] = React.useState(false);
     React.useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
+        const checkSize = () => {
+            const width = window.innerWidth;
+            setIsMobile(width < 768);
+            setIsTablet(width >= 768 && width < 1280); // iPad Interval
+        };
+        checkSize();
+        window.addEventListener('resize', checkSize);
+        return () => window.removeEventListener('resize', checkSize);
     }, []);
 
     const valFormatter = (val: number) => {
@@ -368,8 +373,22 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                     const age = Number(label);
                     // In Desktop Bar view, we already filtered the data, so show every label remaining.
                     if (viewMode === 'bar' && !isMobile) return label;
-                    // Show label only if it matches interval (แสดงเฉพาะอายุที่ตรงกับช่วงที่กำหนด)
-                    if (age % (isMobile ? chartTickInterval * 2 : chartTickInterval) === 0) return label;
+
+                    // Logic: Adjust interval for Mobile and Tablet to prevent overcrowding
+                    // Mobile: Double the interval
+                    // Tablet: If interval is 1 (All years), show every 2 years. Otherwise keep as is.
+                    // Logic: Adjust interval for Mobile and Tablet (Desktop view)
+                    // Mobile: Double the interval (2->4, 5->10)
+                    // Tablet: Keep as is for 2 years (readable enough)
+
+                    let viewInterval = chartTickInterval;
+                    if (isMobile) {
+                        viewInterval = chartTickInterval * 2;
+                    }
+                    // Removed old "1 year -> 2 years on tablet" logic as 1 year is no longer an option
+
+                    // Show label only if match interval
+                    if (age % viewInterval === 0) return label;
                     return "";
                 }
             },

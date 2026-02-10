@@ -4,6 +4,7 @@ export type InsurancePlan = {
     id: string; // รหัสอ้างอิงแผน
     active: boolean; // สถานะการใช้งาน (เปิด/ปิด)
     expanded?: boolean; // สถานะการเปิดดูรายละเอียด (UI)
+    isTypeDropdownOpen?: boolean; // สถานะการเปิด Dropdown เลือกประเภท (UI)
     planName: string; // ชื่อแผนประกัน
     type: string; // ประเภทประกัน
     coverageAge: string; // คุ้มครองถึงอายุ

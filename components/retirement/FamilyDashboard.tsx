@@ -29,6 +29,29 @@ interface FamilyDashboardProps {
     setShowResult: (show: boolean) => void; // ฟังก์ชันแสดง/ซ่อนผลลัพธ์เดี่ยว
 }
 
+// --- InfoTooltip Component ---
+const InfoTooltip: React.FC<{ content: React.ReactNode }> = ({ content }) => {
+    const [isVisible, setIsVisible] = React.useState(false);
+    return (
+        <div
+            className="relative inline-flex ml-1.5 group/tooltip shrink-0"
+            onMouseEnter={() => setIsVisible(true)}
+            onMouseLeave={() => setIsVisible(false)}
+            onClick={(e) => { e.stopPropagation(); setIsVisible(!isVisible); }}
+        >
+            <div className="w-3.5 h-3.5 rounded-full border border-slate-300 text-slate-400 flex items-center justify-center text-[9px] font-bold cursor-help hover:border-indigo-400 hover:text-indigo-500 transition-colors">!</div>
+            {isVisible && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-slate-800 text-white text-xs rounded-xl shadow-xl z-[100] animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
+                    <div className="relative z-10 leading-relaxed font-medium text-left">
+                        {content}
+                    </div>
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 rotate-45"></div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // --- FamilyDashboard: หน้าภาพรวมแผนการเงินครอบครัว ---
 export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
     familyMembers,
@@ -124,7 +147,10 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                 <div className="relative z-10">
                                     <div className="flex items-center gap-2 lg:gap-3 mb-3 lg:mb-4">
                                         <div className="w-1 h-4 lg:h-5 rounded-full bg-blue-500"></div>
-                                        <span className="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">เป้าหมายเกษียณรวม</span>
+                                        <span className="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center">
+                                            เป้าหมายเกษียณรวม
+                                            <InfoTooltip content="เงินก้อนที่ 'ต้องเตรียม' เพื่อให้สมาชิกทุกคนในครอบครัวมีกินมีใช้หลังเกษียณไปตลอดชีวิต" />
+                                        </span>
                                     </div>
                                     <div className="text-xl lg:text-4xl font-black text-slate-800 tracking-tighter">฿{formatNumber(summary.totalTarget)}</div>
                                     <div className="mt-1 lg:mt-2 text-[10px] lg:text-xs text-slate-400 font-medium">Total Target Fund</div>
@@ -139,7 +165,10 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                 <div className="relative z-10">
                                     <div className="flex items-center gap-2 lg:gap-3 mb-3 lg:mb-4">
                                         <div className="w-1 h-4 lg:h-5 rounded-full bg-indigo-500"></div>
-                                        <span className="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">เงินออมคาดการณ์</span>
+                                        <span className="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center">
+                                            เงินออมคาดการณ์
+                                            <InfoTooltip content="เงินก้อนที่จะมีในอนาคต (คำนวณจาก: เงินต้น + เงินออมเพิ่ม + ดอกเบี้ยทบต้น)" />
+                                        </span>
                                     </div>
                                     <div className="text-xl lg:text-4xl font-black text-indigo-600 tracking-tighter">฿{formatNumber(summary.totalProjected)}</div>
                                     <div className="mt-1 lg:mt-2 text-[10px] lg:text-xs text-slate-400 font-medium">Projected Savings</div>
@@ -154,7 +183,19 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                 <div className="relative z-10">
                                     <div className="flex items-center gap-2 lg:gap-3 mb-3 lg:mb-4">
                                         <div className="w-1 h-4 lg:h-5 rounded-full bg-white/60"></div>
-                                        <span className="text-[10px] lg:text-xs font-bold text-white/90 uppercase tracking-wider">ส่วนต่างเป้าหมาย</span>
+                                        <span className="text-[10px] lg:text-xs font-bold text-white/90 uppercase tracking-wider flex items-center">
+                                            ส่วนต่างเป้าหมาย
+                                            <div className="relative inline-flex ml-1.5 group/tooltip shrink-0">
+                                                <div className="w-3.5 h-3.5 rounded-full border border-white/40 text-white/80 flex items-center justify-center text-[9px] font-bold cursor-help hover:border-white hover:text-white transition-colors">!</div>
+                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-800 text-white text-xs rounded-xl shadow-xl z-[100] hidden group-hover/tooltip:block pointer-events-none">
+                                                    <div className="relative z-10 leading-relaxed font-medium text-left">
+                                                        ถ้าเป็น <span className="text-emerald-300 font-bold">บวก (+)</span> แสดงว่าเงินเหลือใช้สบายๆ <br />
+                                                        ถ้าเป็น <span className="text-red-300 font-bold">ลบ (-)</span> แสดงว่าเงินยังขาด ต้องรีบออมเพิ่ม
+                                                    </div>
+                                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 rotate-45"></div>
+                                                </div>
+                                            </div>
+                                        </span>
                                     </div>
                                     <div className="text-xl lg:text-4xl font-black tracking-tighter flex items-center gap-1">
                                         {summary.totalGap >= 0 ? "+" : ""}{formatNumber(Math.abs(summary.totalGap))}
@@ -231,7 +272,16 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                         {/* Right: Graphic */}
                         <div className="bg-slate-50/50 rounded-[40px] p-6 lg:p-10 border border-slate-100 flex flex-col justify-center items-center text-center relative overflow-hidden h-full min-h-[380px] lg:min-h-[440px]">
                             <div className="bg-white px-5 py-2 rounded-full border border-slate-200/60 shadow-sm mb-8 lg:mb-12">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">คะแนนความสำเร็จ (SUCCESS SCORE)</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                    คะแนนความสำเร็จ (SUCCESS SCORE)
+                                    <InfoTooltip content={
+                                        <span>
+                                            บอกว่าแผนของคุณ <b>"ปลอดภัย"</b> แค่ไหน<br />
+                                            • <b>100% ขึ้นไป:</b> ดีมาก! เงินพอใช้แน่นอน<br />
+                                            • <b>ต่ำกว่า 100%:</b> ยังมีความเสี่ยง ควรหารายได้เพิ่มหรือลดรายจ่าย
+                                        </span>
+                                    } />
+                                </span>
                             </div>
 
                             <div className="relative w-56 h-56 lg:w-72 lg:h-72 flex items-center justify-center mb-8 lg:mb-12">
@@ -256,7 +306,10 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             <div className="w-full max-w-sm space-y-4 lg:space-y-5">
                                 <div>
                                     <div className="flex justify-between items-end mb-2.5">
-                                        <span className="text-xs font-bold text-slate-500">ออมจริง (ปัจจุบัน)</span>
+                                        <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5">
+                                            ออมจริง (ปัจจุบัน)
+                                            <InfoTooltip content="เงินที่ทุกคนในครอบครัวช่วยกันออมได้จริง ๆ ตกเดือนละเท่าไหร่" />
+                                        </span>
                                         <span className="text-xs font-black text-slate-800">฿{formatNumber(summary.totalMonthlySavingsCurrent)}</span>
                                     </div>
                                     <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden shadow-inner">
@@ -265,7 +318,10 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-end mb-2.5">
-                                        <span className="text-xs font-bold text-indigo-500">เป้าหมาย (ที่ควรทำให้ได้)</span>
+                                        <span className="text-xs font-bold text-indigo-500 flex items-center gap-1.5">
+                                            เป้าหมาย (ที่ควรทำให้ได้)
+                                            <InfoTooltip content="เพื่อให้ทุกคนรอด! ครอบครัวต้องช่วยกันออมให้ได้เดือนละอย่างน้อยเท่านี้" />
+                                        </span>
                                         <span className="text-xs font-black text-indigo-600">฿{formatNumber(summary.totalMonthlyNeeded)}</span>
                                     </div>
                                     <div className="h-3 w-full bg-indigo-50 rounded-full overflow-hidden shadow-inner">
@@ -353,25 +409,33 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
 
                                     <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
                                         <div>
+                                            <div className="text-[10px] font-bold text-slate-400 mb-0.5">ช่วงอายุ</div>
+                                            <div className="text-sm font-bold text-slate-700">{m.form.currentAge} → {m.form.retireAge} ({yearsLeft} ปี)</div>
+                                        </div>
+                                        <div className="text-right">
                                             <div className="text-[10px] font-bold text-slate-400 mb-0.5">เป้าหมาย</div>
                                             <div className="text-sm font-black text-slate-800">฿{formatNumber(res.targetFund)}</div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="text-[10px] font-bold text-slate-400 mb-0.5">เหลือเวลา</div>
-                                            <span className="font-bold text-slate-700 text-sm">{yearsLeft} ปี</span>
-                                        </div>
                                         <div>
-                                            <div className="text-[10px] font-bold text-slate-400 mb-0.5">สถานะ</div>
-                                            {res.status === "enough"
-                                                ? <span className="text-xs font-bold text-emerald-600">เพียงพอ</span>
-                                                : <span className="text-xs font-bold text-red-500">ขาด {formatNumber(Math.abs(res.gap))}</span>
-                                            }
+                                            <div className="text-[10px] font-bold text-slate-400 mb-0.5">เงินออมปัจจุบัน</div>
+                                            <div className="text-sm font-bold text-slate-700">฿{formatNumber(m.form.currentSavings)}</div>
                                         </div>
-                                        <div className="text-right flex flex-col justify-end">
-                                            <div className="text-[10px] font-bold text-slate-400 mb-1">ความคืบหน้า {prog.toFixed(0)}%</div>
-                                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden ml-auto">
+                                        <div className="text-right">
+                                            <div className="text-[10px] font-bold text-slate-400 mb-0.5">ออมต่อเดือน</div>
+                                            <div className="text-sm font-bold text-slate-700">฿{formatNumber(m.form.monthlySaving)}</div>
+                                        </div>
+                                        <div className="col-span-2 pt-2 border-t border-slate-50 mt-1">
+                                            <div className="flex justify-between items-end mb-1">
+                                                <div className="text-[10px] font-bold text-slate-400">สถานะ</div>
+                                                {res.status === "enough"
+                                                    ? <span className="text-xs font-bold text-emerald-600">เพียงพอ</span>
+                                                    : <span className="text-xs font-bold text-red-500">ขาด {formatNumber(Math.abs(res.gap))}</span>
+                                                }
+                                            </div>
+                                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                                                 <div className={`h-full rounded-full transition-all duration-1000 ${res.status === "enough" ? "bg-emerald-500" : "bg-amber-400"}`} style={{ width: `${prog}%` }}></div>
                                             </div>
+                                            <div className="text-[10px] font-bold text-slate-400 text-right mt-1">ความคืบหน้า {prog.toFixed(0)}%</div>
                                         </div>
                                     </div>
                                 </div>
@@ -394,11 +458,12 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             <table className="w-full text-sm text-left border-collapse min-w-[800px]">
                                 <thead className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider">
                                     <tr>
-                                        <th className="py-6 px-8 w-[30%]">สมาชิกครอบครัว</th>
-                                        <th className="py-6 px-6 text-right w-[15%]">เวลาที่เหลือ (ปี)</th>
-                                        <th className="py-6 px-6 text-right w-[20%]">เป้าหมายเงินออม</th>
-                                        <th className="py-6 px-6 text-left w-[20%] pl-8">ความคืบหน้า</th>
-                                        <th className="py-6 px-8 text-right w-[15%]">ผลประเมิน</th>
+                                        <th className="py-6 px-8 w-[25%]">สมาชิกครอบครัว</th>
+                                        <th className="py-6 px-4 text-center w-[15%]">ช่วงอายุ (เวลา)</th>
+                                        <th className="py-6 px-4 text-right w-[15%]">เงินออมปัจจุบัน</th>
+                                        <th className="py-6 px-4 text-right w-[15%]">ออมต่อเดือน</th>
+                                        <th className="py-6 px-4 text-right w-[15%]">เป้าหมาย</th>
+                                        <th className="py-6 px-8 text-right w-[15%]">สถานะ</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50/50">
@@ -439,23 +504,27 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-6 px-6 text-right">
-                                                    <span className="font-bold text-slate-700 text-base">{yearsLeft}</span> <span className="text-xs text-slate-400 font-medium">ปี</span>
+                                                <td className="py-6 px-4 text-center">
+                                                    <div className="font-bold text-slate-700 text-sm">{m.form.currentAge} → {m.form.retireAge}</div>
+                                                    <div className="text-xs text-slate-400 font-medium">{yearsLeft} ปี</div>
                                                 </td>
-                                                <td className="py-6 px-6 text-right font-black text-slate-800 text-base">
+                                                <td className="py-6 px-4 text-right font-medium text-slate-700 text-sm">
+                                                    ฿{formatNumber(m.form.currentSavings)}
+                                                </td>
+                                                <td className="py-6 px-4 text-right font-medium text-slate-700 text-sm">
+                                                    ฿{formatNumber(m.form.monthlySaving)}
+                                                </td>
+                                                <td className="py-6 px-4 text-right font-black text-slate-800 text-base">
                                                     ฿{formatNumber(res.targetFund)}
                                                 </td>
-                                                <td className="py-6 px-6 pl-8">
-                                                    <div className="w-full bg-slate-100 rounded-full h-2.5 mb-2 overflow-hidden shadow-inner">
-                                                        <div className={`h-full rounded-full transition-all duration-1000 ${res.status === "enough" ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]" : "bg-amber-400"}`} style={{ width: `${prog}%` }}></div>
-                                                    </div>
-                                                    <div className="text-[10px] font-bold text-slate-400 text-right">{prog.toFixed(0)}% ตามแผน</div>
-                                                </td>
                                                 <td className="py-6 px-8 text-right relative">
-                                                    {res.status === "enough"
-                                                        ? <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100 shadow-sm">เพียงพอ</span>
-                                                        : <span className="px-3 py-1.5 rounded-xl bg-red-50 text-red-600 text-[10px] font-bold border border-red-100 shadow-sm">ขาด {formatNumber(Math.abs(res.gap))}</span>
-                                                    }
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        {res.status === "enough"
+                                                            ? <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100 shadow-sm">เพียงพอ</span>
+                                                            : <span className="px-3 py-1.5 rounded-xl bg-red-50 text-red-600 text-[10px] font-bold border border-red-100 shadow-sm">ขาด {formatNumber(Math.abs(res.gap))}</span>
+                                                        }
+                                                        <div className="text-[10px] font-bold text-slate-400">{prog.toFixed(0)}%</div>
+                                                    </div>
                                                     {m.id !== "primary" && (
                                                         <button
                                                             onClick={(e) => {

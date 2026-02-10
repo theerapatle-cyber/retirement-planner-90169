@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { Label } from "@/components/ui/label";
 import { NumericInput } from "@/components/NumericInput";
 import { FormState, InsurancePlan, Allocation } from "@/types/retirement";
-import { User, Briefcase, Home, Plus, Minus, Camera, Calculator, X, ChevronDown, ChevronUp, Trash2, RotateCcw, PenLine, ShieldCheck, TrendingUp, DollarSign, Settings2, ArrowRight, ArrowLeft, Check, Table as TableIcon, AlertCircle, Info } from "lucide-react";
+import { User, Briefcase, Home, Plus, Minus, Camera, Calculator, X, ChevronDown, ChevronUp, Trash2, RotateCcw, PenLine, ShieldCheck, TrendingUp, DollarSign, Settings2, ArrowRight, ArrowLeft, Check, Table as TableIcon, AlertCircle, Info, Heart, PiggyBank, Armchair, Hourglass, PieChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { calculateRetirement, buildRetirementInputs } from "@/lib/retirement-calculation";
 
@@ -765,21 +765,69 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                             </div>
 
                                             {/* Type */}
-                                            <div className="space-y-1">
-                                                <Label className="text-slate-500 font-medium text-sm">ประเภท</Label>
+                                            <div className="space-y-2">
+                                                <Label className="text-slate-500 font-medium text-sm">ประเภทประกัน</Label>
                                                 <div className="relative">
-                                                    <select
-                                                        value={plan.type}
-                                                        onChange={(e) => updateInsurancePlan(index, "type", e.target.value)}
-                                                        className="w-full h-10 px-3 bg-white border border-slate-200 rounded text-slate-700 font-medium appearance-none focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100"
-                                                    >
-                                                        <option value="ตลอดชีพ">ตลอดชีพ</option>
-                                                        <option value="สะสมทรัพย์">สะสมทรัพย์</option>
-                                                        <option value="บำนาญ">บำนาญ</option>
-                                                        <option value="ประกันชั่วระยะเวลา">ประกันชั่วระยะเวลา</option>
-                                                        <option value="Unit Linked">Unit Linked</option>
-                                                    </select>
-                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                                    {(() => {
+                                                        const insuranceOptions = [
+                                                            { label: "ตลอดชีพ", value: "ตลอดชีพ", icon: Heart, color: "text-pink-500", bg: "bg-pink-50" },
+                                                            { label: "สะสมทรัพย์", value: "สะสมทรัพย์", icon: PiggyBank, color: "text-emerald-500", bg: "bg-emerald-50" },
+                                                            { label: "บำนาญ", value: "บำนาญ", icon: Armchair, color: "text-blue-500", bg: "bg-blue-50" },
+                                                            { label: "ชั่วระยะเวลา", value: "ประกันชั่วระยะเวลา", icon: Hourglass, color: "text-orange-500", bg: "bg-orange-50" },
+                                                            { label: "Unit Linked", value: "Unit Linked", icon: PieChart, color: "text-purple-500", bg: "bg-purple-50" },
+                                                        ];
+                                                        const selectedOption = insuranceOptions.find(o => o.value === plan.type) || insuranceOptions[0];
+                                                        const SelectedIcon = selectedOption.icon;
+                                                        const isDropdownOpen = plan.isTypeDropdownOpen || false;
+
+                                                        return (
+                                                            <>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation(); // Prevent card collapse
+                                                                        updateInsurancePlan(index, "isTypeDropdownOpen" as any, !isDropdownOpen);
+                                                                    }}
+                                                                    className="w-full flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                                                                >
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className={`p-2 rounded-full ${selectedOption.bg}`}>
+                                                                            <SelectedIcon size={18} className={selectedOption.color} strokeWidth={2.5} />
+                                                                        </div>
+                                                                        <span className="font-bold text-slate-700 text-sm">{selectedOption.label}</span>
+                                                                    </div>
+                                                                    <ChevronDown className={`text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} size={16} />
+                                                                </button>
+
+                                                                {isDropdownOpen && (
+                                                                    <div className="absolute z-10 top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden p-1 animate-in fade-in slide-in-from-top-2">
+                                                                        {insuranceOptions.map((opt) => {
+                                                                            const Icon = opt.icon;
+                                                                            const isSelected = plan.type === opt.value;
+                                                                            return (
+                                                                                <button
+                                                                                    key={opt.value}
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        updateInsurancePlan(index, "type", opt.value);
+                                                                                        updateInsurancePlan(index, "isTypeDropdownOpen" as any, false);
+                                                                                    }}
+                                                                                    className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition-colors ${isSelected ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}
+                                                                                >
+                                                                                    <div className={`p-1.5 rounded-full ${opt.bg}`}>
+                                                                                        <Icon size={16} className={opt.color} strokeWidth={2.5} />
+                                                                                    </div>
+                                                                                    <span className={`text-sm font-bold ${isSelected ? 'text-indigo-700' : 'text-slate-600'}`}>
+                                                                                        {opt.label}
+                                                                                    </span>
+                                                                                    {isSelected && <Check className="ml-auto text-indigo-600" size={16} />}
+                                                                                </button>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </div>
 

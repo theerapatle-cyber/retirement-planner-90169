@@ -38,9 +38,13 @@ interface MobileProjectionChartProps {
     result: CalculationResult; // ผลลัพธ์การคำนวณ
     mcResult: MonteCarloResult | null; // ผลลัพธ์ Monte Carlo (ถ้ามี)
     showSumAssured: boolean; // แสดงกราฟทุนประกันหรือไม่
+    setShowSumAssured?: (show: boolean) => void; // Toggle Sum Assured
     showActualSavings: boolean; // แสดงกราฟเงินออมหรือไม่
+    setShowActualSavings?: (show: boolean) => void; // Toggle Actual Savings
     insuranceChartData: InsuranceChartData | null; // ข้อมูลกราฟประกัน
     chartTickInterval: number; // ระยะห่างปี (เช่น ทุก 1 ปี, 5 ปี)
+    showMC?: boolean; // แสดง Monte Carlo หรือไม่
+    setShowMC?: (show: boolean) => void; // Toggle Monte Carlo
 }
 
 // --- MobileProjectionChart: กราฟคาดการณ์สำหรับมือถือ (แสดงแนวตั้ง/แนวนอนได้) ---
@@ -49,9 +53,13 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
     result,
     mcResult,
     showSumAssured,
+    setShowSumAssured,
     showActualSavings,
+    setShowActualSavings,
     insuranceChartData,
-    chartTickInterval
+    chartTickInterval,
+    showMC = false,
+    setShowMC
 }) => {
     // Mode State: 'horizontal' (Bar Chart) vs 'vertical' (Column Chart)
     // สำหรับ Mobile จะใช้ Vertical เป็นหลัก แต่เตรียมไว้เผื่อปรับเปลี่ยน
@@ -59,7 +67,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
 
     // Formatting Helpers (ตัวช่วยจัดรูปแบบตัวเลข)
     const valFormatter = (val: number) => {
-        if (val >= 1000000) return (val / 1000000).toFixed(1) + "M";
+        if (val >= 1000000) return (val / 1000000).toFixed(0) + "M";
         if (val >= 1000) return (val / 1000).toFixed(0) + "k";
         return String(val);
     };
@@ -67,7 +75,10 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
     // Enforce minimum interval of 5 years on mobile/vertical charts to prevent overcrowding
     // บังคับให้แสดงผลทุก 5 ปี หากเลือก 1 ปี เพื่อไม่ให้กราฟบนจอมือถือแน่นเกินไป
     // If user selects 1 Year on desktop, mobile will still show 5 Years.
-    const effectiveInterval = chartTickInterval === 1 ? 5 : chartTickInterval;
+    // Enforce minimum interval of 5 years on mobile/vertical charts to prevent overcrowding
+    // บังคับให้แสดงผลทุก 5 ปี หากเลือกต่ำกว่า 5 ปี (เช่น 2 ปี) เพื่อไม่ให้กราฟบนจอมือถือแน่นเกินไป
+    // If user selects 2 Years on desktop, mobile will still show 5 Years.
+    const effectiveInterval = chartTickInterval < 5 ? 5 : chartTickInterval;
 
     const chartData = useMemo(() => {
         // เตรียมข้อมูลชุดข้อมูล (Series)
@@ -119,33 +130,35 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
             data: {
                 labels: filteredLabels,
                 datasets: [
-                    // 1. Monte Carlo Range (Background)
-                    {
-                        label: "P5",
-                        data: p5Series,
-                        borderColor: "transparent",
-                        backgroundColor: "rgba(16, 185, 129, 0.05)",
-                        pointRadius: 0,
-                        fill: "+1",
-                        tension: 0.4,
-                        order: 10,
-                        type: 'line' as const,
-                        xAxisID: 'x', // Explicit ID binding not strictly needed if only one axis, but safe
-                        yAxisID: 'y',
-                    },
-                    {
-                        label: "P95",
-                        data: p95Series,
-                        borderColor: "transparent",
-                        backgroundColor: "rgba(16, 185, 129, 0.05)",
-                        pointRadius: 0,
-                        fill: false,
-                        tension: 0.4,
-                        order: 11,
-                        type: 'line' as const,
-                        xAxisID: 'x',
-                        yAxisID: 'y',
-                    },
+                    // 1. Monte Carlo Range (Background) - Only if showMC is true and mcResult exists
+                    ...(showMC && mcResult ? [
+                        {
+                            label: "P5",
+                            data: p5Series,
+                            borderColor: "transparent",
+                            backgroundColor: "rgba(16, 185, 129, 0.05)",
+                            pointRadius: 0,
+                            fill: "+1",
+                            tension: 0.4,
+                            order: 10,
+                            type: 'line' as const,
+                            xAxisID: 'x',
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: "P95",
+                            data: p95Series,
+                            borderColor: "transparent",
+                            backgroundColor: "rgba(16, 185, 129, 0.05)",
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0.4,
+                            order: 11,
+                            type: 'line' as const,
+                            xAxisID: 'x',
+                            yAxisID: 'y',
+                        }
+                    ] : []),
 
                     // 2. Savings (Main Bar)
                     {
@@ -390,15 +403,19 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                     </button>
                 </div>
 
-                {/* 2. Legend (คำอธิบายสีกราฟ) */}
+                {/* 2. Legend (Interactive Toggles) */}
                 <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
-                    {showActualSavings && (
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-sm bg-[#10B981]"></div>
-                            <span className="text-[10px] lg:text-xs font-medium text-slate-500">เงินออม</span>
-                        </div>
-                    )}
-                    <div className="flex items-center gap-1.5">
+                    {/* Actual Savings Toggle */}
+                    <button
+                        onClick={() => setShowActualSavings && setShowActualSavings(!showActualSavings)}
+                        className={`flex items-center gap-1.5 transition-all active:scale-95 ${showActualSavings ? 'opacity-100' : 'opacity-40 grayscale'}`}
+                    >
+                        <div className="w-2.5 h-2.5 rounded-sm bg-[#10B981]"></div>
+                        <span className="text-[10px] lg:text-xs font-medium text-slate-500">เงินออม</span>
+                    </button>
+
+                    {/* Target (Static Label) */}
+                    <div className="flex items-center gap-1.5 opacity-100">
                         {orientation === 'horizontal' ? (
                             <div className="w-2.5 h-2.5 bg-[#3b82f6] rounded-full"></div>
                         ) : (
@@ -406,17 +423,33 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                         )}
                         <span className="text-[10px] lg:text-xs font-medium text-slate-500">เป้าหมาย</span>
                     </div>
+
+                    {/* Legacy (Static Label if exists) */}
                     {inputs.legacyFund > 0 && (
                         <div className="flex items-center gap-1.5">
                             <div className="w-4 h-0 border-t-[3px] border-dashed border-[#EF4444]"></div>
                             <span className="text-[10px] lg:text-xs font-medium text-slate-500">มรดก</span>
                         </div>
                     )}
-                    {showSumAssured && (
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-sm bg-[#F97316]"></div>
-                            <span className="text-[10px] lg:text-xs font-medium text-slate-500">ทุนประกัน</span>
-                        </div>
+
+                    {/* Sum Assured Toggle */}
+                    <button
+                        onClick={() => setShowSumAssured && setShowSumAssured(!showSumAssured)}
+                        className={`flex items-center gap-1.5 transition-all active:scale-95 ${showSumAssured ? 'opacity-100' : 'opacity-40 grayscale'}`}
+                    >
+                        <div className="w-2.5 h-2.5 rounded-sm bg-[#F97316]"></div>
+                        <span className="text-[10px] lg:text-xs font-medium text-slate-500">ทุนประกัน</span>
+                    </button>
+
+                    {/* Monte Carlo Toggle */}
+                    {mcResult && setShowMC && (
+                        <button
+                            onClick={() => setShowMC(!showMC)}
+                            className={`flex items-center gap-1.5 transition-all active:scale-95 ${showMC ? 'opacity-100' : 'opacity-40 grayscale'}`}
+                        >
+                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/50 border border-emerald-500"></div>
+                            <span className="text-[10px] lg:text-xs font-medium text-slate-500">Monte Carlo</span>
+                        </button>
                     )}
                 </div>
             </div>
