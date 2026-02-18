@@ -7,22 +7,19 @@ import { Label } from "@/components/ui/label";
 interface ProfileSettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    user: { name: string; password?: string; avatar?: string } | null;
-    onSave: (data: { name: string; password?: string; avatar?: string }) => void;
+    user: { name: string; avatar?: string } | null;
+    onSave: (data: { name: string; avatar?: string }) => void;
 }
 
 // --- ProfileSettingsModal: Modal สำหรับแก้ไขข้อมูลส่วนตัว ---
 export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onClose, user, onSave }) => {
     const [name, setName] = useState(user?.name || "");
-    const [password, setPassword] = useState(user?.password || "");
-    const [showPassword, setShowPassword] = useState(false);
     const [avatar, setAvatar] = useState<string | undefined>(user?.avatar);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     React.useEffect(() => {
         if (isOpen && user) {
             setName(user.name || "");
-            setPassword(user.password || "");
             setAvatar(user.avatar);
         }
     }, [isOpen, user]);
@@ -42,7 +39,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOp
     };
 
     const handleSave = () => {
-        onSave({ name, password, avatar });
+        onSave({ name, avatar });
         onClose();
     };
 
@@ -93,26 +90,6 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOp
                                     className="pl-11 h-12 bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl"
                                     placeholder="ชื่อผู้ใช้"
                                 />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-slate-700 font-semibold">รหัสผ่าน</Label>
-                            <div className="relative">
-                                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <Input
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                    type={showPassword ? "text" : "password"}
-                                    className="pl-11 pr-10 h-12 bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl"
-                                    placeholder="เปลี่ยนรหัสผ่าน (ระบุเพื่อเปลี่ยน)"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
                             </div>
                         </div>
                     </div>

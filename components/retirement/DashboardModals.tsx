@@ -231,8 +231,8 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
     const activePlan = plans.find(p => p.id === activeTabId);
 
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in transition-all duration-300">
-            <div className="w-full max-w-6xl bg-white rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[1100] flex items-start justify-center bg-slate-900/60 backdrop-blur-sm p-4 pt-8 md:pt-16 animate-in fade-in transition-all duration-300 overflow-y-auto">
+            <div className="w-full max-w-6xl bg-white rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col max-h-[85vh] shrink-0">
                 {/* Header (ส่วนหัวของ Modal) */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-20 shadow-sm shrink-0">
                     <div>

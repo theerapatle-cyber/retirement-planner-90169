@@ -49,6 +49,7 @@ interface MobileProjectionChartProps {
     showMC?: boolean; // แสดง Monte Carlo หรือไม่
     setShowMC?: (show: boolean) => void; // Toggle Monte Carlo
     initialOrientation?: 'horizontal' | 'vertical'; // Initial orientation
+    hideOrientationToggle?: boolean; // ซ่อนปุ่มสลับแนวนอน/แนวตั้ง (กรณีควบคุมจากภายนอก)
 }
 
 // --- MobileProjectionChart: กราฟคาดการณ์สำหรับมือถือ (แสดงแนวตั้ง/แนวนอนได้) ---
@@ -64,7 +65,8 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
     chartTickInterval,
     showMC = false,
     setShowMC,
-    initialOrientation = 'horizontal'
+    initialOrientation = 'horizontal',
+    hideOrientationToggle = false
 }) => {
     // Mode State: 'horizontal' (Bar Chart) vs 'vertical' (Column Chart)
     // สำหรับ Mobile จะใช้ Vertical เป็นหลัก แต่เตรียมไว้เผื่อปรับเปลี่ยน
@@ -397,26 +399,28 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
             <div className="flex flex-col items-center gap-2 mb-2 px-2 shrink-0">
 
                 {/* 1. View Toggle Switch (ปุ่มสลับแนวนอน/แนวตั้ง) */}
-                <div className="flex bg-slate-100 p-1 rounded-lg print:hidden">
-                    <button
-                        onClick={() => setOrientation('horizontal')}
-                        className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${orientation === 'horizontal'
-                            ? 'bg-white text-indigo-600 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-600'
-                            }`}
-                    >
-                        แนวนอน
-                    </button>
-                    <button
-                        onClick={() => setOrientation('vertical')}
-                        className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${orientation === 'vertical'
-                            ? 'bg-white text-indigo-600 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-600'
-                            }`}
-                    >
-                        แนวตั้ง
-                    </button>
-                </div>
+                {!hideOrientationToggle && (
+                    <div className="flex bg-slate-100 p-1 rounded-lg print:hidden">
+                        <button
+                            onClick={() => setOrientation('horizontal')}
+                            className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${orientation === 'horizontal'
+                                ? 'bg-white text-indigo-600 shadow-sm'
+                                : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                        >
+                            แนวนอน
+                        </button>
+                        <button
+                            onClick={() => setOrientation('vertical')}
+                            className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${orientation === 'vertical'
+                                ? 'bg-white text-indigo-600 shadow-sm'
+                                : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                        >
+                            แนวตั้ง
+                        </button>
+                    </div>
+                )}
 
                 {/* 2. Legend (Interactive Toggles) */}
                 <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">

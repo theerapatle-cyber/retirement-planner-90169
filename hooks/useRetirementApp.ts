@@ -21,7 +21,7 @@ import { useInsuranceLogic } from "@/components/retirement/DashboardModals";
 
 export function useRetirementApp() {
     /* ---------- Authentication (mock) ---------- */
-    const [user, setUser] = React.useState<{ name: string; password?: string; avatar?: string; } | null>(null);
+    const [user, setUser] = React.useState<{ name: string; avatar?: string; } | null>(null);
     const [planType, setPlanType] = React.useState<"individual" | "family" | null>(null);
 
     /* ---------- Family State ---------- */
@@ -733,13 +733,6 @@ export function useRetirementApp() {
         if (typeof window !== "undefined") {
             window.localStorage.setItem("mock-user", JSON.stringify(u));
         }
-
-        // Auto-select Individual for Guest
-        if (name === "Guest") {
-            setPlanType("individual");
-            setShowResult(false);
-            setForm(initialForm); // Reset form just in case
-        }
     };
 
     const handleLogout = () => {
@@ -756,7 +749,7 @@ export function useRetirementApp() {
         setPlanType(null);
     };
 
-    const handleUpdateUser = (data: { name: string; password?: string; avatar?: string }) => {
+    const handleUpdateUser = (data: { name: string; avatar?: string }) => {
         const u = user ? { ...user, ...data } : { ...data };
         setUser(u);
         if (typeof window !== "undefined") {

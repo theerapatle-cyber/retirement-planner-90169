@@ -99,7 +99,7 @@ export const RetirementInputPage: React.FC<RetirementInputPageProps> = ({
                                 user?.name?.substring(0, 2).toUpperCase() || "U"
                             )}
                         </div>
-                        <span className="text-sm font-bold text-slate-700 pr-2">{user?.name || "Guest User"}</span>
+                        <span className="text-sm font-bold text-slate-700 pr-2">{user?.name || "User"}</span>
                     </button>
                     <button
                         onClick={onLogout}

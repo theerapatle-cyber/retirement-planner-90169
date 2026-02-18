@@ -334,28 +334,28 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         type="button"
                         onClick={field ? changeBy(field, -step) : undefined}
                         disabled={disabled}
-                        className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm"
+                        className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm"
                     >
-                        <Minus size={18} strokeWidth={2.5} />
+                        <Minus size={16} strokeWidth={2.5} />
                     </button>
 
-                    <div className={`flex-1 relative bg-white border border-slate-200 rounded-full h-12 flex items-center px-4 transition-all duration-300 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50 shadow-sm hover:shadow-md ${disabled ? 'bg-slate-50 opacity-70' : ''}`}>
+                    <div className={`flex-1 relative bg-white border border-slate-200 rounded-full h-10 flex items-center px-3 transition-all duration-300 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50 shadow-sm hover:shadow-md ${disabled ? 'bg-slate-50 opacity-70' : ''}`}>
                         <NumericInput
                             value={value}
                             onChange={field ? handleChange(field) : () => { }}
                             disabled={disabled}
                             className={`flex-1 min-w-0 h-full text-sm font-bold bg-transparent border-none p-0 focus:ring-0 text-center text-slate-700 ${disabled ? 'text-slate-400' : ''}`}
                         />
-                        {suffix && <span className="text-xs font-semibold text-slate-400 ml-2 select-none">{suffix}</span>}
+                        {suffix && <span className="text-xs font-semibold text-slate-400 ml-1 select-none">{suffix}</span>}
                     </div>
 
                     <button
                         type="button"
                         onClick={field ? changeBy(field, step) : undefined}
                         disabled={disabled}
-                        className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm"
+                        className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 shadow-sm"
                     >
-                        <Plus size={18} strokeWidth={2.5} />
+                        <Plus size={16} strokeWidth={2.5} />
                     </button>
                 </div>
             </div>
@@ -385,7 +385,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="flex flex-col items-center justify-center gap-4 py-4">
                 <div className="relative group/avatar cursor-pointer mb-2" onClick={() => fileInputRef.current?.click()}>
-                    <div className={`w-28 h-28 rounded-full border-4 border-white shadow-xl shadow-slate-100 flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-105 ${gender === 'male' ? 'bg-indigo-50' : 'bg-pink-50'}`}>
+                    <div className={`w-24 h-24 rounded-full border-4 border-white shadow-xl shadow-slate-100 flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-105 ${gender === 'male' ? 'bg-indigo-50' : 'bg-pink-50'}`}>
                         {avatarImage ? (
                             <img src={avatarImage} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
@@ -416,7 +416,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                     </button>
                 </div>
 
-                <div className="w-64 relative z-20">
+                <div className="w-full px-8 relative z-20">
                     <Label className="text-slate-500 font-bold text-xs mb-1.5 block text-center">ชื่อของคุณ หรือ ชื่อแผน</Label>
                     <div className="relative">
                         <input
@@ -431,7 +431,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
                 {/* Relation Selector (Dropdown Style) - Only for Family Plan */}
                 {setRelation && relation && (
-                    <div className="w-64 relative z-20">
+                    <div className="w-full px-8 relative z-20">
                         <Label className="text-slate-500 font-bold text-xs mb-1.5 block text-center">ความสัมพันธ์</Label>
                         <div className="relative">
                             <button
@@ -490,7 +490,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                 <InputControl label="อายุที่ต้องการเกษียณ (ปี)" value={form.retireAge} field="retireAge" icon={Settings2} />
                 <InputControl label="จะอยู่ถึงอายุ (ปี)" value={form.lifeExpectancy} field="lifeExpectancy" icon={RotateCcw} />
             </div>
-        </div>
+        </div >
     );
 
     // 2. Financial Info (ข้อมูลการเงินปัจจุบัน)
@@ -938,9 +938,19 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                                                         </div>
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <Label className="text-slate-500 font-medium text-sm">บำนาญปีละ (บาท)</Label>
-                                                        <div className="bg-white border border-slate-200 rounded h-10 flex items-center px-3">
-                                                            <NumericInput value={Number(String(plan.pensionAmount || 0).replace(/,/g, "")).toLocaleString()} onChange={(v) => updateInsurancePlan(index, "pensionAmount", v)} className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base" />
+                                                        <div className="flex justify-between items-baseline">
+                                                            <Label className="text-slate-500 font-medium text-sm">บำนาญปีละ (% ของเงินทุน)</Label>
+                                                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                                                                ≈ {Number((Number(String(plan.sumAssured || 0).replace(/,/g, "")) * (Number(plan.pensionPercent) || 0) / 100).toFixed(0)).toLocaleString()} บาท/ปี
+                                                            </span>
+                                                        </div>
+                                                        <div className="bg-white border border-slate-200 rounded h-10 flex items-center px-3 relative">
+                                                            <NumericInput
+                                                                value={plan.pensionPercent || 0}
+                                                                onChange={(v) => updateInsurancePlan(index, "pensionPercent", v)}
+                                                                className="w-full bg-transparent border-none p-0 font-medium text-slate-700 text-base"
+                                                            />
+                                                            <span className="absolute right-3 text-slate-400 text-xs font-bold">%</span>
                                                         </div>
                                                     </div>
                                                 </div>

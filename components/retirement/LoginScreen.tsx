@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 // --- LoginScreen: หน้าจอเข้าสู่ระบบ ---
 export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
     const [name, setName] = React.useState("");
-    const [password, setPassword] = React.useState("");
+
 
     return (
         <div className="min-h-[100dvh] w-full bg-[#0B0F19] relative flex items-center justify-center p-[4vw] lg:p-8 font-sans overflow-hidden selection:bg-indigo-500/30">
@@ -112,23 +112,6 @@ export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) =>
                                     </div>
                                 </div>
 
-                                <div className="space-y-2 group text-left">
-                                    <Label className="text-xs font-bold text-slate-700 ml-1">รหัสผ่าน</Label>
-                                    <div className="relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                        </div>
-                                        <Input
-                                            type="password"
-                                            className="h-[6vh] max-h-[60px] min-h-[48px] pl-12 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-medium text-base placeholder:text-slate-300"
-                                            placeholder="••••••••"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && onLogin(name || "User")}
-                                        />
-                                    </div>
-                                </div>
-
                                 <Button
                                     onClick={() => onLogin(name || "User")}
                                     className="w-full h-[6vh] max-h-[60px] min-h-[48px] rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold text-lg shadow-xl shadow-indigo-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-[2vh]"
@@ -136,12 +119,6 @@ export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) =>
                                     เริ่มต้นใช้งาน
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
                                 </Button>
-                            </div>
-
-                            <div className="text-center pt-2">
-                                <button onClick={() => onLogin("Guest")} className="text-xs font-semibold text-slate-400 hover:text-indigo-600 hover:underline transition-all">
-                                    เข้าใช้งานแบบ Guest Mode (ไม่ต้องกรอกข้อมูล)
-                                </button>
                             </div>
                         </div>
                     </div>

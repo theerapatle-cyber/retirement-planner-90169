@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import * as XLSX from "xlsx";
@@ -12,7 +14,9 @@ import {
     MonteCarloDetailsModal,
     useInsuranceLogic
 } from "./DashboardModals";
+import { PlanManager } from "./PlanManager";
 import { AllocationWidget, MonteCarloWidget } from "./DashboardWidgets";
+import { PlanSummaryPanel } from "./PlanSummaryPanel"; // Import new component
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +31,6 @@ import {
     Allocation
 } from "@/types/retirement";
 import { Plus, X as CloseIcon, Table as TableIcon, PanelLeftOpen, PanelLeftClose, Save } from "lucide-react";
-import { PlanManager } from "./PlanManager";
 
 import { buildProjectionSeries } from "@/lib/retirement-calculation";
 
@@ -119,7 +122,8 @@ export const RetirementDashboard = ({
     // State Variables (สถานะการทำงานภายใน Component)
     // ----------------------------------------------------------------------
     const [showSumAssured, setShowSumAssured] = React.useState(true); // แสดง/ซ่อน ทุนประกันบนกราฟ
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false); // ควบคุมการเปิด/ปิด Sidebar (Mobile/Tablet)
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false); // Left Sidebar State (Default closed to focus on results)
+    const [isSummaryOpen, setIsSummaryOpen] = React.useState(false); // Right Sidebar State
     const [showActualSavings, setShowActualSavings] = React.useState(true); // แสดง/ซ่อน เงินออมจริงบนกราฟ
     const [showInsuranceTable, setShowInsuranceTable] = React.useState(false); // แสดง Modal ตารางกรมธรรม์
     const [showProjectedModal, setShowProjectedModal] = React.useState(false); // แสดง Modal กราฟคาดการณ์
@@ -251,11 +255,16 @@ export const RetirementDashboard = ({
                     width: 100%;
                     max-width: 100%;
                 }
+                
+                @page {
+                    size: landscape; 
+                    margin: 2mm; /* Further reduced margin */
+                }
 
                 /* Chart Specifics */
                 #printable-chart { 
-                    height: 350px !important; /* Fixed smaller height for print to fit table */
-                    min-height: 300px !important; 
+                    height: 250px !important; /* Reduced height further */
+                    min-height: 250px !important; 
                     border: none !important;
                     box-shadow: none !important;
                     break-inside: avoid;
@@ -264,7 +273,7 @@ export const RetirementDashboard = ({
                     max-width: 100% !important;
                     overflow: visible !important;
                     display: block !important;
-                    margin-bottom: 10px !important;
+                    margin-bottom: 0px !important;
                 }
                 
                 #printable-chart canvas {
@@ -277,8 +286,8 @@ export const RetirementDashboard = ({
                 /* Data Table Specifics */
                 #print-data-table { 
                     display: block !important; 
-                    margin-top: 10px !important;
-                    font-size: 9px; /* Slightly smaller font */
+                    margin-top: 5px !important;
+                    font-size: 8px; /* Smaller font */
                     width: 100%;
                 }
                 
@@ -333,7 +342,7 @@ export const RetirementDashboard = ({
                                 user?.name?.substring(0, 2).toUpperCase() || "U"
                             )}
                         </div>
-                        <span className="text-sm font-bold text-slate-700 pr-2">{user?.name || "Guest User"}</span>
+                        <span className="text-sm font-bold text-slate-700 pr-2">{user?.name || "User"}</span>
                     </button>
                     <button
                         onClick={onLogout}
@@ -345,14 +354,14 @@ export const RetirementDashboard = ({
                 </div>
             </div>
 
-            <div className="w-full px-3 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10 print:px-0 print:space-y-4 pt-[72px]">
+            <div className="w-full px-3 md:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10 print:px-0 print:space-y-4 pt-[72px] print:pt-0">
 
                 {/* Print Only Header */}
                 <div className="hidden print:block mb-4 border-b-2 border-slate-800 pb-2">
                     <div className="flex justify-between items-end">
                         <div>
                             <h1 className="text-2xl font-black text-slate-900 uppercase">Retirement Plan Report</h1>
-                            <p className="text-slate-500 text-sm mt-1 font-medium">รายงานวางแผนเกษียณอายุสำหรับ: {user?.name || "Guest User"}</p>
+                            <p className="text-slate-500 text-sm mt-1 font-medium">รายงานวางแผนเกษียณอายุสำหรับ: {user?.name || "User"}</p>
                         </div>
                         <div className="text-right">
                             <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Date</div>
@@ -370,7 +379,7 @@ export const RetirementDashboard = ({
 
                     {/* Mobile Backdrop (พื้นหลังสีดำจางๆ เมื่อเปิด Sidebar บนมือถือ) */}
                     <div
-                        className={`fixed inset-0 z-30 bg-black/20 backdrop-blur-sm transition-opacity duration-300 xl:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                        className={`fixed inset-0 z-[140] bg-black/20 backdrop-blur-sm transition-opacity duration-300 xl:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                         onClick={() => setIsSidebarOpen(false)}
                     />
 
@@ -378,7 +387,7 @@ export const RetirementDashboard = ({
                     {/* - Mobile/Tablet: แสดงเป็น Bottom Sheet (เลื่อนขึ้นจากด้านล่าง) */}
                     {/* - Desktop: แสดงเป็น Sidebar ปกติด้านซ้าย */}
                     <div className={`
-                        fixed z-40 transition-all duration-300 ease-in-out
+                        fixed z-[150] transition-all duration-300 ease-in-out
                         
                         /* Mobile & Tablet (<1280px): Bottom Sheet Overlay (ทับจอ) */
                         inset-0 flex items-end justify-center
@@ -393,7 +402,7 @@ export const RetirementDashboard = ({
                         
                         /* Desktop Width & Visibility */
                         ${isSidebarOpen
-                            ? 'xl:w-[480px] xl:translate-x-0 xl:visible xl:pointer-events-auto xl:opacity-100 xl:overflow-y-auto no-scrollbar'
+                            ? 'xl:w-[400px] xl:translate-x-0 xl:visible xl:pointer-events-auto xl:opacity-100 xl:overflow-y-auto no-scrollbar'
                             : 'xl:w-0 xl:-translate-x-full xl:invisible xl:pointer-events-none xl:opacity-0 xl:overflow-hidden'}
                         
                         print:hidden
@@ -416,10 +425,10 @@ export const RetirementDashboard = ({
                             <div className="overflow-y-auto p-0 xl:p-0 custom-scrollbar xl:overflow-visible flex flex-col items-center xl:block">
                                 <div className="w-full max-w-2xl xl:max-w-none">
                                     {/* LEFT HEADER: Adjust Plan */}
-                                    <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md px-5 py-4 flex items-center justify-between">
+                                    <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-slate-100 shadow-sm">
                                         <div>
                                             <h2 className="text-xl font-black text-slate-800 tracking-tight">ปรับแผนการเงิน</h2>
-                                            <p className="text-slate-500 text-xs font-medium">กำหนดแผนเกษียณในแบบของคุณ</p>
+                                            <span className="text-slate-500 text-xs font-medium">กำหนดแผนเกษียณในแบบของคุณ</span>
                                         </div>
                                         <Button
                                             variant="ghost"
@@ -457,8 +466,22 @@ export const RetirementDashboard = ({
                                         removeAllocation={removeAllocation}
                                         updateAllocation={updateAllocation}
                                         onCalculate={() => {
-                                            // Defer slightly to allow click animation to finish and ensure smooth transition
-                                            setTimeout(() => setIsSidebarOpen(false), 50);
+                                            // Close both sidebars immediately to focus on results
+                                            setIsSidebarOpen(false);
+                                            setIsSummaryOpen(false);
+
+                                            // Close all modals to ensure clean view
+                                            setShowInsuranceTable(false);
+                                            setShowProjectedModal(false);
+                                            setShowTargetModal(false);
+                                            setShowExpenseModal(false);
+                                            setShowMonteCarloDetails(false);
+
+                                            // Wait for transition (500ms) to finish before scrolling
+                                            setTimeout(() => {
+                                                // Scroll to top of window to ensure Results Summary (which is at top) is visible
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }, 550);
                                         }}
                                         isEmbedded={true}
                                     />
@@ -468,60 +491,62 @@ export const RetirementDashboard = ({
                     </div>
                     {/* RIGHT AREA: Main Content (ส่วนแสดงผลลัพธ์) */}
                     <div id="results-section" className={`
-                        flex-1 min-w-0 space-y-8 transition-all duration-500 ease-in-out pb-20
-                        ${isSidebarOpen ? 'xl:ml-[500px] w-full xl:w-[calc(100%-500px)]' : 'ml-0 w-full'}
+                        flex-1 min-w-0 space-y-8 transition-all duration-500 ease-in-out pb-20 print:pb-0
+                        ${isSidebarOpen ? 'xl:ml-[420px]' : 'ml-0'}
+                        ${isSummaryOpen ? 'xl:mr-[380px]' : 'mr-0'}
+                        w-full
                     `}>
 
                         {/* RIGHT HEADER: Financial Results Summary + Buttons (หัวข้อสรุปผลลัพธ์ + ปุ่มเครื่องมือ) */}
-                        <div className="sticky top-0 z-30 flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 py-4 -mx-4 px-4 md:mx-0 md:px-0 bg-white relative overflow-hidden md:static md:bg-transparent md:border-none md:pt-6 md:pb-0 print:hidden transition-all duration-200">
+                        <div className="sticky top-0 z-30 flex flex-row items-center justify-between gap-4 mb-4 py-3 -mx-4 px-4 md:mx-0 md:px-0 bg-white/60 backdrop-blur-md relative overflow-hidden md:static md:bg-transparent md:border-none md:pt-4 md:pb-0 print:hidden transition-all duration-200 md:shadow-none">
+                            {/* Mobile-only background grid for consistency */}
+                            <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none md:hidden z-0"></div>
 
-                            <div className="relative z-10">
+                            <div className="relative z-10 flex items-baseline gap-3">
                                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">สรุปผลลัพธ์ทางการเงิน</h2>
-                                <p className="text-slate-500 text-sm font-medium mt-0.5">ภาพรวมวางแผนการรับมือเกษียณ (Financial Overview)</p>
+                                <span className="text-slate-500 text-sm font-medium hidden sm:inline-block">(Financial Overview)</span>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                                {/* Adjust Plan Toggle */}
                                 <Button
-                                    variant={isSidebarOpen ? "secondary" : "default"}
-                                    size={isSidebarOpen ? "sm" : "default"}
-                                    className={`rounded-xl font-bold text-xs shadow-sm transition-all gap-2 hidden xl:flex ${isSidebarOpen
-                                        ? 'h-9 px-4 bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                        : 'h-10 px-6 bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200 animate-in slide-in-from-left-2 duration-300'
+                                    variant="outline"
+                                    size="sm"
+                                    className={`h-9 px-4 rounded-xl border font-bold text-xs transition-all gap-2 hidden xl:flex ${isSidebarOpen
+                                        ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm'
+                                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                                         }`}
                                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                                 >
-                                    {isSidebarOpen ? (
-                                        <>
-                                            <PanelLeftClose className="w-4 h-4" />
-                                            ซ่อนแถบเครื่องมือ
-                                        </>
-                                    ) : (
-                                        <>
-                                            <PanelLeftOpen className="w-4 h-4" />
-                                            ปรับแผน (Adjust Plan)
-                                        </>
-                                    )}
+                                    {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+                                    ปรับแผน
                                 </Button>
 
+                                {/* Family Toggle */}
                                 {planType === "family" && (
                                     <Button
-                                        variant="default"
+                                        variant="outline"
                                         size="sm"
-                                        className="h-9 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg shadow-indigo-200 transition-all gap-2"
+                                        className="h-9 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold text-xs hover:bg-slate-50 hover:text-slate-800 transition-all gap-2"
                                         onClick={() => {
                                             syncCurrentToFamily();
                                             setShowFamilyResult(true);
                                         }}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                                        ดูผลลัพธ์ครอบครัว
+                                        ผลลัพธ์ครอบครัว
                                     </Button>
                                 )}
+
+                                {/* Insurance Toggle */}
                                 {form.insurancePlans.length > 0 && (
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-9 rounded-xl border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-all gap-2 hidden xl:flex"
+                                        className={`h-9 px-4 rounded-xl border font-bold text-xs transition-all gap-2 hidden xl:flex ${showInsuranceTable
+                                            ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm'
+                                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                                            }`}
                                         onClick={() => {
                                             setForm(prev => ({ ...prev, selectedPlanId: null }));
                                             setShowInsuranceTable(true);
@@ -531,18 +556,29 @@ export const RetirementDashboard = ({
                                         พอร์ตประกัน
                                     </Button>
                                 )}
-                                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                                    <span>ข้อมูลล่าสุด: {new Date().toLocaleDateString('th-TH')}</span>
-                                </div>
+
+                                {/* Plan Summary Toggle - Visible on Mobile too */}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={`h-9 px-3 md:px-4 rounded-xl border font-bold text-xs transition-all gap-2 flex ${isSummaryOpen
+                                        ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm'
+                                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                                        }`}
+                                    onClick={() => setIsSummaryOpen(!isSummaryOpen)}
+                                >
+                                    <PanelLeftClose className={`w-4 h-4 transition-transform duration-300 ${isSummaryOpen ? 'rotate-180' : ''}`} />
+                                    <span className="hidden sm:inline">สรุปข้อมูล</span>
+                                    <span className="sm:hidden">สรุป</span>
+                                </Button>
                             </div>
                         </div>
 
                         {/* Mobile Carousel Wrapper: Unifies Hero, Metrics, and Chart into one swipeable flow */}
-                        <div ref={carouselRef} className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 px-4 -mx-4 pb-6 items-stretch md:pb-0 md:px-0 md:mx-0 md:block md:space-y-6 md:overflow-visible no-scrollbar">
+                        <div ref={carouselRef} className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 px-4 -mx-4 pb-6 items-stretch md:pb-0 md:px-0 md:mx-0 md:block md:space-y-6 md:overflow-visible no-scrollbar print:hidden">
 
                             {/* Hero Summary Card (Redesigned) */}
-                            <div className={`min-w-[85%] sm:min-w-[45%] md:min-w-0 snap-center relative rounded-[32px] p-6 lg:p-8 xl:p-10 overflow-hidden font-sans border border-white/20 shadow-2xl transition-all duration-500 group print:hidden min-h-[240px] md:min-h-0 flex flex-col justify-center ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981]' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444]'}`}>
+                            <div className={`min-w-[92%] sm:min-w-[380px] md:min-w-0 snap-center relative rounded-[28px] p-5 lg:p-8 xl:p-10 overflow-hidden font-sans border border-white/20 shadow-xl transition-all duration-500 group print:hidden min-h-[220px] md:min-h-0 flex flex-col justify-center ${result.status === 'enough' ? 'bg-gradient-to-br from-[#065f46] via-[#059669] to-[#10b981]' : 'bg-gradient-to-br from-[#991b1b] via-[#dc2626] to-[#ef4444]'}`}>
                                 {/* Decorative Background Patterns */}
                                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-25 mix-blend-overlay"></div>
                                 <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none mix-blend-overlay animate-pulse duration-[4000ms]"></div>
@@ -624,7 +660,7 @@ export const RetirementDashboard = ({
                                     {/* Card 1: Projected Savings (เงินออมที่มี) */}
                                     <div
                                         onClick={() => setShowProjectedModal(true)}
-                                        className="min-w-[85%] sm:min-w-[45%] md:min-w-0 snap-center bg-white rounded-[32px] p-6 lg:p-7 border border-slate-100 relative overflow-hidden group cursor-pointer hover:border-emerald-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(16,185,129,0.1)] transition-all duration-500 hover:-translate-y-1.5 active:scale-[0.98] min-h-[240px] md:h-auto flex flex-col justify-between"
+                                        className="min-w-[92%] sm:min-w-[380px] md:min-w-0 snap-center bg-white rounded-[28px] p-5 lg:p-7 border border-slate-100 relative overflow-hidden group cursor-pointer hover:border-emerald-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)] transition-all duration-500 hover:-translate-y-1 active:scale-[0.98] min-h-[200px] md:h-auto flex flex-col justify-between"
                                     >
                                         <div className="absolute -right-8 -top-8 text-emerald-100/50 group-hover:text-emerald-200/50 transition-colors pointer-events-none z-0">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5a3.5 3.5 0 0 1-4.9-5.0L10.3 1.5" /><path d="M19 5a3 5 0 0 1 0 6h-6.7" /><path d="M12 11l-3 3" /><circle cx="5" cy="18" r="4" /><path d="M9 18l6-6" /></svg>
@@ -659,7 +695,7 @@ export const RetirementDashboard = ({
                                             setTargetModalTab('details');
                                             setShowTargetModal(true);
                                         }}
-                                        className="min-w-[85%] sm:min-w-[45%] md:min-w-0 snap-center bg-white rounded-[32px] p-6 lg:p-7 border border-slate-100 relative overflow-hidden group cursor-pointer hover:border-blue-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(59,130,246,0.1)] transition-all duration-500 hover:-translate-y-1.5 active:scale-[0.98] min-h-[240px] md:h-auto flex flex-col justify-between"
+                                        className="min-w-[92%] sm:min-w-[380px] md:min-w-0 snap-center bg-white rounded-[28px] p-5 lg:p-7 border border-slate-100 relative overflow-hidden group cursor-pointer hover:border-blue-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_15px_30px_rgba(59,130,246,0.1)] transition-all duration-500 hover:-translate-y-1 active:scale-[0.98] min-h-[200px] md:h-auto flex flex-col justify-between"
                                     >
                                         <div className="absolute -right-8 -top-8 text-blue-100/50 group-hover:text-blue-200/50 transition-colors pointer-events-none z-0">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
@@ -706,7 +742,7 @@ export const RetirementDashboard = ({
                                     {/* Card 3: Monthly Expense */}
                                     <div
                                         onClick={() => setShowExpenseModal(true)}
-                                        className="min-w-[85%] sm:min-w-[45%] md:min-w-0 snap-center bg-white rounded-[32px] p-6 lg:p-7 border border-slate-100 relative overflow-hidden group cursor-pointer hover:border-purple-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(168,85,247,0.1)] transition-all duration-500 hover:-translate-y-1.5 active:scale-[0.98] min-h-[240px] md:h-auto flex flex-col justify-between"
+                                        className="min-w-[92%] sm:min-w-[380px] md:min-w-0 snap-center bg-white rounded-[28px] p-5 lg:p-7 border border-slate-100 relative overflow-hidden group cursor-pointer hover:border-purple-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_15px_30px_rgba(168,85,247,0.1)] transition-all duration-500 hover:-translate-y-1 active:scale-[0.98] min-h-[200px] md:h-auto flex flex-col justify-between"
                                     >
                                         <div className="absolute -right-8 -top-8 text-purple-100/50 group-hover:text-purple-200/50 transition-colors pointer-events-none z-0">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 -rotate-12 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
@@ -736,7 +772,7 @@ export const RetirementDashboard = ({
 
                                     {/* Card 4: Status */}
                                     <div
-                                        className={`min-w-[85%] sm:min-w-[45%] md:min-w-0 snap-center bg-white rounded-[32px] p-6 lg:p-7 border border-slate-100 relative overflow-hidden group cursor-default transition-all duration-500 hover:-translate-y-1.5 active:scale-[0.98] min-h-[240px] md:h-auto flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] ${result.status === 'enough' ? 'hover:border-emerald-100 hover:shadow-[0_20px_40px_rgba(16,185,129,0.1)]' : 'hover:border-rose-100 hover:shadow-[0_20px_40px_rgba(244,63,94,0.1)]'}`}
+                                        className={`min-w-[92%] sm:min-w-[380px] md:min-w-0 snap-center bg-white rounded-[28px] p-5 lg:p-7 border border-slate-100 relative overflow-hidden group cursor-default transition-all duration-500 hover:-translate-y-1 active:scale-[0.98] min-h-[200px] md:h-auto flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03)] ${result.status === 'enough' ? 'hover:border-emerald-100 hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : 'hover:border-rose-100 hover:shadow-[0_15px_30px_rgba(244,63,94,0.1)]'}`}
                                     >
                                         <div className={`absolute -right-8 -top-8 transition-colors pointer-events-none z-0 ${result.status === 'enough' ? 'text-emerald-100/50 group-hover:text-emerald-200/50' : 'text-rose-100/50 group-hover:text-rose-200/50'}`}>
                                             {result.status === 'enough' ? (
@@ -781,7 +817,7 @@ export const RetirementDashboard = ({
                             {/* PRINT ONLY: Plan Summary */}
                             <div className="hidden print:block mb-6 p-4 border border-slate-300 rounded-xl bg-slate-50 text-sm">
                                 <h3 className="font-bold text-slate-900 border-b border-slate-300 pb-2 mb-3 uppercase tracking-wide">Plan Summary</h3>
-                                <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                                <div className="grid grid-cols-2 gap-x-8 gap-y-1">
                                     <div className="grid grid-cols-2">
                                         <span className="text-slate-500">Current Age:</span>
                                         <span className="font-bold text-slate-800">{form.currentAge} ปี</span>
@@ -846,29 +882,6 @@ export const RetirementDashboard = ({
                                             <p className="text-sm text-slate-500 font-medium pl-4.5">Wealth Projection & Goal Analysis</p>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-3">
-                                            {/* Orientation Toggle - Visible on Tablets (md:flex xl:hidden) */}
-                                            <div className="hidden md:flex xl:hidden bg-slate-100 p-1 rounded-xl border border-slate-200">
-                                                <button
-                                                    onClick={() => setMobileChartOrientation('vertical')}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${mobileChartOrientation === 'vertical'
-                                                        ? "bg-white text-indigo-600 shadow-sm"
-                                                        : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
-                                                        }`}
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>
-                                                    แนวตั้ง
-                                                </button>
-                                                <button
-                                                    onClick={() => setMobileChartOrientation('horizontal')}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${mobileChartOrientation === 'horizontal'
-                                                        ? "bg-white text-indigo-600 shadow-sm"
-                                                        : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
-                                                        }`}
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
-                                                    แนวนอน
-                                                </button>
-                                            </div>
                                             {/* View Mode Toggle - Hidden on Mobile */}
                                             <div className="hidden md:flex bg-white/50 p-1 rounded-xl backdrop-blur-sm border border-slate-200 shadow-sm">
                                                 <button
@@ -925,12 +938,8 @@ export const RetirementDashboard = ({
                                                         document.body.classList.add('print-desktop');
                                                         document.body.classList.remove('print-mobile');
                                                     }
-
-                                                    // Allow small delay for redraw if needed, then print
                                                     setTimeout(() => {
                                                         window.print();
-                                                        // Cleanup after print dialog closes (though js pauses, this runs after)
-                                                        // Actually better to leave it or clean up on focus return, but simple add/remove is fine for next click.
                                                     }, 100);
                                                 }}>
                                                 Print
@@ -939,16 +948,40 @@ export const RetirementDashboard = ({
                                     </div>
                                     <div id="printable-chart" className="w-full relative h-[600px] md:h-[600px] print:h-[350px] print:min-h-0 bg-white rounded-3xl border border-slate-100 p-4 md:p-6 print:p-0 print:border-none print:shadow-none overflow-hidden print:overflow-visible print:break-inside-avoid">
                                         <div className="hidden md:block print:hidden print-desktop-only w-full h-full">
-                                            <ProjectionChart
-                                                inputs={inputs}
-                                                result={result}
-                                                mcResult={showMC ? mcResult : null}
-                                                showSumAssured={showSumAssured}
-                                                showActualSavings={showActualSavings}
-                                                insuranceChartData={insuranceChartData}
-                                                chartTickInterval={chartTickInterval}
-                                                viewMode={viewMode}
-                                            />
+                                            {/* iPad/Desktop Rendering Logic */}
+
+                                            {/* Case A: iPad Bar View (Use Mobile Chart Structure) - Only if viewMode is Bar and on small/medium desktop */}
+                                            <div className={`w-full h-full ${viewMode === 'bar' ? 'block xl:hidden' : 'hidden'}`}>
+                                                <MobileProjectionChart
+                                                    inputs={inputs}
+                                                    result={result}
+                                                    mcResult={mcResult}
+                                                    showSumAssured={showSumAssured}
+                                                    setShowSumAssured={setShowSumAssured}
+                                                    showActualSavings={showActualSavings}
+                                                    setShowActualSavings={setShowActualSavings}
+                                                    insuranceChartData={insuranceChartData}
+                                                    chartTickInterval={chartTickInterval}
+                                                    showMC={showMC}
+                                                    setShowMC={setShowMC}
+                                                    initialOrientation="vertical" // Default to Vertical, user can toggle
+                                                    hideOrientationToggle={false} // Show internal toggle
+                                                />
+                                            </div>
+
+                                            {/* Case B: Standard Projection Chart - Visible if Desktop OR iPad Line Mode OR print */}
+                                            <div className={`w-full h-full ${viewMode === 'bar' ? 'hidden xl:block' : 'block'}`}>
+                                                <ProjectionChart
+                                                    inputs={inputs}
+                                                    result={result}
+                                                    mcResult={showMC ? mcResult : null}
+                                                    showSumAssured={showSumAssured}
+                                                    showActualSavings={showActualSavings}
+                                                    insuranceChartData={insuranceChartData}
+                                                    chartTickInterval={chartTickInterval}
+                                                    viewMode={viewMode}
+                                                />
+                                            </div>
                                         </div>
                                         <div className="block md:hidden print:hidden print-mobile-only w-full h-full">
                                             <MobileProjectionChart
@@ -967,23 +1000,7 @@ export const RetirementDashboard = ({
                                             />
                                         </div>
 
-                                        {/* iPad Specific: Horizontal Graph Toggle Integrated Above */}
-                                        <div className="hidden md:block xl:hidden w-full h-full">
-                                            <MobileProjectionChart
-                                                inputs={inputs}
-                                                result={result}
-                                                mcResult={mcResult}
-                                                showSumAssured={showSumAssured}
-                                                setShowSumAssured={setShowSumAssured}
-                                                showActualSavings={showActualSavings}
-                                                setShowActualSavings={setShowActualSavings}
-                                                insuranceChartData={insuranceChartData}
-                                                chartTickInterval={chartTickInterval}
-                                                showMC={showMC}
-                                                setShowMC={setShowMC}
-                                                initialOrientation={mobileChartOrientation}
-                                            />
-                                        </div>
+
 
                                         {/* Financial Highlights Table - Hidden on Desktop, Visible on Print (Inside Container) */}
                                         <div className="hidden print:block mt-4 w-full pt-2 border-t border-slate-300">
@@ -992,11 +1009,11 @@ export const RetirementDashboard = ({
                                                 <table className="w-full border-collapse text-xs">
                                                     <thead>
                                                         <tr className="bg-slate-100 border-b border-slate-400">
-                                                            <th className="py-2.5 px-3 text-left font-bold text-black w-1/5 border-r border-slate-300">รายการ (Item)</th>
-                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/5 border-r border-slate-300">เงินออม (Savings)</th>
-                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/5 border-r border-slate-300">เป้าหมาย (Target)</th>
-                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/5 border-r border-slate-300">ทุนประกัน (Sum Assured)</th>
-                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/5">มรดก (Legacy)</th>
+                                                            <th className="py-2.5 px-3 text-left font-bold text-black w-1/6 border-r border-slate-300">รายการ (Item)</th>
+                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/4 border-r border-slate-300">เงินออมที่มีตอนอายุเกษียณ ({form.retireAge} ปี)</th>
+                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/4 border-r border-slate-300">เงินที่ต้องการก่อนเกษียณ</th>
+                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/6 border-r border-slate-300">ทุนประกัน (Sum Assured)</th>
+                                                            <th className="py-2.5 px-3 text-right font-bold text-black w-1/6">มรดก (Legacy)</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -1058,7 +1075,8 @@ export const RetirementDashboard = ({
 
                                     {/* PRINT ONLY: Chart Data Table (ตารางข้อมูลสำหรับโหมดพิมพ์) */}
                                     {/* จะแสดงเฉพาะเมื่อสั่งพิมพ์เท่านั้น (hidden print:block) */}
-                                    <div id="print-data-table" className="hidden print:block mt-6 font-mono text-black">
+                                    {/* Data Table Removed (User Request: Single Page Only) */}
+                                    <div id="print-data-table" className="hidden mt-6 font-mono text-black">
                                         <h3 className="text-[10px] font-bold uppercase tracking-widest mb-2 border-b border-black pb-1 inline-block">DATA TABLE (YEARLY ANALYSIS)</h3>
                                         <div className="grid grid-cols-3 gap-4 text-[8px] leading-tight">
                                             {/* Generate 3 Columns */}
@@ -1073,11 +1091,11 @@ export const RetirementDashboard = ({
                                                         <table className="w-full text-left table-fixed">
                                                             <thead className="bg-gray-100 print:bg-gray-100 font-bold border-b border-black">
                                                                 <tr>
-                                                                    <th className="py-1 px-1 text-center border-r border-black uppercase w-[10%]">Age</th>
-                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">Principal</th>
-                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">Savings</th>
-                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">CashFlow</th>
-                                                                    <th className="py-1 px-1 text-right uppercase w-[24%]">Target</th>
+                                                                    <th className="py-1 px-1 text-center border-r border-black uppercase w-[10%]">อายุ (Age)</th>
+                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">เงินต้น (Principal)</th>
+                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">เงินออม (Savings)</th>
+                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">เงินคืน (CashFlow)</th>
+                                                                    <th className="py-1 px-1 text-right uppercase w-[24%]">เป้าหมาย (Target)</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody className="divide-y divide-black">
@@ -1112,7 +1130,7 @@ export const RetirementDashboard = ({
 
 
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:grid print:grid-cols-2 print:gap-4 print:mt-8 print:break-before-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:hidden">
                             <div className="min-w-full md:min-w-0 snap-center w-full print:break-inside-avoid">
                                 <AllocationWidget inputs={inputs} />
                             </div>
@@ -1186,21 +1204,76 @@ export const RetirementDashboard = ({
                     />
                 </div>
 
-                <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-slate-100/80 py-1.5 px-4 z-[100] xl:hidden shadow-[0_-12px_40px_-10px_rgba(0,0,0,0.1)] pb-safe-area-bottom">
-                    <div className="grid grid-cols-3 w-full max-w-5xl mx-auto items-end">
+
+                {/* Mobile Backdrop for Summary Panel */}
+                <div
+                    className={`fixed inset-0 z-[140] bg-black/20 backdrop-blur-sm transition-opacity duration-300 xl:hidden ${isSummaryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    onClick={() => setIsSummaryOpen(false)}
+                />
+
+                {/* RIGHT AREA: Sidebar (Plan Summary) */}
+                <div className={`
+                fixed z-[150] transition-all duration-300 ease-in-out
+                
+                /* Mobile & Tablet (<1280px): Bottom Sheet Overlay (ทับจอ) */
+                inset-0 flex items-end justify-center
+                ${isSummaryOpen
+                        ? 'opacity-100 pointer-events-auto visible'
+                        : 'opacity-0 pointer-events-none invisible xl:opacity-100 xl:pointer-events-none xl:invisible'}
+                
+                /* Desktop (>=1280px): Fixed Sidebar (ติดด้านขวา) */
+                xl:fixed xl:top-[72px] xl:bottom-0 xl:right-0 xl:inset-auto xl:block
+                xl:p-0 xl:flex-none
+                xl:bg-transparent xl:shadow-none
+                
+                /* Desktop Width & Visibility */
+                ${isSummaryOpen
+                        ? 'xl:w-[360px] xl:translate-x-0 xl:visible xl:pointer-events-auto xl:opacity-100 xl:overflow-y-auto no-scrollbar'
+                        : 'xl:w-0 xl:translate-x-full xl:invisible xl:pointer-events-none xl:opacity-0 xl:overflow-hidden'}
+                
+                print:hidden
+            `}>
+                    <div className={`
+                    transition-all duration-500 cubic-bezier(0.32, 0.72, 0, 1) w-full h-full
+                    
+                    /* Mobile & Tablet (<1280px): Detailed Bottom Sheet */
+                    max-w-none bg-white rounded-t-[32px] rounded-b-none shadow-[0_-10px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col 
+                    h-[90vh]
+                    
+                    ${isSummaryOpen
+                            ? 'translate-y-0 opacity-100'
+                            : 'translate-y-full opacity-100'}
+
+                    /* Desktop (>=1280px): Reset */
+                    xl:max-w-none xl:bg-transparent xl:rounded-none xl:shadow-none xl:h-auto xl:max-h-none xl:overflow-visible xl:translate-y-0 xl:opacity-100
+                `}>
+                        <PlanSummaryPanel
+                            isOpen={isSummaryOpen}
+                            onClose={() => setIsSummaryOpen(false)}
+                            form={form}
+                            allocations={allocations}
+                            returnMode={returnMode}
+                            savingMode={savingMode}
+                            gender={gender}
+                        />
+                    </div>
+                </div>
+
+                <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-slate-100/80 py-1 px-4 z-[100] xl:hidden shadow-[0_-12px_40px_-10px_rgba(0,0,0,0.1)] pb-safe-area-bottom">
+                    <div className="grid grid-cols-3 w-full max-w-5xl mx-auto items-end pb-1">
                         {/* Adjust Plan Toggle - Left Centered */}
                         <div className="flex justify-center">
                             <button
                                 onClick={() => setIsSidebarOpen(prev => !prev)}
-                                className="flex flex-col items-center justify-center gap-1 group transition-all"
+                                className="flex flex-col items-center justify-center gap-0.5 group transition-all"
                             >
-                                <div className={`w-9 h-9 md:w-11 md:h-11 rounded-[14px] flex items-center justify-center transition-all duration-500 ease-out shadow-sm ${isSidebarOpen
+                                <div className={`w-8 h-8 md:w-9 md:h-9 rounded-[12px] flex items-center justify-center transition-all duration-500 ease-out shadow-sm ${isSidebarOpen
                                     ? 'bg-indigo-600 text-white shadow-indigo-200 rotate-[90deg]'
                                     : 'bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600'}`}>
-                                    {isSidebarOpen ? <PanelLeftClose className="w-4.5 h-4.5" /> : <PanelLeftOpen className="w-4.5 h-4.5" />}
+                                    {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
                                 </div>
-                                <span className={`text-[11px] md:text-[13px] font-black tracking-tighter transition-colors text-center ${isSidebarOpen ? 'text-indigo-600' : 'text-slate-400'}`}>
-                                    {isSidebarOpen ? 'ปิดเครื่องมือ' : 'ปรับแผน'}
+                                <span className={`text-[10px] md:text-[11px] font-black tracking-tighter transition-colors text-center ${isSidebarOpen ? 'text-indigo-600' : 'text-slate-400'}`}>
+                                    {isSidebarOpen ? 'ปิด' : 'ปรับแผน'}
                                 </span>
                             </button>
                         </div>
@@ -1223,20 +1296,20 @@ export const RetirementDashboard = ({
                                     if (data.gender) setGender(data.gender);
                                 }}
                                 customTrigger={
-                                    <button className="flex flex-col items-center justify-center gap-1.5 group relative -top-6 md:-top-8 transition-all">
+                                    <button className="flex flex-col items-center justify-center gap-1 group relative -top-3 md:-top-4 transition-all">
                                         <div className="relative group-active:scale-95 transition-all duration-300">
                                             {/* Extreme Overglow */}
-                                            <div className="absolute inset-[-10px] bg-emerald-400 blur-3xl opacity-30 group-hover:opacity-60 animate-pulse transition-opacity duration-1000"></div>
-                                            <div className="absolute inset-[-4px] bg-emerald-300/30 blur-xl rounded-full opacity-50"></div>
+                                            <div className="absolute inset-[-8px] bg-emerald-400 blur-2xl opacity-20 group-hover:opacity-40 animate-pulse transition-opacity duration-1000"></div>
+                                            <div className="absolute inset-[-3px] bg-emerald-300/20 blur-lg rounded-full opacity-40"></div>
 
                                             {/* The Main Button Ring */}
-                                            <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600 text-white flex items-center justify-center shadow-[0_15px_45px_-10px_rgba(16,185,129,0.6),0_0_20px_rgba(16,185,129,0.2)] border-[3px] border-white z-10 overflow-hidden">
+                                            <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600 text-white flex items-center justify-center shadow-[0_10px_30px_-8px_rgba(16,185,129,0.5),0_0_15px_rgba(16,185,129,0.15)] border-2 border-white z-10 overflow-hidden">
                                                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                                                <Save className="w-7 h-7 md:w-9 md:h-9 drop-shadow-[0_2px_10px_rgba(0,0,0,0.2)]" />
+                                                <Save className="w-5 h-5 md:w-6 md:h-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.15)]" />
                                             </div>
                                         </div>
-                                        <div className="flex flex-col items-center mt-1">
-                                            <span className="text-[11px] md:text-[13px] font-black text-emerald-800 bg-white/98 backdrop-blur-xl px-4 py-0.5 rounded-full border border-emerald-100 shadow-[0_4px_15px_-2px_rgba(16,185,129,0.25)] tracking-tighter uppercase">บันทึก</span>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-[10px] md:text-[11px] font-black text-emerald-800 bg-white/98 backdrop-blur-xl px-3 py-0 scale-90 md:scale-100 rounded-full border border-emerald-100 shadow-[0_4px_10px_-2px_rgba(16,185,129,0.2)] tracking-tighter uppercase whitespace-nowrap">บันทึก</span>
                                         </div>
                                     </button>
                                 }
@@ -1250,17 +1323,17 @@ export const RetirementDashboard = ({
                                     setForm(prev => ({ ...prev, selectedPlanId: null }));
                                     setShowInsuranceTable(true);
                                 }}
-                                className="flex flex-col items-center justify-center gap-1 group transition-all"
+                                className="flex flex-col items-center justify-center gap-0.5 group transition-all"
                             >
-                                <div className="w-9 h-9 md:w-11 md:h-11 rounded-[14px] bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-600 transition-all duration-300 shadow-sm">
-                                    <TableIcon className="w-4.5 h-4.5" />
+                                <div className="w-8 h-8 md:w-9 md:h-9 rounded-[12px] bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-600 transition-all duration-300 shadow-sm">
+                                    <TableIcon className="w-4 h-4" />
                                 </div>
-                                <span className="text-[11px] md:text-[13px] font-black text-slate-400 tracking-tighter text-center group-hover:text-blue-600 transition-colors">พอร์ตประกัน</span>
+                                <span className="text-[10px] md:text-[11px] font-black text-slate-400 tracking-tighter text-center group-hover:text-blue-600 transition-colors">พอร์ต</span>
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
