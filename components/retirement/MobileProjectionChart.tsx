@@ -18,7 +18,7 @@ import { Chart } from "react-chartjs-2";
 import { formatNumber } from "@/lib/utils";
 import { buildProjectionSeries } from "@/lib/retirement-calculation";
 import { CalculationResult, MonteCarloResult, RetirementInputs } from "@/types/retirement";
-import { InsuranceChartData } from "./DashboardCharts"; // Import shared interface
+import { InsuranceChartData, goalLabelPlugin, legacyLabelPlugin } from "./DashboardCharts"; // Import shared interface
 
 // Register ChartJS components (ลงทะเบียน Component กราฟที่ต้องใช้)
 ChartJS.register(
@@ -33,6 +33,9 @@ ChartJS.register(
     Filler
 );
 
+// Register custom plugins
+ChartJS.register(goalLabelPlugin, legacyLabelPlugin);
+
 interface MobileProjectionChartProps {
     inputs: RetirementInputs; // ข้อมูล Input ทั้งหมด
     result: CalculationResult; // ผลลัพธ์การคำนวณ
@@ -45,6 +48,7 @@ interface MobileProjectionChartProps {
     chartTickInterval: number; // ระยะห่างปี (เช่น ทุก 1 ปี, 5 ปี)
     showMC?: boolean; // แสดง Monte Carlo หรือไม่
     setShowMC?: (show: boolean) => void; // Toggle Monte Carlo
+    initialOrientation?: 'horizontal' | 'vertical'; // Initial orientation
 }
 
 // --- MobileProjectionChart: กราฟคาดการณ์สำหรับมือถือ (แสดงแนวตั้ง/แนวนอนได้) ---
@@ -59,11 +63,14 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
     insuranceChartData,
     chartTickInterval,
     showMC = false,
-    setShowMC
+    setShowMC,
+    initialOrientation = 'horizontal'
 }) => {
     // Mode State: 'horizontal' (Bar Chart) vs 'vertical' (Column Chart)
     // สำหรับ Mobile จะใช้ Vertical เป็นหลัก แต่เตรียมไว้เผื่อปรับเปลี่ยน
-    const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
+    const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>(initialOrientation);
+    const [showTarget, setShowTarget] = useState(true);
+    const [showLegacy, setShowLegacy] = useState(true);
 
     // Formatting Helpers (ตัวช่วยจัดรูปแบบตัวเลข)
     const valFormatter = (val: number) => {
@@ -162,7 +169,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
 
                     // 2. Savings (Main Bar)
                     {
-                        label: "เงินออมคาดว่าจะมี",
+                        label: `เงินออมที่มีตอนอายุเกษียณ (${inputs.retireAge} ปี)`,
                         data: filteredActual,
                         backgroundColor: (context: ScriptableContext<"bar">) => {
                             const ctx = context.chart.ctx;
@@ -216,7 +223,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
 
                     // 5. Goal (เป้าหมายเกษียณ)
                     {
-                        label: "เป้าหมาย",
+                        label: "เงินที่ต้องการก่อนเกษียณ",
                         // Only show goal at Retirement Age for Horizontal mode
                         // แนวนอน: แสดงจุดเดียวที่อายุเกษียณ
                         // แนวตั้ง: แสดงเป็นเส้นตั้งแต่อายุเริ่มต้นถึงเกษียณ
@@ -230,15 +237,16 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                             return age <= retireAge ? val : null;
                         }),
                         // Horizontal: Dot (Scatter style), Vertical: Solid Line
-                        borderColor: orientation === 'horizontal' ? "transparent" : "rgba(59, 130, 246, 0.5)",
+                        borderColor: "#3b82f6",
                         backgroundColor: orientation === 'horizontal' ? "#3b82f6" : undefined,
-                        borderWidth: orientation === 'horizontal' ? 0 : 4,
-                        borderDash: [],
+                        borderWidth: orientation === 'horizontal' ? 0 : 3,
+                        borderDash: orientation === 'vertical' ? [6, 4] : [],
                         pointRadius: orientation === 'horizontal' ? 6 : 0, // Dot only in Horizontal
                         pointHoverRadius: orientation === 'horizontal' ? 8 : 0,
                         fill: false,
                         tension: 0.4,
                         order: 1,
+                        hidden: !showTarget,
                         type: 'line' as const,
                         spanGaps: true
                     },
@@ -248,13 +256,13 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                         label: "มรดก",
                         data: filteredLabels.map((age, i) => Number(age) >= Number(inputs.retireAge) ? inputs.legacyFund : null),
                         borderColor: "#EF4444",
-                        borderWidth: 3,
-                        borderDash: [4, 4],
+                        borderWidth: orientation === 'horizontal' ? 0 : 3, // Disable line in horizontal mode (handled by plugin)
+                        borderDash: [6, 4], // Unified dash pattern
                         pointRadius: 0,
                         fill: false,
                         order: 0,
                         type: 'line' as const,
-                        hidden: !(inputs.legacyFund > 0),
+                        hidden: !(inputs.legacyFund > 0) || !showLegacy,
                         spanGaps: true
                     }
                 ]
@@ -264,7 +272,12 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                 maintainAspectRatio: false,
                 indexAxis: orientation === 'horizontal' ? 'y' as const : 'x' as const, // สลับแกนตามโหมด (แนวนอน/แนวตั้ง)
                 layout: {
-                    padding: { left: 0, right: 10, top: 10, bottom: 0 }
+                    padding: {
+                        left: 0,
+                        right: 10,
+                        top: orientation === 'horizontal' ? 40 : 10,
+                        bottom: orientation === 'horizontal' ? 40 : 0
+                    }
                 },
                 plugins: {
                     legend: { display: false },
@@ -294,6 +307,8 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                         },
                         filter: (item: any) => item.dataset.label !== "P5" && item.dataset.label !== "P95",
                     },
+                    goalLabelPlugin: { goalValue: result.targetFund, labelText: "เป้าหมายทางการเงิน", formatNumber, retireAge: Number(inputs.retireAge), display: showTarget },
+                    legacyLabelPlugin: { legacyValue: inputs.legacyFund, retireAge: Number(inputs.retireAge), display: showLegacy },
                 },
                 scales: {
                     x: orientation === 'horizontal' ? {
@@ -358,19 +373,19 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                     const datasetLabel = chart.data.datasets[datasetIndex].label;
 
                     // Interaction for Single Goal Dot (Horizontal Mode)
-                    if (orientation === 'horizontal' && datasetLabel === "เป้าหมาย") {
+                    if (orientation === 'horizontal' && datasetLabel === "เงินที่ต้องการก่อนเกษียณ") {
                         const age = chart.data.labels?.[index];
                         const value = chart.data.datasets[datasetIndex].data[index];
                         // In a real app, use a Toast or Bottom Sheet. For now, native alert or console is simplest proof-of-concept,
                         // but user interaction usually expects visual feedback.
                         // Let's assume the Tooltip is sufficient, or if "cliking" is needed, we alert.
                         // The user said "If press... tell age".
-                        alert(`เป้าหมายเกษียณที่อายุ ${age} ปี: ฿${formatNumber(Number(value))}`);
+                        alert(`เงินที่ต้องการก่อนเกษียณที่อายุ ${age} ปี: ฿${formatNumber(Number(value))}`);
                     }
                 },
             } as ChartOptions
         };
-    }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData, effectiveInterval, orientation]);
+    }, [inputs, result, mcResult, showSumAssured, showActualSavings, insuranceChartData, effectiveInterval, orientation, showTarget, showLegacy]);
 
     // Calculate Scroll Width for Vertical Mode
     const minVerticalWidth = Math.max(window.innerWidth - 32, chartData.data.labels.length * 50);
@@ -408,47 +423,49 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                     {/* Actual Savings Toggle */}
                     <button
                         onClick={() => setShowActualSavings && setShowActualSavings(!showActualSavings)}
-                        className={`flex items-center gap-1.5 transition-all active:scale-95 ${showActualSavings ? 'opacity-100' : 'opacity-40 grayscale'}`}
+                        className={`flex items-center gap-2 transition-all active:scale-95 ${showActualSavings ? 'opacity-100' : 'opacity-40 grayscale'}`}
                     >
-                        <div className="w-2.5 h-2.5 rounded-sm bg-[#10B981]"></div>
-                        <span className="text-[10px] lg:text-xs font-medium text-slate-500">เงินออม</span>
+                        <div className="w-2.5 h-2.5 bg-[#10B981] rounded-full shadow-sm ring-2 ring-[#10B981]/10 flex-shrink-0"></div>
+                        <span className="text-[11px] lg:text-xs font-black tracking-tight text-slate-500">เงินออม ({inputs.retireAge} ปี)</span>
                     </button>
 
-                    {/* Target (Static Label) */}
-                    <div className="flex items-center gap-1.5 opacity-100">
-                        {orientation === 'horizontal' ? (
-                            <div className="w-2.5 h-2.5 bg-[#3b82f6] rounded-full"></div>
-                        ) : (
-                            <div className="w-5 h-[4px] bg-[#3b82f6] opacity-50 rounded-full"></div>
-                        )}
-                        <span className="text-[10px] lg:text-xs font-medium text-slate-500">เป้าหมาย</span>
-                    </div>
+                    {/* Target Toggle */}
+                    <button
+                        onClick={() => setShowTarget(!showTarget)}
+                        className={`flex items-center gap-2 transition-all active:scale-95 ${showTarget ? 'opacity-100' : 'opacity-40 grayscale'}`}
+                    >
+                        <div className="w-2.5 h-2.5 bg-[#3b82f6] rounded-full shadow-sm ring-2 ring-[#3b82f6]/10 flex-shrink-0"></div>
+                        <span className="text-[11px] lg:text-xs font-black tracking-tight text-slate-500">เงินที่ต้องการ</span>
+                    </button>
 
-                    {/* Legacy (Static Label if exists) */}
+                    {/* Legacy Toggle */}
                     {inputs.legacyFund > 0 && (
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-4 h-0 border-t-[3px] border-dashed border-[#EF4444]"></div>
-                            <span className="text-[10px] lg:text-xs font-medium text-slate-500">มรดก</span>
-                        </div>
+                        <button
+                            onClick={() => setShowLegacy(!showLegacy)}
+                            className={`flex items-center gap-2 transition-all active:scale-95 ${showLegacy ? 'opacity-100' : 'opacity-40 grayscale'}`}
+                        >
+                            <div className="w-2.5 h-2.5 bg-[#EF4444] rounded-full border border-white ring-2 ring-[#EF4444]/20 flex-shrink-0"></div>
+                            <span className="text-[11px] lg:text-xs font-black tracking-tight text-slate-500">มรดก</span>
+                        </button>
                     )}
 
                     {/* Sum Assured Toggle */}
                     <button
                         onClick={() => setShowSumAssured && setShowSumAssured(!showSumAssured)}
-                        className={`flex items-center gap-1.5 transition-all active:scale-95 ${showSumAssured ? 'opacity-100' : 'opacity-40 grayscale'}`}
+                        className={`flex items-center gap-2 transition-all active:scale-95 ${showSumAssured ? 'opacity-100' : 'opacity-40 grayscale'}`}
                     >
-                        <div className="w-2.5 h-2.5 rounded-sm bg-[#F97316]"></div>
-                        <span className="text-[10px] lg:text-xs font-medium text-slate-500">ทุนประกัน</span>
+                        <div className="w-2.5 h-2.5 bg-[#F97316] rounded-full shadow-sm ring-2 ring-[#F97316]/10 flex-shrink-0"></div>
+                        <span className="text-[11px] lg:text-xs font-black tracking-tight text-slate-500">ทุนประกัน</span>
                     </button>
 
                     {/* Monte Carlo Toggle */}
                     {mcResult && setShowMC && (
                         <button
                             onClick={() => setShowMC(!showMC)}
-                            className={`flex items-center gap-1.5 transition-all active:scale-95 ${showMC ? 'opacity-100' : 'opacity-40 grayscale'}`}
+                            className={`flex items-center gap-2 transition-all active:scale-95 ${showMC ? 'opacity-100' : 'opacity-40 grayscale'}`}
                         >
-                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/50 border border-emerald-500"></div>
-                            <span className="text-[10px] lg:text-xs font-medium text-slate-500">Monte Carlo</span>
+                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 opacity-60 border border-emerald-500/30 ring-2 ring-emerald-400/10 flex-shrink-0"></div>
+                            <span className="text-[11px] lg:text-xs font-black tracking-tight text-slate-500">Monte Carlo</span>
                         </button>
                     )}
                 </div>

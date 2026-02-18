@@ -782,8 +782,8 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
     // Initial Sum Assured
     let initSumAssured = 0;
     insurancePlans.forEach(p => {
-        const notSurrendered = !p.useSurrender || startAge <= p.surrenderAge;
-        if (p.active && startAge <= p.coverageAge && notSurrendered) initSumAssured += p.sumAssured;
+        // Show Sum Assured for ALL ages if plan is active (User Request)
+        if (p.active) initSumAssured += p.sumAssured;
     });
     sumAssuredSeries.push(initSumAssured);
 
@@ -878,9 +878,10 @@ export function buildProjectionSeries(inputs: RetirementInputs, result: any) {
         let currentSA = 0;
         const nextAge = age + 1;
         insurancePlans.forEach(p => {
-            // Surrender Condition: Visible up to and including surrender year
-            const notSurrendered = !p.useSurrender || nextAge <= p.surrenderAge;
-            if (p.active && nextAge <= p.coverageAge && notSurrendered) currentSA += p.sumAssured;
+            // Start of Sum Assured Logic Update: Show Sum Assured for ALL ages if plan is active
+            // Modified to match User Request: "Inheritance line shows in every part"
+            if (p.active) currentSA += p.sumAssured;
+            // End of Update
         });
         sumAssuredSeries.push(currentSA);
 

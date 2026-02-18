@@ -217,7 +217,15 @@ export default function HomePage() {
             setters.setInputStep(1);
           }}
           onEditProfile={() => setters.setShowProfileSettings(true)}
-          onBack={() => setters.setShowResult(false)}
+          onBack={() => {
+            if (planType === 'family') {
+              setters.setShowFamilyResult(true);
+              setters.setShowResult(false);
+            } else {
+              setters.setPlanType(null);
+              setters.setShowResult(false);
+            }
+          }}
         />
         <ProfileSettingsModal
           isOpen={state.showProfileSettings}

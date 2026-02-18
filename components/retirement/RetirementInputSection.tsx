@@ -40,18 +40,41 @@ interface RetirementInputSectionProps {
 // Tooltip ที่แสดงผลแบบ Portal (ลอยเหนือ Layer อื่นๆ)
 const PortalTooltip = ({ text, rect, onCheck, onLeave }: { text: string, rect: DOMRect, onCheck: () => void, onLeave: () => void }) => {
     const [visible, setVisible] = useState(false);
+    const [coords, setCoords] = useState({ left: 0, arrowOffset: 0 });
 
-    // แสดงผลเมื่อ Component ถูก Mount
     useEffect(() => {
+        const calculatePosition = () => {
+            const width = 300; // Tooltip Width
+            const padding = 16;
+            const screenWidth = window.innerWidth;
+
+            // Ideal center position
+            let idealLeft = rect.left + rect.width / 2;
+
+            // Constraints
+            const minLeft = width / 2 + padding;
+            const maxLeft = screenWidth - (width / 2) - padding;
+
+            // Final clamped position
+            const finalLeft = Math.max(minLeft, Math.min(maxLeft, idealLeft));
+
+            // Calculate arrow offset relative to tooltip center
+            const offset = idealLeft - finalLeft;
+
+            setCoords({ left: finalLeft, arrowOffset: offset });
+        };
+
+        calculatePosition();
         requestAnimationFrame(() => setVisible(true));
-    }, []);
+
+        window.addEventListener('resize', calculatePosition);
+        return () => window.removeEventListener('resize', calculatePosition);
+    }, [rect]);
 
     const top = rect.top - 10;
-    const left = rect.left + rect.width / 2;
 
     if (typeof document === 'undefined') return null;
 
-    // createPortal: เรนเดอร์ Tooltip ไปที่ body โดยตรง เพื่อไม่ให้โดน Parent Component บัง
     return createPortal(
         <div
             className={`fixed inset-0 z-[9999] pointer-events-none transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
@@ -60,20 +83,23 @@ const PortalTooltip = ({ text, rect, onCheck, onLeave }: { text: string, rect: D
                 className="absolute transition-all duration-300 ease-out origin-bottom"
                 style={{
                     top: top,
-                    left: left,
+                    left: coords.left,
                     transform: `translate(-50%, -100%) scale(${visible ? 1 : 0.9}) translateY(${visible ? 0 : 10}px)`
                 }}
                 onMouseEnter={onCheck}
                 onMouseLeave={onLeave}
             >
-                <div className="w-72 p-4 bg-white/95 backdrop-blur-xl text-slate-600 text-xs leading-relaxed rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-200 relative pointer-events-auto">
-                    <div className="font-bold text-indigo-600 mb-1 flex items-center gap-2">
-                        <Info size={14} />
+                <div className="w-[300px] p-5 bg-white/98 backdrop-blur-2xl text-slate-600 text-[13px] leading-[1.6] rounded-[24px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] border border-slate-100 relative pointer-events-auto">
+                    <div className="font-black text-indigo-600 mb-2 flex items-center gap-2 text-xs uppercase tracking-widest">
+                        <Info size={14} strokeWidth={3} />
                         คำแนะนำ
                     </div>
                     {text}
-                    {/* Arrow (ลูกศรชี้) */}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-8 border-transparent border-t-white/95 drop-shadow-sm"></div>
+                    {/* Arrow (ลูกศรชี้) - Dynamically shifted */}
+                    <div
+                        className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-8 border-transparent border-t-white/98 drop-shadow-sm transition-all duration-300"
+                        style={{ marginLeft: coords.arrowOffset }}
+                    ></div>
                 </div>
             </div>
         </div>,
@@ -171,7 +197,6 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
     const [avatarImage, setAvatarImage] = useState<string | null>(null); // รูปโปรไฟล์ (ถ้ามี)
     const [showMonteCarlo, setShowMonteCarlo] = useState(true); // แสดงส่วน Monte Carlo หรือไม่
     const [isRelationOpen, setIsRelationOpen] = useState(false); // ควบคุม Dropdown ความสัมพันธ์
-    const [showInsuranceHelp, setShowInsuranceHelp] = useState(false); // แสดง Help ของประกัน
 
     // Validation State (ตรวจสอบความถูกต้องของข้อมูล)
     const [showValidationModal, setShowValidationModal] = useState(false); // แสดง Modal แจ้งเตือนข้อมูลไม่ครบ
@@ -484,7 +509,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                         field="currentSavings"
                         icon={Briefcase}
                         step={1000}
-                        tooltip="กรอกจำนวนเงินออมทั้งหมดที่คุณมีอยู่ในปัจจุบัน"
+                        tooltip="รวบรวมเงินเก็บทั้งหมดที่คุณมี ณ ตอนนี้ (เช่น บัญชีออมทรัพย์, เงินสด, ทองคำ หรือกองทุนต่างๆ) เพื่อใช้เป็นเงินตั้งต้นสำหรับแผนเกษียณ"
                     />
 
                     <div className="pt-2 border-t border-slate-100/50 space-y-4">
@@ -494,7 +519,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                             field="monthlySaving"
                             icon={Plus}
                             step={1000}
-                            tooltip="กรอกจำนวนเงินที่คุณออมหรือลงทุนเพื่อการเกษียณในแต่ละเดือน (ไม่รวมเงินจากประกันสังคม หรือกองทุนสำรองเลี้ยงชีพนะ)"
+                            tooltip="ระบุจำนวนเงินที่คุณตั้งใจเก็บเพิ่ม 'ในทุกๆ เดือน' เพื่อสร้างเงินก้อนให้โตขึ้นตามเป้าหมาย"
                         />
 
                         <div className="flex items-center gap-4">
@@ -538,7 +563,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                             field="expectedReturn"
                             icon={TrendingUp}
                             disabled={returnMode === 'custom'}
-                            tooltip="กรอกอัตราผลตอบแทนเฉลี่ยที่คาดว่าจะได้รับจากการลงทุนเพื่อการเกษียณ ช่วงก่อนเกษียณ"
+                            tooltip="อัตราผลตอบแทนเฉลี่ยที่คุณคาดหวังจากการลงทุน 'ก่อน' เกษียณ (เช่น กองทุนตราสารหนี้ 2-3%, หุ้น 7-10%)"
                         />
 
                         {/* Return Mode Selection */}
@@ -663,7 +688,7 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
                             value={form.inflation}
                             field="inflation"
                             icon={TrendingUp}
-                            tooltip="กรอกอัตราเงินเฟ้อที่ประมาณการไว้ในอนาคต"
+                            tooltip="การคาดการณ์ค่าครองชีพที่แพงขึ้นในอนาคต ซึ่งจะทำให้เงินมีมูลค่าลดลง (แนะนำที่ 2-3% ตามค่าเฉลี่ยปกติ)"
                         />
                     </div>
                 </div>
@@ -671,55 +696,11 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
             {/* Insurance Section - Detailed List (ส่วนจัดการประกันชีวิต) */}
             <div className="pt-6 mt-6 border-t border-slate-100 relative">
-                <div className="flex items-center gap-2 mb-4 pl-5">
+                <div className="flex items-center gap-1.5 mb-4 pl-5">
                     <h3 className="font-bold text-slate-700 text-lg">ประกันชีวิต</h3>
-                    <button
-                        onClick={() => setShowInsuranceHelp(true)}
-                        className="w-5 h-5 rounded-full bg-slate-200 text-slate-500 hover:bg-blue-100 hover:text-blue-600 flex items-center justify-center transition-colors"
-                    >
-                        <Info size={14} strokeWidth={2.5} />
-                    </button>
+                    <TooltipWrapper text="บันทึกกรมธรรม์ประกันชีวิตที่มีอยู่ เพื่อนำทุนประกันหรือเงินคืนตามสัญญา มาช่วยลดภาระการออมและสร้างความมั่นคงให้แผนการเงินของคุณ" />
                 </div>
 
-                {/* Insurance Help Modal */}
-                {showInsuranceHelp && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setShowInsuranceHelp(false)}>
-                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                            <button onClick={() => setShowInsuranceHelp(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-                                <X size={20} />
-                            </button>
-
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-                                    <Info size={20} />
-                                </div>
-                                <h4 className="text-lg font-bold text-slate-800">คำแนะนำแผนประกัน</h4>
-                            </div>
-
-                            <div className="space-y-4 text-sm text-slate-600 leading-relaxed font-medium">
-                                <p>
-                                    ส่วนนี้ใช้สำหรับกรอกข้อมูลประกันชีวิต ที่มีวัตถุประสงค์เพื่อเป็นเห็นทุนประกันหรือ cash flow ที่ได้มาจากประกัน โดยจะมีรายละเอียดการกรอกที่ซับซ้อนขึ้นอยู่กับประเภทของประกันที่เลือก เช่น:
-                                </p>
-                                <ul className="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                    <li><strong className="text-slate-800">ทุนประกัน:</strong> จำนวนเงินเอาประกัน</li>
-                                    <li><strong className="text-slate-800">อายุที่ต้องการสิ้นสุดความคุ้มครอง:</strong> อายุที่คุณต้องการให้กรมธรรม์สิ้นสุด</li>
-                                    <li><strong className="text-slate-800">ประเภท:</strong> ประเภทของประกันเพื่อให้คำนวณตารางต่างกัน</li>
-                                    <li><strong className="text-slate-800">มูลค่าเวนคืน:</strong> จำนวนเงินที่ได้เมื่อเวนคืน</li>
-                                </ul>
-                                <p className="text-blue-600 font-bold bg-blue-50 p-3 rounded-lg border border-blue-100 text-center">
-                                    เมื่อกรอกครบแล้วเราก็จะสามารถกดตารางเพื่อดู cash flow ของแต่ละกรมธรรม์ได้เลย
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={() => setShowInsuranceHelp(false)}
-                                className="w-full mt-6 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors"
-                            >
-                                เข้าใจแล้ว
-                            </button>
-                        </div>
-                    </div>
-                )}
 
                 <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                     {/* Card Header */}
@@ -1132,27 +1113,23 @@ export const RetirementInputSection: React.FC<RetirementInputSectionProps> = ({
 
             {/* STEP INDICATOR (Hidden if embedded) - แถบแสดงขั้นตอน (ซ่อนเมื่ออยู่ใน Sidebar) */}
             {!isEmbedded && (
-                <div className={`mb-8 p-1.5 bg-slate-50/80 rounded-full border border-slate-200/60 backdrop-blur-sm sticky top-4 z-30 shadow-sm mx-4`}>
-                    <div className="relative flex justify-between">
-                        {/* Active Background Pill */}
-                        <div
-                            className={`absolute top-0 bottom-0 bg-white shadow-sm border border-slate-200 transition-all duration-500 ease-out rounded-full`}
-                            style={{
-                                left: `${((step - 1) * 33.33) + 0.5}%`,
-                                width: '32%'
-                            }}
-                        ></div>
-
+                <div className={`mb-8 px-2 py-3 bg-white/80 rounded-2xl border border-slate-200/60 backdrop-blur-md sticky top-4 z-30 shadow-sm mx-4`}>
+                    <div className="relative flex justify-between items-end">
                         {[1, 2, 3].map((s) => (
                             <button
                                 key={s}
                                 onClick={() => goToStep(s)}
-                                className={`relative flex-1 py-2.5 rounded-full text-xs font-bold transition-all duration-300 z-10 flex items-center justify-center gap-2 ${step === s ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`relative flex-1 flex flex-col-reverse items-center justify-end gap-1.5 transition-all duration-300 z-10 group`}
                             >
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center border text-[10px] transition-all ${step === s ? 'bg-blue-100 border-blue-200 text-blue-600' : 'bg-transparent border-slate-300 text-slate-400'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 text-xs font-bold transition-all shadow-sm ${step === s
+                                    ? 'bg-blue-600 border-blue-600 text-white shadow-blue-200'
+                                    : 'bg-white border-slate-200 text-slate-400 group-hover:border-slate-300'
+                                    }`}>
                                     {s}
                                 </div>
-                                <span className="hidden sm:inline">{s === 1 ? 'ข้อมูลส่วนตัว' : s === 2 ? 'สถานะการเงิน' : 'เป้าหมาย'}</span>
+                                <span className={`text-[10px] font-bold whitespace-nowrap transition-colors duration-300 ${step === s ? 'text-blue-600' : 'text-slate-400'}`}>
+                                    {s === 1 ? 'ข้อมูลส่วนตัว' : s === 2 ? 'สถานะการเงิน' : 'เป้าหมาย'}
+                                </span>
                             </button>
                         ))}
                     </div>

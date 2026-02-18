@@ -36,9 +36,9 @@ export const LoginScreen = ({ onLogin }: { onLogin: (name: string) => void }) =>
                     </div>
 
                     <div className="space-y-[2vh] lg:space-y-6">
-                        <h1 className="text-[clamp(1.8rem,6vw,3.5rem)] lg:text-7xl font-bold leading-[1.1] tracking-tight text-white/95">
+                        <h1 className="text-[clamp(1.8rem,6vw,3.5rem)] lg:text-5xl xl:text-6xl font-bold leading-[1.1] tracking-tight text-white/95">
                             วางแผนอนาคต<br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-emerald-300">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-emerald-300 inline-block">
                                 เพื่อชีวิตที่คุณเลือกได้
                             </span>
                         </h1>

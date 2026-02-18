@@ -84,86 +84,132 @@ const crosshairPlugin = {
 };
 
 // Goal Label Plugin: แสดงเส้นเป้าหมายและป้ายกำกับ (เส้นประสีฟ้า)
-const goalLabelPlugin = {
+export const goalLabelPlugin = {
     id: "goalLabelPlugin",
     afterDraw: (chart: any, args: any, options: any) => {
-        if (options.display === false) return; // Check display option (ตรวจสอบว่าต้องแสดงหรือไม่)
+        if (options.display === false) return;
 
         const { ctx, scales: { x, y } } = chart;
         const goalVal = options.goalValue;
         const retireAge = options.retireAge;
         if (!goalVal || goalVal <= 0) return;
 
-        const yPos = y.getPixelForValue(goalVal);
-        const xStart = x.left;
-        let xEnd = x.right;
+        const isHorizontal = chart.options.indexAxis === 'y';
 
-        // Limit line to retire age if possible (จำกัดความยาวเส้นถึงอายุเกษียณ ถ้ามีข้อมูล)
-        if (retireAge) {
-            const px = x.getPixelForValue(String(retireAge));
-            if (px !== undefined && px !== null && !isNaN(px)) xEnd = px;
-        }
+        if (isHorizontal) {
+            // --- Horizontal View: Draw VERTICAL line ---
+            const xPos = x.getPixelForValue(goalVal);
+            let yStart = y.bottom;
+            let yEnd = y.top;
 
-        // Draw Blue Dashed Line (วาดเส้นประสีฟ้า)
-        ctx.save();
-        ctx.beginPath();
-        ctx.strokeStyle = "#3b82f6"; // Blue 500
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 4]); // Clean dash pattern
+            // Limit line to Retirement Age (if provided)
+            if (retireAge) {
+                const retireY = y.getPixelForValue(String(retireAge));
+                if (retireY !== undefined && !isNaN(retireY)) {
+                    yEnd = retireY;
+                }
+            }
 
-        ctx.moveTo(xStart, yPos);
-        ctx.lineTo(xEnd, yPos);
-        ctx.stroke();
-        ctx.restore();
+            // Draw Blue Dashed Line
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = "#3b82f6";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.moveTo(xPos, yStart);
+            ctx.lineTo(xPos, yEnd);
+            ctx.stroke();
+            ctx.restore();
 
-        // Draw Label "เป้าหมายทางการเงิน" as a Badge (วาดป้ายกำกับ)
-        const text = options.labelText || "เป้าหมายทางการเงิน";
-        ctx.save();
-        ctx.font = "bold 12px 'Inter', 'Prompt', sans-serif";
-        const textMetrics = ctx.measureText(text);
+            // Draw Label Badge (Rotated)
+            const text = options.labelText || "เป้าหมายทางการเงิน";
+            ctx.save();
+            ctx.font = "bold 12px 'Inter', 'Prompt', sans-serif";
+            const metrics = ctx.measureText(text);
+            const badgeWidth = metrics.width + 24;
+            const badgeHeight = 26;
 
-        // Badge Dimensions
-        const paddingX = 12;
-        const paddingY = 6;
-        const badgeHeight = 26;
-        const badgeWidth = textMetrics.width + (paddingX * 2);
+            // Positioning: Center of the vertical segment
+            const centerX = xPos;
+            const centerY = yEnd + (yStart - yEnd) / 2;
 
-        // Position: 20px from left axis, centered vertically on line
-        const badgeX = xStart + 20;
-        const badgeY = yPos - (badgeHeight / 2);
+            ctx.translate(centerX, centerY);
+            ctx.rotate(-Math.PI / 2); // Rotate 90 degrees CCW (Standard for vertical)
 
-        // Shadow
-        ctx.shadowColor = "rgba(37, 99, 235, 0.15)"; // Blue shadow
-        ctx.shadowBlur = 8;
-        ctx.shadowOffsetY = 4;
+            // Background
+            ctx.shadowColor = "rgba(37, 99, 235, 0.15)";
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            // Origin is now the center of the badge
+            if (ctx.roundRect) ctx.roundRect(-badgeWidth / 2, -badgeHeight / 2, badgeWidth, badgeHeight, 100);
+            else ctx.rect(-badgeWidth / 2, -badgeHeight / 2, badgeWidth, badgeHeight);
+            ctx.fill();
 
-        // Background (Pill Shape)
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        if (ctx.roundRect) {
-            ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 100); // Max rounded
+            // Border
+            ctx.strokeStyle = "#bfdbfe";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Text
+            ctx.fillStyle = "#2563eb";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, 0, 1);
+            ctx.restore();
+
         } else {
-            ctx.rect(badgeX, badgeY, badgeWidth, badgeHeight); // Fallback
+            // --- Vertical View: Draw HORIZONTAL line (Existing Logic) ---
+            const yPos = y.getPixelForValue(goalVal);
+            const xStart = x.left;
+            let xEnd = x.right;
+
+            if (retireAge) {
+                const px = x.getPixelForValue(String(retireAge));
+                if (px !== undefined && px !== null && !isNaN(px)) xEnd = px;
+            }
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = "#3b82f6";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.moveTo(xStart, yPos);
+            ctx.lineTo(xEnd, yPos);
+            ctx.stroke();
+            ctx.restore();
+
+            const text = options.labelText || "เป้าหมายทางการเงิน";
+            ctx.save();
+            ctx.font = "bold 12px 'Inter', 'Prompt', sans-serif";
+            const textMetrics = ctx.measureText(text);
+            const paddingX = 12;
+            const badgeHeight = 26;
+            const badgeWidth = textMetrics.width + (paddingX * 2);
+
+            const badgeX = xStart + 20;
+            const badgeY = yPos - (badgeHeight / 2);
+
+            ctx.shadowColor = "rgba(37, 99, 235, 0.15)";
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetY = 4;
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 100);
+            else ctx.rect(badgeX, badgeY, badgeWidth, badgeHeight);
+            ctx.fill();
+
+            ctx.shadowColor = "transparent";
+            ctx.strokeStyle = "#bfdbfe";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.fillStyle = "#2563eb";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, badgeX + paddingX, yPos + 1);
+            ctx.restore();
         }
-        ctx.fill();
-
-        // Restoring shadow for border/text to be clean
-        ctx.shadowColor = "transparent";
-        ctx.shadowBlur = 0;
-
-        // Border
-        ctx.strokeStyle = "#bfdbfe"; // Blue 200
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Text
-        ctx.fillStyle = "#2563eb"; // Blue 600
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillText(text, badgeX + paddingX, yPos + 1); // +1 for visual centering in font
-
-        // Optional: Small dot indicator at start of badge? No, keep clean.
-        ctx.restore();
     }
 };
 
@@ -202,66 +248,132 @@ const agePeriodPlugin = {
 };
 
 // Legacy Label Plugin: แสดงป้ายกำกับมรดก (เส้นประสีแดง)
-const legacyLabelPlugin = {
+export const legacyLabelPlugin = {
     id: "legacyLabelPlugin",
     afterDraw: (chart: any, args: any, options: any) => {
-        if (options.display === false) return; // Check display option
+        if (options.display === false) return;
 
         const { ctx, scales: { x, y } } = chart;
         const legacyVal = options.legacyValue || 0;
         if (legacyVal <= 0) return;
 
-        const yPos = y.getPixelForValue(legacyVal);
-        const xStart = x.left;
-        const xEnd = x.right;
+        const isHorizontal = chart.options.indexAxis === 'y';
 
-        // Draw Label "มรดก" as a Badge
-        const text = "มรดก";
-        ctx.save();
-        ctx.font = "bold 12px 'Inter', 'Prompt', sans-serif";
-        const textMetrics = ctx.measureText(text);
+        if (isHorizontal) {
+            // --- Horizontal View: Draw VERTICAL line ---
+            const xPos = x.getPixelForValue(legacyVal);
+            let yStart = y.top;
+            let yEnd = y.bottom;
 
-        // Badge Dimensions
-        const paddingX = 12;
-        const paddingY = 6;
-        const badgeHeight = 26;
-        const badgeWidth = textMetrics.width + (paddingX * 2);
+            const retireAge = options.retireAge;
+            if (retireAge) {
+                const retireY = y.getPixelForValue(String(retireAge));
+                if (retireY !== undefined && !isNaN(retireY)) {
+                    yEnd = retireY;
+                }
+            }
 
-        // Position: Align more to the right side (e.g. 80-85% of width) to distinct from potentially overlapping goal line
-        const badgeX = xStart + (xEnd - xStart) * 0.85;
-        const badgeY = yPos - (badgeHeight / 2);
+            // Draw Red Dashed Line
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = "#EF4444";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.moveTo(xPos, yStart);
+            ctx.lineTo(xPos, yEnd);
+            ctx.stroke();
+            ctx.restore();
 
-        // Shadow
-        ctx.shadowColor = "rgba(239, 68, 68, 0.15)"; // Red shadow
-        ctx.shadowBlur = 8;
-        ctx.shadowOffsetY = 4;
+            // Draw Label Badge (Rotated)
+            const text = "มรดก";
+            ctx.save();
+            ctx.font = "bold 12px 'Inter', 'Prompt', sans-serif";
+            const metrics = ctx.measureText(text);
+            const badgeWidth = metrics.width + 24;
+            const badgeHeight = 26;
 
-        // Background (Pill Shape)
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        if (ctx.roundRect) {
-            ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 100);
+            // Position: Center of the vertical segment
+            const centerX = xPos;
+            const centerY = yStart + (yEnd - yStart) / 2;
+
+            ctx.translate(centerX, centerY);
+            ctx.rotate(-Math.PI / 2); // Rotate 90 degrees CCW
+
+            // Background
+            ctx.shadowColor = "rgba(239, 68, 68, 0.15)";
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            // Origin is now center of badge
+            if (ctx.roundRect) ctx.roundRect(-badgeWidth / 2, -badgeHeight / 2, badgeWidth, badgeHeight, 100);
+            else ctx.rect(-badgeWidth / 2, -badgeHeight / 2, badgeWidth, badgeHeight);
+            ctx.fill();
+
+            // Border
+            ctx.strokeStyle = "#fecaca";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Text
+            ctx.fillStyle = "#dc2626";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, 0, 1);
+            ctx.restore();
+
         } else {
-            ctx.rect(badgeX, badgeY, badgeWidth, badgeHeight);
+            // --- Vertical View: Draw HORIZONTAL line (Existing Logic) ---
+            const yPos = y.getPixelForValue(legacyVal);
+            let xStart = x.left;
+            const xEnd = x.right;
+
+            const retireAge = options.retireAge;
+            if (retireAge) {
+                const px = x.getPixelForValue(String(retireAge));
+                if (px !== undefined && px !== null && !isNaN(px)) xStart = px;
+            }
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = "#EF4444";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.moveTo(xStart, yPos);
+            ctx.lineTo(xEnd, yPos);
+            ctx.stroke();
+            ctx.restore();
+
+            const text = "มรดก";
+            ctx.save();
+            ctx.font = "bold 12px 'Inter', 'Prompt', sans-serif";
+            const textMetrics = ctx.measureText(text);
+            const paddingX = 12;
+            const badgeHeight = 26;
+            const badgeWidth = textMetrics.width + (paddingX * 2);
+
+            const badgeX = xStart + (xEnd - xStart) * 0.85;
+            const badgeY = yPos - (badgeHeight / 2);
+
+            ctx.shadowColor = "rgba(239, 68, 68, 0.15)";
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetY = 4;
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 100);
+            else ctx.rect(badgeX, badgeY, badgeWidth, badgeHeight);
+            ctx.fill();
+
+            ctx.shadowColor = "transparent";
+            ctx.strokeStyle = "#fecaca";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.fillStyle = "#dc2626";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, badgeX + paddingX, yPos + 1);
+            ctx.restore();
         }
-        ctx.fill();
-
-        // Restore shadow
-        ctx.shadowColor = "transparent";
-        ctx.shadowBlur = 0;
-
-        // Border
-        ctx.strokeStyle = "#fca5a5"; // Red 300
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Text
-        ctx.fillStyle = "#ef4444"; // Red 500
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillText(text, badgeX + paddingX, yPos + 1);
-
-        ctx.restore();
     }
 };
 
@@ -415,7 +527,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                     { label: "P5", data: filteredP5, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: "+1", tension: 0.4, order: 5, hidden: isMobile, type: 'line' as const },
                     { label: "P95", data: filteredP95, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: false, tension: 0.4, order: 6, hidden: isMobile, type: 'line' as const },
                     {
-                        label: "เงินออมคาดว่าจะมี",
+                        label: `เงินออมที่มีตอนอายุเกษียณ (${inputs.retireAge} ปี)`,
                         data: filteredActual,
                         borderColor: "#10B981",
                         // Bar specific style
@@ -471,7 +583,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         type: 'line' as const
                     },
                     {
-                        label: "เป้าหมาย",
+                        label: "เงินที่ต้องการก่อนเกษียณ",
                         data: _requiredMapped,
                         borderColor: "#2563eb",
                         borderDash: [6, 6],
@@ -493,9 +605,9 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         label: "มรดก",
                         data: _legacyMapped,
                         borderColor: "#EF4444",
-                        borderDash: [5, 5],
+                        borderDash: [6, 4],
                         backgroundColor: "transparent",
-                        borderWidth: 2,
+                        borderWidth: isMobile ? 0 : 2, // Disable line on mobile (handled by plugin)
                         pointRadius: 0,
                         pointHoverRadius: 0,
                         fill: false,
@@ -541,8 +653,8 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                             title: (items: any[]) => items.length ? `อายุ ${items[0].label}` : "",
                             label: (ctx: any) => {
                                 const label = ctx.dataset.label; const val = ctx.parsed[isMobile ? 'x' : 'y'] || 0; // Check correct axis val
-                                if (label === "เงินออมคาดว่าจะมี" || label === "เงินที่เก็บได้จริง") return `เงินออม: ฿${formatNumber(val)}`;
-                                if (label === "เป้าหมาย") return `เป้าหมาย: ฿${formatNumber(val)}`;
+                                if (label === `เงินออมที่มีตอนอายุเกษียณ (${inputs.retireAge} ปี)` || label === "เงินที่เก็บได้จริง") return `เงินออม: ฿${formatNumber(val)}`;
+                                if (label === "เงินที่ต้องการก่อนเกษียณ") return `เป้าหมาย: ฿${formatNumber(val)}`;
                                 if (label === "ทุนประกัน") {
                                     const age = Number(ctx.label);
                                     const flowIdx = insuranceChartData?.labels.indexOf(age) ?? -1;
@@ -556,7 +668,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         }, filter: (item: any) => item.dataset.label !== "P5" && item.dataset.label !== "P95",
                     },
                     goalLabelPlugin: { goalValue: result.targetFund, labelText: "เป้าหมายทางการเงิน", formatNumber, chartTickInterval, retireAge: Number(inputs.retireAge), display: !isMobile }, // Disable on Mobile
-                    legacyLabelPlugin: { legacyValue: inputs.legacyFund, display: !isMobile }, // Disable on Mobile
+                    legacyLabelPlugin: { legacyValue: inputs.legacyFund, retireAge: Number(inputs.retireAge), display: !isMobile }, // Disable on Mobile
                     agePeriodPlugin: { tickInterval: chartTickInterval },
                 },
                 categoryPercentage: 0.6,

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumericInput } from "@/components/NumericInput";
 import { formatNumber, formatNumber2, formatInputDisplay } from "@/lib/utils";
-import { Plus, X as CloseIcon, ChevronDown, Check } from "lucide-react";
+import { Plus, X as CloseIcon, ChevronDown, Check, Minus } from "lucide-react";
 import { ExpenseChart } from "./DashboardCharts";
 import { PensionTiersManager } from "./PensionTiersManager";
 import { FormState, InsurancePlan, CalculationResult, MonteCarloResult, RetirementInputs } from "@/types/retirement";
@@ -184,23 +184,62 @@ export const useInsuranceLogic = (form: FormState) => {
 export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
     show, onClose, form, updateSurrenderTable
 }) => {
+    // State for Active Tab (Selected Plan ID)
+    const [activeTabId, setActiveTabId] = React.useState<string | null>(null);
+    const [isMoreOpen, setIsMoreOpen] = React.useState(false); // Valid state for dropdown
+
+    // Responsive Visible Count Logic
+    const [visibleCount, setVisibleCount] = React.useState(2);
+
+    React.useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 640) {
+                setVisibleCount(2); // Mobile: 2 tabs + ...
+            } else if (window.innerWidth < 1024) {
+                setVisibleCount(4); // Tablet: 4 tabs + ...
+            } else {
+                setVisibleCount(6); // Desktop: 6 tabs + ...
+            }
+        };
+
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Sync activeTabId with form.selectedPlanId or default to first plan
+    React.useEffect(() => {
+        if (show) {
+            if (form.selectedPlanId) {
+                setActiveTabId(form.selectedPlanId);
+            } else if (form.insurancePlans.length > 0) {
+                setActiveTabId(form.insurancePlans[0].id);
+            }
+        }
+    }, [show, form.selectedPlanId, form.insurancePlans]);
+
     if (!show) return null;
 
-    // เลือกแผนที่จะแสดง (ถ้ามี Selected ID ให้แสดงเฉพาะอันนั้น ถ้าไม่มีให้แสดงทั้งหมด)
-    const targetPlans = form.selectedPlanId
-        ? form.insurancePlans.filter(p => p.id === form.selectedPlanId)
-        : form.insurancePlans;
+    // Plans to Display Logic
+    const plans = form.insurancePlans || [];
+    const visibleTabs = plans.slice(0, visibleCount);
+    const overflowTabs = plans.slice(visibleCount);
+
+    // Find Active Plan Data
+    const activePlan = plans.find(p => p.id === activeTabId);
 
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in transition-all duration-300">
-            <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col max-h-[90vh]">
+            <div className="w-full max-w-6xl bg-white rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col max-h-[90vh]">
                 {/* Header (ส่วนหัวของ Modal) */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-20 shadow-sm">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-20 shadow-sm shrink-0">
                     <div>
                         <h3 className="text-lg font-bold text-slate-900">
-                            {targetPlans.length === 1 ? targetPlans[0].planName : "รายละเอียดแผนประกันทั้งหมด (All Plans)"}
+                            รายละเอียดแผนประกัน (Insurance Portfolio)
                         </h3>
-                        <p className="text-xs text-slate-500 mt-0.5">โปรดตรวจสอบรายละเอียดความคุ้มครองและตารางเวนคืน (แยกตามแผน)</p>
+                        <p className="text-xs text-slate-500 mt-0.5">เลือกแผนประกันที่ต้องการดูรายละเอียด</p>
                     </div>
                     <button
                         onClick={onClose}
@@ -210,30 +249,89 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                     </button>
                 </div>
 
-                {/* Content: List of Tables (เนื้อหา: รายการตาราง) */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50/50 space-y-8">
-                    {targetPlans.map((plan) => (
-                        <div key={plan.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2">
-                            {/* Plan Header */}
-                            {targetPlans.length > 1 && (
-                                <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
-                                    <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
-                                    <span className="font-bold text-slate-800 text-sm">{plan.planName}</span>
-                                    <span className="text-[10px] text-slate-400 px-2 py-0.5 bg-slate-100 rounded-full">{plan.type}</span>
-                                </div>
+                {/* Tab Navigation (Main + Overflow) */}
+                <div className="px-6 pt-2 bg-slate-50 border-b border-slate-200 flex items-center gap-1 overflow-visible sticky top-0 z-30 shrink-0">
+                    {visibleTabs.map(plan => (
+                        <button
+                            key={plan.id}
+                            onClick={() => setActiveTabId(plan.id)}
+                            className={`relative px-4 py-3 text-sm font-bold transition-all whitespace-nowrap rounded-t-lg border-b-2 z-10 flex-1 ${activeTabId === plan.id
+                                ? "bg-white text-blue-600 border-blue-600 shadow-[0_-1px_2px_rgba(0,0,0,0.05)]"
+                                : "text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/50"
+                                }`}
+                        >
+                            <span className="truncate block w-full">{plan.planName}</span>
+                        </button>
+                    ))}
+
+                    {/* Overflow "More" Button */}
+                    {overflowTabs.length > 0 && (
+                        <div className="relative ml-2 flex-shrink-0">
+                            <button
+                                onClick={() => setIsMoreOpen(!isMoreOpen)}
+                                className={`h-9 px-3 flex items-center justify-center rounded-lg text-sm font-bold transition-all border ${overflowTabs.some(p => p.id === activeTabId)
+                                    ? "bg-white text-blue-600 border-blue-200 shadow-sm"
+                                    : "bg-slate-100 text-slate-500 border-transparent hover:bg-slate-200"
+                                    }`}
+                            >
+                                <span className="mb-2 leading-none">...</span>
+                            </button>
+
+                            {/* Dropdown Menu (Reverted to Dropdown) */}
+                            {isMoreOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-[100]" onClick={() => setIsMoreOpen(false)} />
+                                    <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 z-[110] overflow-hidden animate-in fade-in zoom-in-95 duration-200 ring-1 ring-black/5">
+                                        <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
+                                            {overflowTabs.map(plan => (
+                                                <button
+                                                    key={plan.id}
+                                                    onClick={() => {
+                                                        setActiveTabId(plan.id);
+                                                        setIsMoreOpen(false);
+                                                    }}
+                                                    className={`w-full px-3 py-2.5 text-left text-xs font-bold rounded-lg transition-colors flex items-center justify-between ${activeTabId === plan.id
+                                                        ? "bg-blue-50 text-blue-700"
+                                                        : "text-slate-600 hover:bg-slate-50"
+                                                        }`}
+                                                >
+                                                    <span className="truncate">{plan.planName}</span>
+                                                    {activeTabId === plan.id && <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
                             )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Content: Selected Plan Table */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50/50">
+                    {activePlan ? (
+                        <div key={activePlan.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                            {/* Plan Header (Inline) */}
+                            <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-2 justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                                    <span className="font-bold text-slate-800 text-sm">{activePlan.planName}</span>
+                                </div>
+                                <span className="text-[10px] text-slate-500 px-2 py-0.5 bg-slate-100 rounded-full font-medium border border-slate-200">{activePlan.type}</span>
+                            </div>
 
                             <table className="w-full text-xs sm:text-sm border-collapse">
-                                <thead className="bg-[#F8F9FA] border-b border-slate-200 text-slate-700 font-bold text-xs sticky top-0 z-10">
+                                <thead className="bg-[#F8F9FA] border-b border-slate-200 text-slate-700 font-bold text-xs sticky top-0 z-10 shadow-sm">
                                     <tr>
                                         <th className="py-3 px-4 text-left w-[10%]">อายุ</th>
-                                        <th className="py-3 px-4 text-right w-[25%]">{plan.surrenderMode === 'table' ? 'มูลค่าเวนคืน (แก้ไขได้)' : 'กระแสเงินสดไหลเข้า'}</th>
+                                        <th className="py-3 px-4 text-right w-[25%]">{activePlan.surrenderMode === 'table' ? 'มูลค่าเวนคืน (แก้ไขได้)' : 'กระแสเงินสดไหลเข้า'}</th>
                                         <th className="py-3 px-4 text-right w-[25%]">ผลประโยชน์เมื่อเสียชีวิต</th>
                                         <th className="py-3 px-4 text-left pl-8 w-[20%]">สถานะ</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {Array.from({ length: 100 - Number(form.currentAge || 0) + 1 }, (_, i) => Number(form.currentAge || 0) + i).map(age => {
+                                        const plan = activePlan; // Use activePlan ref
                                         // Calculations for SINGLE Plan (คำนวณแยกตามแผน)
                                         const sumAssured = Number(String(plan.sumAssured || 0).replace(/,/g, ""));
                                         const coverageAge = Number(plan.coverageAge);
@@ -293,21 +391,21 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                         }
 
                                         // Death Benefit Logic (ผลประโยชน์มรณกรรม)
-                                        if (!planIsAfterSurrender && planIsWithinCoverage) {
-                                            db += sumAssured;
+                                        // User request: "Adjust inheritance money part to go up every part" -> Always show if defined
+                                        const baseSumAssured = Number(String(plan.sumAssured || 0).replace(/,/g, ""));
+                                        if (baseSumAssured > 0) {
+                                            // Default: use Sum Assured
+                                            db = baseSumAssured;
+
+                                            // Pension Handling
                                             if (plan.type === "บำนาญ") {
-                                                if (age < Number(plan.pensionStartAge)) {
-                                                    // ก่อนรับบำนาญ: ใช้ความคุ้มครองก่อนบำนาญ (ถ้ามี) มิฉะนั้นใช้ทุนประกันปกติ
-                                                    const prePensionDB = Number(String(plan.deathBenefitPrePension || 0).replace(/,/g, ""));
-                                                    db = prePensionDB > 0 ? prePensionDB : sumAssured;
-                                                } else {
-                                                    // หลังรับบำนาญ: ความคุ้มครองลดลงตามเงินที่รับไปแล้ว
-                                                    // คำนวณเงินบำนาญสะสมที่รับไปแล้ว
+                                                if (age >= Number(plan.pensionStartAge)) {
+                                                    // Pension Phase: Reduce DB by cumulative pension
                                                     let cumulativePension = 0;
                                                     const startAge = Number(plan.pensionStartAge);
                                                     for (let a = startAge; a < age; a++) {
                                                         let histAmt = Number(String(plan.pensionAmount || 0).replace(/,/g, ""));
-                                                        if (Number(plan.pensionPercent) > 0) histAmt = (sumAssured * Number(plan.pensionPercent)) / 100;
+                                                        if (Number(plan.pensionPercent) > 0) histAmt = (baseSumAssured * Number(plan.pensionPercent)) / 100;
                                                         if (plan.unequalPension && plan.pensionTiers && plan.pensionTiers.length > 0) {
                                                             const tier = plan.pensionTiers.find(t => a >= Number(t.startAge) && a <= Number(t.endAge));
                                                             if (tier) histAmt = Number(String(tier.amount || 0).replace(/,/g, ""));
@@ -315,10 +413,12 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                                         }
                                                         cumulativePension += histAmt;
                                                     }
-
-                                                    // Base DB for reduction
-                                                    const baseDB = Number(String(plan.deathBenefitPrePension || 0).replace(/,/g, "")) || sumAssured;
+                                                    const baseDB = Number(String(plan.deathBenefitPrePension || 0).replace(/,/g, "")) || baseSumAssured;
                                                     db = Math.max(0, baseDB - cumulativePension);
+                                                } else {
+                                                    // Pre-Pension Phase
+                                                    const prePensionDB = Number(String(plan.deathBenefitPrePension || 0).replace(/,/g, ""));
+                                                    if (prePensionDB > 0) db = prePensionDB;
                                                 }
                                             }
                                         }
@@ -338,7 +438,9 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                             }
                                         }
                                         else if (isMaturityYear) statusText = "ครบสัญญา";
-                                        else if (isPostDeathRow) statusText = "ตายแล้ว";
+                                        else if (isPostDeathRow) {
+                                            statusText = "ครบอายุคุ้มครอง"; // Changed from specific death status to generic
+                                        }
                                         else if (useSurrender && age > surrenderAge) statusText = "เวนคืนไปแล้ว";
 
                                         // Editable State
@@ -384,16 +486,17 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
                                 </tbody>
                             </table>
                         </div>
-                    ))}
-
-                    {targetPlans.length === 0 && (
-                        <div className="p-8 text-center text-slate-400">
-                            ไม่พบแผนประกันที่เลือก
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-20 text-slate-400 opacity-60">
+                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                                <Minus size={32} />
+                            </div>
+                            <p>ไม่มีแผนประกันที่เลือก</p>
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
