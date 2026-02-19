@@ -527,7 +527,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                     { label: "P5", data: filteredP5, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: "+1", tension: 0.4, order: 5, hidden: isMobile, type: 'line' as const },
                     { label: "P95", data: filteredP95, borderColor: "transparent", backgroundColor: "rgba(16, 185, 129, 0.1)", pointRadius: 0, fill: false, tension: 0.4, order: 6, hidden: isMobile, type: 'line' as const },
                     {
-                        label: `เงินออมที่มีตอนอายุเกษียณ (${inputs.retireAge} ปี)`,
+                        label: `เงินออม (${inputs.retireAge} ปี)`,
                         data: filteredActual,
                         borderColor: "#10B981",
                         // Bar specific style
@@ -583,7 +583,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         type: 'line' as const
                     },
                     {
-                        label: "เงินที่ต้องการก่อนเกษียณ",
+                        label: "เงินที่ต้องการ",
                         data: _requiredMapped,
                         borderColor: "#2563eb",
                         borderDash: [6, 6],
@@ -638,6 +638,17 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                         hidden: !showSumAssured,
                         type: (viewMode === 'bar' && !isMobile) ? 'bar' as const : 'line' as const
                     },
+                    // Dummy Dataset for Monte Carlo Legend
+                    {
+                        label: "Monte Carlo",
+                        data: [],
+                        borderColor: "#2dd4bf", // Teal-400
+                        backgroundColor: "#2dd4bf",
+                        pointRadius: 4,
+                        order: 10,
+                        hidden: !mcResult, // Only show if MC is available
+                        type: 'line' as const
+                    }
                 ],
             },
             options: {
@@ -645,7 +656,44 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                 maintainAspectRatio: false,
                 indexAxis: isMobile ? 'y' as const : 'x' as const,
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        display: !isMobile,
+                        position: 'top' as const,
+                        align: 'center' as const,
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            padding: 20,
+                            font: { size: 12, family: "'Inter', 'Prompt', sans-serif", weight: 'bold' as const },
+                            generateLabels: (chart: any) => {
+                                const defaults = ChartJS.defaults.plugins.legend.labels.generateLabels(chart);
+                                return defaults.map(item => {
+                                    if (item.text.includes("เงินออม")) {
+                                        item.fillStyle = '#10B981';
+                                        item.strokeStyle = '#10B981';
+                                    }
+                                    if (item.text.includes("เงินที่ต้องการ")) {
+                                        item.fillStyle = '#2563eb';
+                                        item.strokeStyle = '#2563eb';
+                                    }
+                                    if (item.text.includes("ทุนประกัน")) {
+                                        item.fillStyle = '#F97316';
+                                        item.strokeStyle = '#F97316';
+                                    }
+                                    if (item.text.includes("Monte Carlo")) {
+                                        item.fillStyle = '#2dd4bf';
+                                        item.strokeStyle = '#2dd4bf';
+                                    }
+                                    return item;
+                                }).filter(item =>
+                                    item.text.includes("เงินออม") ||
+                                    item.text.includes("เงินที่ต้องการ") ||
+                                    item.text.includes("ทุนประกัน") ||
+                                    item.text.includes("Monte Carlo")
+                                );
+                            }
+                        }
+                    },
                     tooltip: {
                         mode: "index" as const, intersect: false, backgroundColor: 'rgba(255, 255, 255, 0.98)', titleColor: '#1e293b', bodyColor: '#475569', borderColor: '#e2e8f0', borderWidth: 1,
                         titleFont: { size: 14, weight: "bold" as const, family: "'Inter', 'Prompt', sans-serif" }, bodyFont: { size: 13, family: "'Inter', 'Prompt', sans-serif" }, padding: 12, displayColors: true, boxPadding: 4, usePointStyle: true,
@@ -653,8 +701,8 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                             title: (items: any[]) => items.length ? `อายุ ${items[0].label}` : "",
                             label: (ctx: any) => {
                                 const label = ctx.dataset.label; const val = ctx.parsed[isMobile ? 'x' : 'y'] || 0; // Check correct axis val
-                                if (label === `เงินออมที่มีตอนอายุเกษียณ (${inputs.retireAge} ปี)` || label === "เงินที่เก็บได้จริง") return `เงินออม: ฿${formatNumber(val)}`;
-                                if (label === "เงินที่ต้องการก่อนเกษียณ") return `เป้าหมาย: ฿${formatNumber(val)}`;
+                                if (label === `เงินออม (${inputs.retireAge} ปี)` || label === "เงินที่เก็บได้จริง") return `เงินออม: ฿${formatNumber(val)}`;
+                                if (label === "เงินที่ต้องการ") return `เป้าหมาย: ฿${formatNumber(val)}`;
                                 if (label === "ทุนประกัน") {
                                     const age = Number(ctx.label);
                                     const flowIdx = insuranceChartData?.labels.indexOf(age) ?? -1;
@@ -665,7 +713,7 @@ export const ProjectionChart: React.FC<ProjectionChartProps> = ({
                                 if (label === "P95") return `โอกาส 95% (ดีสุด): ฿${formatNumber(val)}`;
                                 return;
                             },
-                        }, filter: (item: any) => item.dataset.label !== "P5" && item.dataset.label !== "P95",
+                        }, filter: (item: any) => item.dataset.label !== "P5" && item.dataset.label !== "P95" && item.dataset.label !== "Monte Carlo", // Hide dummy MC from tooltip
                     },
                     goalLabelPlugin: { goalValue: result.targetFund, labelText: "เป้าหมายทางการเงิน", formatNumber, chartTickInterval, retireAge: Number(inputs.retireAge), display: !isMobile }, // Disable on Mobile
                     legacyLabelPlugin: { legacyValue: inputs.legacyFund, retireAge: Number(inputs.retireAge), display: !isMobile }, // Disable on Mobile

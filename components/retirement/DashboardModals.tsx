@@ -231,15 +231,15 @@ export const InsuranceTableModal: React.FC<InsuranceTableModalProps> = ({
     const activePlan = plans.find(p => p.id === activeTabId);
 
     return (
-        <div className="fixed inset-0 z-[1100] flex items-start justify-center bg-slate-900/60 backdrop-blur-sm p-4 pt-8 md:pt-16 animate-in fade-in transition-all duration-300 overflow-y-auto">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in transition-all duration-300 overflow-y-auto">
             <div className="w-full max-w-6xl bg-white rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col max-h-[85vh] shrink-0">
                 {/* Header (ส่วนหัวของ Modal) */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-20 shadow-sm shrink-0">
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-900">
+                    <div className="flex-1 pr-4">
+                        <h3 className="text-lg font-bold text-slate-900 break-words">
                             รายละเอียดแผนประกัน (Insurance Portfolio)
                         </h3>
-                        <p className="text-xs text-slate-500 mt-0.5">เลือกแผนประกันที่ต้องการดูรายละเอียด</p>
+                        <p className="text-xs text-slate-500 mt-0.5 break-words">เลือกแผนประกันที่ต้องการดูรายละเอียด</p>
                     </div>
                     <button
                         onClick={onClose}
@@ -516,9 +516,9 @@ export const ProjectedModal: React.FC<ProjectedModalProps> = ({ show, onClose, f
             <div className="w-full max-w-2xl rounded-[32px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-black/5">
                 {/* Header */}
                 <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100">
-                    <div>
-                        <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2"><span className="w-8 h-8 rounded-lg bg-emerald-100/50 flex items-center justify-center text-emerald-600 text-lg">💰</span> ที่มาของเงินออม (Projected Savings)</h3>
-                        <p className="text-sm text-slate-500 mt-1 ml-10">วิเคราะห์องค์ประกอบของเงินออมในอนาคต</p>
+                    <div className="flex-1 pr-4">
+                        <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2 break-words"><span className="w-8 h-8 rounded-lg bg-emerald-100/50 flex items-center justify-center text-emerald-600 text-lg shrink-0">💰</span> ที่มาของเงินออม (Projected Savings)</h3>
+                        <p className="text-sm text-slate-500 mt-1 ml-10 break-words">วิเคราะห์องค์ประกอบของเงินออมในอนาคต</p>
                     </div>
                     <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"><CloseIcon className="w-5 h-5" /></button>
                 </div>
@@ -601,8 +601,8 @@ export const TargetModal: React.FC<TargetModalProps> = ({ show, onClose, result,
             <div className="w-full max-w-2xl rounded-[32px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-black/5">
                 {/* Header */}
                 <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100">
-                    <div>
-                        <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">เงินที่ต้องการก่อนเกษียณ</h3>
+                    <div className="flex-1 pr-4">
+                        <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2 break-words">เงินที่ต้องการก่อนเกษียณ</h3>
                     </div>
                     <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"><CloseIcon className="w-5 h-5" /></button>
                 </div>
@@ -746,9 +746,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ show, onClose, form,
             <div className="w-full max-w-2xl rounded-[32px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-white/20 ring-1 ring-black/5">
                 {/* Header */}
                 <div className="flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100">
-                    <div>
-                        <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2"><span className="w-8 h-8 rounded-lg bg-purple-100/50 flex items-center justify-center text-purple-600 text-lg">💸</span> ค่าใช้จ่ายหลังเกษียณ (Future Expense)</h3>
-                        <p className="text-sm text-slate-500 mt-1 ml-10">ประมาณการเงินเฟ้อ ({form.inflation}%) และค่าครองชีพ</p>
+                    <div className="flex-1 pr-4">
+                        <h3 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2 break-words"><span className="w-8 h-8 rounded-lg bg-purple-100/50 flex items-center justify-center text-purple-600 text-lg shrink-0">💸</span> ค่าใช้จ่ายหลังเกษียณ (Future Expense)</h3>
+                        <p className="text-sm text-slate-500 mt-1 ml-10 break-words">ประมาณการเงินเฟ้อ ({form.inflation}%) และค่าครองชีพ</p>
                     </div>
                     <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"><CloseIcon className="w-5 h-5" /></button>
                 </div>

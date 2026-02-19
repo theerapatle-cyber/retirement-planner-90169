@@ -395,12 +395,25 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
     return (
         <div className="w-full h-full flex flex-col relative">
 
-            {/* Header: Legend + Toggle (ส่วนหัวและปุ่มสลับมุมมอง) */}
-            <div className="flex flex-col items-center gap-2 mb-2 px-2 shrink-0">
+            {/* Chart Container based on Orientation (พื้นที่แสดงกราฟ) */}
+            <div className={`flex-1 w-full relative min-h-0 ${orientation === 'vertical' ? 'overflow-x-auto pb-2 custom-scrollbar' : ''}`}>
+                {orientation === 'vertical' ? (
+                    <div style={{ width: `${minVerticalWidth}px`, height: '100%' }} className="relative">
+                        <Chart type='bar' data={chartData.data} options={chartData.options} />
+                    </div>
+                ) : (
+                    <div className="w-full h-full relative">
+                        <Chart type='bar' data={chartData.data} options={chartData.options} />
+                    </div>
+                )}
+            </div>
+
+            {/* Header: Legend + Toggle (Moved to Bottom) */}
+            <div className="flex flex-col items-center gap-2 mt-4 px-2 shrink-0">
 
                 {/* 1. View Toggle Switch (ปุ่มสลับแนวนอน/แนวตั้ง) */}
                 {!hideOrientationToggle && (
-                    <div className="flex bg-slate-100 p-1 rounded-lg print:hidden">
+                    <div className="flex bg-slate-100 p-1 rounded-lg print:hidden mb-2">
                         <button
                             onClick={() => setOrientation('horizontal')}
                             className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${orientation === 'horizontal'
@@ -422,14 +435,14 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                     </div>
                 )}
 
-                {/* 2. Legend (Interactive Toggles) */}
+                {/* 2. Legend (Interactive Toggles) - Removed Rings for Single Layer Look */}
                 <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
                     {/* Actual Savings Toggle */}
                     <button
                         onClick={() => setShowActualSavings && setShowActualSavings(!showActualSavings)}
                         className={`flex items-center gap-2 transition-all active:scale-95 ${showActualSavings ? 'opacity-100' : 'opacity-40 grayscale'}`}
                     >
-                        <div className="w-2.5 h-2.5 bg-[#10B981] rounded-full shadow-sm ring-2 ring-[#10B981]/10 flex-shrink-0"></div>
+                        <div className="w-2.5 h-2.5 bg-[#10B981] rounded-full shadow-sm flex-shrink-0"></div>
                         <span className="text-[11px] lg:text-xs font-black tracking-tight text-slate-500">เงินออม ({inputs.retireAge} ปี)</span>
                     </button>
 
@@ -438,7 +451,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                         onClick={() => setShowTarget(!showTarget)}
                         className={`flex items-center gap-2 transition-all active:scale-95 ${showTarget ? 'opacity-100' : 'opacity-40 grayscale'}`}
                     >
-                        <div className="w-2.5 h-2.5 bg-[#3b82f6] rounded-full shadow-sm ring-2 ring-[#3b82f6]/10 flex-shrink-0"></div>
+                        <div className="w-2.5 h-2.5 bg-[#3b82f6] rounded-full shadow-sm flex-shrink-0"></div>
                         <span className="text-[11px] lg:text-xs font-black tracking-tight text-slate-500">เงินที่ต้องการ</span>
                     </button>
 
@@ -448,7 +461,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                             onClick={() => setShowLegacy(!showLegacy)}
                             className={`flex items-center gap-2 transition-all active:scale-95 ${showLegacy ? 'opacity-100' : 'opacity-40 grayscale'}`}
                         >
-                            <div className="w-2.5 h-2.5 bg-[#EF4444] rounded-full border border-white ring-2 ring-[#EF4444]/20 flex-shrink-0"></div>
+                            <div className="w-2.5 h-2.5 bg-[#EF4444] rounded-full border border-white flex-shrink-0"></div>
                             <span className="text-[11px] lg:text-xs font-black tracking-tight text-slate-500">มรดก</span>
                         </button>
                     )}
@@ -458,7 +471,7 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                         onClick={() => setShowSumAssured && setShowSumAssured(!showSumAssured)}
                         className={`flex items-center gap-2 transition-all active:scale-95 ${showSumAssured ? 'opacity-100' : 'opacity-40 grayscale'}`}
                     >
-                        <div className="w-2.5 h-2.5 bg-[#F97316] rounded-full shadow-sm ring-2 ring-[#F97316]/10 flex-shrink-0"></div>
+                        <div className="w-2.5 h-2.5 bg-[#F97316] rounded-full shadow-sm flex-shrink-0"></div>
                         <span className="text-[11px] lg:text-xs font-black tracking-tight text-slate-500">ทุนประกัน</span>
                     </button>
 
@@ -468,24 +481,11 @@ export const MobileProjectionChart: React.FC<MobileProjectionChartProps> = ({
                             onClick={() => setShowMC(!showMC)}
                             className={`flex items-center gap-2 transition-all active:scale-95 ${showMC ? 'opacity-100' : 'opacity-40 grayscale'}`}
                         >
-                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 opacity-60 border border-emerald-500/30 ring-2 ring-emerald-400/10 flex-shrink-0"></div>
+                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 opacity-60 border border-emerald-500/30 flex-shrink-0"></div>
                             <span className="text-[11px] lg:text-xs font-black tracking-tight text-slate-500">Monte Carlo</span>
                         </button>
                     )}
                 </div>
-            </div>
-
-            {/* Chart Container based on Orientation (พื้นที่แสดงกราฟ) */}
-            <div className={`flex-1 w-full relative min-h-0 ${orientation === 'vertical' ? 'overflow-x-auto pb-2 custom-scrollbar' : ''}`}>
-                {orientation === 'vertical' ? (
-                    <div style={{ width: `${minVerticalWidth}px`, height: '100%' }} className="relative">
-                        <Chart type='bar' data={chartData.data} options={chartData.options} />
-                    </div>
-                ) : (
-                    <div className="w-full h-full relative">
-                        <Chart type='bar' data={chartData.data} options={chartData.options} />
-                    </div>
-                )}
             </div>
         </div>
     );

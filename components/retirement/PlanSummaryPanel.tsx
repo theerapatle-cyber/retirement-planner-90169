@@ -53,9 +53,9 @@ export const PlanSummaryPanel: React.FC<PlanSummaryPanelProps> = ({
     const formatMoney = (val: string | number) => Number(String(val).replace(/,/g, '')).toLocaleString();
 
     return (
-        <div className="h-full w-full bg-white flex flex-col relative">
+        <div className="h-full w-full bg-white flex flex-col relative xl:border-l xl:border-slate-200 xl:shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.05)]">
             {/* Header: Sticky on scroll */}
-            <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-slate-100 shadow-sm shrink-0 rounded-t-[32px] xl:rounded-none">
+            <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-slate-100 shadow-sm shrink-0 xl:rounded-none">
                 <div>
                     <h2 className="text-xl font-black text-slate-800 tracking-tight">สรุปแผนของคุณ</h2>
                     <span className="text-xs text-slate-500 font-medium">ภาพรวมข้อมูลการวางแผนทั้งหมด</span>
@@ -63,7 +63,7 @@ export const PlanSummaryPanel: React.FC<PlanSummaryPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div ref={contentRef} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+            <div ref={contentRef} className="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
 
                 {/* Section 1: Personal Data */}
                 <div className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 relative overflow-hidden">
@@ -167,10 +167,10 @@ export const PlanSummaryPanel: React.FC<PlanSummaryPanelProps> = ({
             </div>
 
             {/* Footer: Close Button (Hidden on Desktop) */}
-            <div className="p-4 bg-white border-t border-slate-100 shrink-0 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] z-50 pb-safe-area-bottom xl:hidden">
+            <div className="p-4 bg-white border-t border-slate-100 shrink-0 z-50 xl:hidden">
                 <button
                     onClick={onClose}
-                    className="w-full h-12 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 hover:text-slate-800 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                    className="w-full h-12 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 hover:text-slate-800 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></svg>
                     ปิดหน้าต่าง

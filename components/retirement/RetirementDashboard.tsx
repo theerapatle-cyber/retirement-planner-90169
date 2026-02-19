@@ -230,22 +230,17 @@ export const RetirementDashboard = ({
             {/* Print Styles */}
             <style type="text/css" media="print">
                 {`
-                @page { size: landscape; margin: 4mm; }
+                @page { size: portrait; margin: 8mm; }
                 body { 
                     -webkit-print-color-adjust: exact; 
                     print-color-adjust: exact; 
                     background: white;
+                    zoom: 0.75; /* Larger zoom for Portrait */
                 }
                 
-                /* Reset Main Layout for Print */
                 /* Reset Main Layout for Print */
                 .print-no-padding { padding: 0 !important; margin: 0 !important; }
                 .print-reset-height { min-height: 0 !important; height: auto !important; overflow: visible !important; }
-                
-                @page {
-                    size: A4 landscape;
-                    margin: 5mm; /* Reduced margins for mobile/iPad fit */
-                }
                 
                 /* Layout Grid for Single Page */
                 .print-layout-container {
@@ -255,16 +250,11 @@ export const RetirementDashboard = ({
                     width: 100%;
                     max-width: 100%;
                 }
-                
-                @page {
-                    size: landscape; 
-                    margin: 2mm; /* Further reduced margin */
-                }
 
                 /* Chart Specifics */
                 #printable-chart { 
-                    height: 250px !important; /* Reduced height further */
-                    min-height: 250px !important; 
+                    height: 300px !important; /* Adjusted for Portrait */
+                    min-height: 300px !important; 
                     border: none !important;
                     box-shadow: none !important;
                     break-inside: avoid;
@@ -273,7 +263,7 @@ export const RetirementDashboard = ({
                     max-width: 100% !important;
                     overflow: visible !important;
                     display: block !important;
-                    margin-bottom: 0px !important;
+                    margin-bottom: 20px !important;
                 }
                 
                 #printable-chart canvas {
@@ -286,9 +276,11 @@ export const RetirementDashboard = ({
                 /* Data Table Specifics */
                 #print-data-table { 
                     display: block !important; 
-                    margin-top: 5px !important;
-                    font-size: 8px; /* Smaller font */
+                    margin-top: 20px !important;
+                    font-size: 10px; /* Larger font for table */
                     width: 100%;
+                    break-before: avoid;
+                    page-break-before: avoid;
                 }
                 
                 /* Hide everything else */
@@ -502,8 +494,8 @@ export const RetirementDashboard = ({
                             {/* Mobile-only background grid for consistency */}
                             <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none md:hidden z-0"></div>
 
-                            <div className="relative z-10 flex items-baseline gap-3">
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">สรุปผลลัพธ์ทางการเงิน</h2>
+                            <div className="relative z-10 flex flex-wrap items-baseline gap-3 max-w-[70%] md:max-w-none">
+                                <h2 className="text-2xl font-black text-slate-800 tracking-tight break-words">สรุปผลลัพธ์ทางการเงิน</h2>
                                 <span className="text-slate-500 text-sm font-medium hidden sm:inline-block">(Financial Overview)</span>
                             </div>
 
@@ -569,7 +561,7 @@ export const RetirementDashboard = ({
                                 >
                                     <PanelLeftClose className={`w-4 h-4 transition-transform duration-300 ${isSummaryOpen ? 'rotate-180' : ''}`} />
                                     <span className="hidden sm:inline">สรุปข้อมูล</span>
-                                    <span className="sm:hidden">สรุป</span>
+                                    <span className="sm:hidden">สรุปข้อมูล</span>
                                 </Button>
                             </div>
                         </div>
@@ -947,7 +939,7 @@ export const RetirementDashboard = ({
                                         </div>
                                     </div>
                                     <div id="printable-chart" className="w-full relative h-[600px] md:h-[600px] print:h-[350px] print:min-h-0 bg-white rounded-3xl border border-slate-100 p-4 md:p-6 print:p-0 print:border-none print:shadow-none overflow-hidden print:overflow-visible print:break-inside-avoid">
-                                        <div className="hidden md:block print:hidden print-desktop-only w-full h-full">
+                                        <div className="hidden md:block print:block print:w-full print:h-full w-full h-full">
                                             {/* iPad/Desktop Rendering Logic */}
 
                                             {/* Case A: iPad Bar View (Use Mobile Chart Structure) - Only if viewMode is Bar and on small/medium desktop */}
@@ -970,7 +962,7 @@ export const RetirementDashboard = ({
                                             </div>
 
                                             {/* Case B: Standard Projection Chart - Visible if Desktop OR iPad Line Mode OR print */}
-                                            <div className={`w-full h-full ${viewMode === 'bar' ? 'hidden xl:block' : 'block'}`}>
+                                            <div className={`w-full h-full ${viewMode === 'bar' ? 'hidden xl:block print:block' : 'block'}`}>
                                                 <ProjectionChart
                                                     inputs={inputs}
                                                     result={result}
@@ -1033,55 +1025,17 @@ export const RetirementDashboard = ({
                                     </div>
 
 
-                                    {/* Chart Control Toggles - Redesigned (Pill Style) */}
-                                    <div className="mt-8 hidden md:flex md:flex-row items-center justify-center gap-3 pt-6 print:hidden">
 
-                                        {/* Sum Assured Toggle - Orange */}
-                                        <button
-                                            onClick={() => setShowSumAssured(!showSumAssured)}
-                                            className={`w-full md:w-auto px-6 py-3 rounded-full text-sm font-bold border transition-all duration-300 flex items-center justify-center gap-3 ${showSumAssured
-                                                ? "bg-white border-orange-200 text-orange-600 shadow-sm ring-2 ring-orange-100 ring-offset-1"
-                                                : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
-                                                }`}
-                                        >
-                                            <div className={`w-3 h-3 rounded-full ${showSumAssured ? "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" : "bg-slate-300"}`}></div>
-                                            แสดงทุนประกัน
-                                        </button>
-
-                                        {/* Actual Savings Toggle - Blue */}
-                                        <button
-                                            onClick={() => setShowActualSavings(!showActualSavings)}
-                                            className={`w-full md:w-auto px-6 py-3 rounded-full text-sm font-bold border transition-all duration-300 flex items-center justify-center gap-3 ${showActualSavings
-                                                ? "bg-white border-blue-200 text-blue-600 shadow-sm ring-2 ring-blue-100 ring-offset-1"
-                                                : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
-                                                }`}
-                                        >
-                                            <div className={`w-3 h-3 rounded-full ${showActualSavings ? "bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]" : "bg-slate-300"}`}></div>
-                                            แสดงเงินที่เก็บได้จริง
-                                        </button>
-
-                                        {/* Monte Carlo Toggle - Green */}
-                                        <button
-                                            onClick={() => setShowMC(!showMC)}
-                                            className={`w-full md:w-auto px-6 py-3 rounded-full text-sm font-bold border transition-all duration-300 flex items-center justify-center gap-3 ${showMC
-                                                ? "bg-white border-emerald-200 text-emerald-600 shadow-sm ring-2 ring-emerald-100 ring-offset-1"
-                                                : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-500"
-                                                }`}
-                                        >
-                                            <div className={`w-3 h-3 rounded-full ${showMC ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" : "bg-slate-300"}`}></div>
-                                            Monte Carlo Simulation P5-P95
-                                        </button>
-                                    </div>
 
                                     {/* PRINT ONLY: Chart Data Table (ตารางข้อมูลสำหรับโหมดพิมพ์) */}
                                     {/* จะแสดงเฉพาะเมื่อสั่งพิมพ์เท่านั้น (hidden print:block) */}
                                     {/* Data Table Removed (User Request: Single Page Only) */}
-                                    <div id="print-data-table" className="hidden mt-6 font-mono text-black">
-                                        <h3 className="text-[10px] font-bold uppercase tracking-widest mb-2 border-b border-black pb-1 inline-block">DATA TABLE (YEARLY ANALYSIS)</h3>
-                                        <div className="grid grid-cols-3 gap-4 text-[8px] leading-tight">
-                                            {/* Generate 3 Columns */}
-                                            {Array.from({ length: 3 }).map((_, colIndex) => {
-                                                const chunkSize = Math.ceil(printData.length / 3);
+                                    <div id="print-data-table" className="hidden print:block mt-6 font-mono text-black">
+                                        <h3 className="text-xs font-bold uppercase tracking-widest mb-2 border-b border-black pb-1 inline-block">DATA TABLE (YEARLY ANALYSIS)</h3>
+                                        <div className="grid grid-cols-2 gap-6 text-[10px] leading-snug">
+                                            {/* Generate 2 Columns for Portrait Layout - Larger Text */}
+                                            {Array.from({ length: 2 }).map((_, colIndex) => {
+                                                const chunkSize = Math.ceil(printData.length / 2);
                                                 const start = colIndex * chunkSize;
                                                 const end = start + chunkSize;
                                                 const dataSlice = printData.slice(start, end);
@@ -1091,21 +1045,21 @@ export const RetirementDashboard = ({
                                                         <table className="w-full text-left table-fixed">
                                                             <thead className="bg-gray-100 print:bg-gray-100 font-bold border-b border-black">
                                                                 <tr>
-                                                                    <th className="py-1 px-1 text-center border-r border-black uppercase w-[10%]">อายุ (Age)</th>
-                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">เงินต้น (Principal)</th>
-                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">เงินออม (Savings)</th>
-                                                                    <th className="py-1 px-1 text-right border-r border-black uppercase w-[22%]">เงินคืน (CashFlow)</th>
-                                                                    <th className="py-1 px-1 text-right uppercase w-[24%]">เป้าหมาย (Target)</th>
+                                                                    <th className="py-1.5 px-2 text-center border-r border-black uppercase w-[12%]">อายุ</th>
+                                                                    <th className="py-1.5 px-2 text-right border-r border-black uppercase w-[22%]">เงินต้น</th>
+                                                                    <th className="py-1.5 px-2 text-right border-r border-black uppercase w-[22%]">เงินออม</th>
+                                                                    <th className="py-1.5 px-2 text-right border-r border-black uppercase w-[22%]">เงินคืน</th>
+                                                                    <th className="py-1.5 px-2 text-right uppercase w-[22%]">เป้าหมาย</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody className="divide-y divide-black">
                                                                 {dataSlice.map((row: any) => (
                                                                     <tr key={row.age} className="border-b border-black last:border-0">
-                                                                        <td className="py-0.5 px-1 text-center font-bold border-r border-black">{row.age}</td>
-                                                                        <td className="py-0.5 px-1 text-right border-r border-black">{formatNumber(row.principal)}</td>
-                                                                        <td className="py-0.5 px-1 text-right font-bold border-r border-black">{formatNumber(row.savings)}</td>
-                                                                        <td className="py-0.5 px-1 text-right border-r border-black">{row.insuranceCashFlow > 0 ? formatNumber(row.insuranceCashFlow) : "-"}</td>
-                                                                        <td className="py-0.5 px-1 text-right">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
+                                                                        <td className="py-1 px-2 text-center font-bold border-r border-black">{row.age}</td>
+                                                                        <td className="py-1 px-2 text-right border-r border-black">{formatNumber(row.principal)}</td>
+                                                                        <td className="py-1 px-2 text-right font-bold border-r border-black">{formatNumber(row.savings)}</td>
+                                                                        <td className="py-1 px-2 text-right border-r border-black">{row.insuranceCashFlow > 0 ? formatNumber(row.insuranceCashFlow) : "-"}</td>
+                                                                        <td className="py-1 px-2 text-right">{row.target > 0 ? formatNumber(row.target) : "-"}</td>
                                                                     </tr>
                                                                 ))}
                                                             </tbody>
@@ -1184,8 +1138,8 @@ export const RetirementDashboard = ({
                     />
                 </div>
 
-                {/* Desktop Floating Plan Manager */}
-                <div className="hidden xl:block">
+                {/* Desktop Floating Plan Manager (Syncs with Sidebar) */}
+                <div className={`hidden xl:block print:hidden fixed bottom-6 z-[140] transition-all duration-300 ease-in-out ${isSummaryOpen ? 'right-[390px]' : 'right-6'}`}>
                     <PlanManager
                         currentData={{
                             form,
@@ -1201,139 +1155,151 @@ export const RetirementDashboard = ({
                             if (data.savingMode) setSavingMode(data.savingMode);
                             if (data.gender) setGender(data.gender);
                         }}
+                        customTrigger={
+                            <button className="w-16 h-16 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 group">
+                                <Save size={28} />
+                                <span className="absolute -top-10 right-0 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-bold">
+                                    จัดการแผน
+                                </span>
+                            </button>
+                        }
                     />
                 </div>
 
 
-                {/* Mobile Backdrop for Summary Panel */}
-                <div
-                    className={`fixed inset-0 z-[140] bg-black/20 backdrop-blur-sm transition-opacity duration-300 xl:hidden ${isSummaryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-                    onClick={() => setIsSummaryOpen(false)}
-                />
 
-                {/* RIGHT AREA: Sidebar (Plan Summary) */}
-                <div className={`
-                fixed z-[150] transition-all duration-300 ease-in-out
+            </div >
+
+            {/* Mobile Backdrop for Summary Panel */}
+            <div
+                className={`fixed inset-0 z-[140] bg-black/20 backdrop-blur-sm transition-opacity duration-300 xl:hidden ${isSummaryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                onClick={() => setIsSummaryOpen(false)}
+            />
+
+            {/* RIGHT AREA: Sidebar (Plan Summary) */}
+            <div className={`
+                fixed z-[150] transition-all duration-300 ease-in-out pointer-events-none
                 
-                /* Mobile & Tablet (<1280px): Bottom Sheet Overlay (ทับจอ) */
-                inset-0 flex items-end justify-center
+                /* Mobile & Tablet (<1280px): Centered Floating Card (Modal Style) */
+                inset-0 flex items-center justify-center px-4
+                
                 ${isSummaryOpen
-                        ? 'opacity-100 pointer-events-auto visible'
-                        : 'opacity-0 pointer-events-none invisible xl:opacity-100 xl:pointer-events-none xl:invisible'}
+                    ? 'opacity-100 visible'
+                    : 'opacity-0 invisible xl:opacity-100 xl:invisible'}
                 
                 /* Desktop (>=1280px): Fixed Sidebar (ติดด้านขวา) */
                 xl:fixed xl:top-[72px] xl:bottom-0 xl:right-0 xl:inset-auto xl:block
-                xl:p-0 xl:flex-none
+                xl:px-0 xl:flex-none
                 xl:bg-transparent xl:shadow-none
+                xl:pointer-events-none
                 
                 /* Desktop Width & Visibility */
                 ${isSummaryOpen
-                        ? 'xl:w-[360px] xl:translate-x-0 xl:visible xl:pointer-events-auto xl:opacity-100 xl:overflow-y-auto no-scrollbar'
-                        : 'xl:w-0 xl:translate-x-full xl:invisible xl:pointer-events-none xl:opacity-0 xl:overflow-hidden'}
+                    ? 'xl:w-[360px] xl:translate-x-0 xl:visible xl:opacity-100'
+                    : 'xl:w-0 xl:translate-x-full xl:invisible xl:opacity-0'}
                 
                 print:hidden
             `}>
-                    <div className={`
-                    transition-all duration-500 cubic-bezier(0.32, 0.72, 0, 1) w-full h-full
+                <div className={`
+                    transition-all duration-500 cubic-bezier(0.32, 0.72, 0, 1) w-full overflow-hidden pointer-events-auto
                     
                     /* Mobile & Tablet (<1280px): Detailed Bottom Sheet */
-                    max-w-none bg-white rounded-t-[32px] rounded-b-none shadow-[0_-10px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col 
-                    h-[90vh]
+                    max-w-lg bg-white rounded-[32px] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] md:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col 
+                    h-[80vh] md:h-[70vh]
                     
                     ${isSummaryOpen
-                            ? 'translate-y-0 opacity-100'
-                            : 'translate-y-full opacity-100'}
+                        ? 'translate-y-0 opacity-100 scale-100'
+                        : 'translate-y-8 opacity-0 scale-95'}
 
                     /* Desktop (>=1280px): Reset */
-                    xl:max-w-none xl:bg-transparent xl:rounded-none xl:shadow-none xl:h-auto xl:max-h-none xl:overflow-visible xl:translate-y-0 xl:opacity-100
+                    xl:max-w-none xl:bg-transparent xl:rounded-none xl:shadow-none xl:h-full xl:max-h-none xl:overflow-hidden xl:translate-y-0 xl:opacity-100 xl:scale-100 xl:pointer-events-auto
                 `}>
-                        <PlanSummaryPanel
-                            isOpen={isSummaryOpen}
-                            onClose={() => setIsSummaryOpen(false)}
-                            form={form}
-                            allocations={allocations}
-                            returnMode={returnMode}
-                            savingMode={savingMode}
-                            gender={gender}
+                    <PlanSummaryPanel
+                        isOpen={isSummaryOpen}
+                        onClose={() => setIsSummaryOpen(false)}
+                        form={form}
+                        allocations={allocations}
+                        returnMode={returnMode}
+                        savingMode={savingMode}
+                        gender={gender}
+                    />
+                </div>
+            </div>
+
+            <div className={`fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-slate-100/80 pt-1 pb-2 px-4 z-[60] xl:hidden shadow-[0_-12px_40px_-10px_rgba(0,0,0,0.1)] transition-all duration-300 ${isSummaryOpen ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
+                <div className="grid grid-cols-3 w-full max-w-5xl mx-auto items-end">
+                    {/* Adjust Plan Toggle - Left Centered */}
+                    <div className="flex justify-center">
+                        <button
+                            onClick={() => setIsSidebarOpen(prev => !prev)}
+                            className="flex flex-col items-center justify-center gap-1 group transition-all"
+                        >
+                            <div className={`w-10 h-10 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all duration-500 ease-out shadow-sm ${isSidebarOpen
+                                ? 'bg-indigo-600 text-white shadow-indigo-200 rotate-[90deg]'
+                                : 'bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600'}`}>
+                                {isSidebarOpen ? <PanelLeftClose className="w-5 h-5 md:w-7 md:h-7" /> : <PanelLeftOpen className="w-5 h-5 md:w-7 md:h-7" />}
+                            </div>
+                            <span className={`text-xs md:text-sm font-bold tracking-tight transition-colors text-center ${isSidebarOpen ? 'text-indigo-600' : 'text-slate-400'}`}>
+                                {isSidebarOpen ? 'ปิด' : 'ปรับแผน'}
+                            </span>
+                        </button>
+                    </div>
+
+                    {/* Save Plan Button - Hero Centerpiece */}
+                    <div className="flex justify-center">
+                        <PlanManager
+                            currentData={{
+                                form,
+                                allocations,
+                                returnMode,
+                                savingMode,
+                                gender
+                            }}
+                            onLoad={(data) => {
+                                setForm(data.form);
+                                if (data.allocations) setAllocations(data.allocations);
+                                if (data.returnMode) setReturnMode(data.returnMode);
+                                if (data.savingMode) setSavingMode(data.savingMode);
+                                if (data.gender) setGender(data.gender);
+                            }}
+                            customTrigger={
+                                <button className="flex flex-col items-center justify-center gap-1 group relative -top-5 transition-all">
+                                    <div className="relative group-active:scale-95 transition-all duration-300">
+                                        {/* Extreme Overglow */}
+                                        <div className="absolute inset-[-8px] bg-emerald-400 blur-2xl opacity-20 group-hover:opacity-40 animate-pulse transition-opacity duration-1000"></div>
+                                        <div className="absolute inset-[-3px] bg-emerald-300/20 blur-lg rounded-full opacity-40"></div>
+
+                                        {/* The Main Button Ring */}
+                                        <div className="relative w-14 h-14 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600 text-white flex items-center justify-center shadow-[0_10px_30px_-8px_rgba(16,185,129,0.5),0_0_15px_rgba(16,185,129,0.15)] border-[3px] border-white z-10 overflow-hidden">
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                                            <Save className="w-6 h-6 md:w-9 md:h-9 drop-shadow-[0_2px_8px_rgba(0,0,0,0.15)]" />
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-xs md:text-sm font-bold text-emerald-800 bg-white/90 backdrop-blur-xl px-3 py-0.5 rounded-full border border-emerald-100 shadow-sm tracking-tight uppercase whitespace-nowrap">บันทึก</span>
+                                    </div>
+                                </button>
+                            }
                         />
                     </div>
-                </div>
 
-                <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-slate-100/80 py-1 px-4 z-[100] xl:hidden shadow-[0_-12px_40px_-10px_rgba(0,0,0,0.1)] pb-safe-area-bottom">
-                    <div className="grid grid-cols-3 w-full max-w-5xl mx-auto items-end pb-1">
-                        {/* Adjust Plan Toggle - Left Centered */}
-                        <div className="flex justify-center">
-                            <button
-                                onClick={() => setIsSidebarOpen(prev => !prev)}
-                                className="flex flex-col items-center justify-center gap-0.5 group transition-all"
-                            >
-                                <div className={`w-8 h-8 md:w-9 md:h-9 rounded-[12px] flex items-center justify-center transition-all duration-500 ease-out shadow-sm ${isSidebarOpen
-                                    ? 'bg-indigo-600 text-white shadow-indigo-200 rotate-[90deg]'
-                                    : 'bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600'}`}>
-                                    {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
-                                </div>
-                                <span className={`text-[10px] md:text-[11px] font-black tracking-tighter transition-colors text-center ${isSidebarOpen ? 'text-indigo-600' : 'text-slate-400'}`}>
-                                    {isSidebarOpen ? 'ปิด' : 'ปรับแผน'}
-                                </span>
-                            </button>
-                        </div>
-
-                        {/* Save Plan Button - Hero Centerpiece */}
-                        <div className="flex justify-center">
-                            <PlanManager
-                                currentData={{
-                                    form,
-                                    allocations,
-                                    returnMode,
-                                    savingMode,
-                                    gender
-                                }}
-                                onLoad={(data) => {
-                                    setForm(data.form);
-                                    if (data.allocations) setAllocations(data.allocations);
-                                    if (data.returnMode) setReturnMode(data.returnMode);
-                                    if (data.savingMode) setSavingMode(data.savingMode);
-                                    if (data.gender) setGender(data.gender);
-                                }}
-                                customTrigger={
-                                    <button className="flex flex-col items-center justify-center gap-1 group relative -top-3 md:-top-4 transition-all">
-                                        <div className="relative group-active:scale-95 transition-all duration-300">
-                                            {/* Extreme Overglow */}
-                                            <div className="absolute inset-[-8px] bg-emerald-400 blur-2xl opacity-20 group-hover:opacity-40 animate-pulse transition-opacity duration-1000"></div>
-                                            <div className="absolute inset-[-3px] bg-emerald-300/20 blur-lg rounded-full opacity-40"></div>
-
-                                            {/* The Main Button Ring */}
-                                            <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600 text-white flex items-center justify-center shadow-[0_10px_30px_-8px_rgba(16,185,129,0.5),0_0_15px_rgba(16,185,129,0.15)] border-2 border-white z-10 overflow-hidden">
-                                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                                                <Save className="w-5 h-5 md:w-6 md:h-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.15)]" />
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col items-center">
-                                            <span className="text-[10px] md:text-[11px] font-black text-emerald-800 bg-white/98 backdrop-blur-xl px-3 py-0 scale-90 md:scale-100 rounded-full border border-emerald-100 shadow-[0_4px_10px_-2px_rgba(16,185,129,0.2)] tracking-tighter uppercase whitespace-nowrap">บันทึก</span>
-                                        </div>
-                                    </button>
-                                }
-                            />
-                        </div>
-
-                        {/* Insurance Portfolio - Right Centered */}
-                        <div className="flex justify-center">
-                            <button
-                                onClick={() => {
-                                    setForm(prev => ({ ...prev, selectedPlanId: null }));
-                                    setShowInsuranceTable(true);
-                                }}
-                                className="flex flex-col items-center justify-center gap-0.5 group transition-all"
-                            >
-                                <div className="w-8 h-8 md:w-9 md:h-9 rounded-[12px] bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-600 transition-all duration-300 shadow-sm">
-                                    <TableIcon className="w-4 h-4" />
-                                </div>
-                                <span className="text-[10px] md:text-[11px] font-black text-slate-400 tracking-tighter text-center group-hover:text-blue-600 transition-colors">พอร์ต</span>
-                            </button>
-                        </div>
+                    {/* Insurance Portfolio - Right Centered */}
+                    <div className="flex justify-center">
+                        <button
+                            onClick={() => {
+                                setForm(prev => ({ ...prev, selectedPlanId: null }));
+                                setShowInsuranceTable(true);
+                            }}
+                            className="flex flex-col items-center justify-center gap-1 group transition-all"
+                        >
+                            <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-600 transition-all duration-300 shadow-sm">
+                                <TableIcon className="w-5 h-5 md:w-7 md:h-7" />
+                            </div>
+                            <span className="text-xs md:text-sm font-bold text-slate-400 tracking-tight text-center group-hover:text-blue-600 transition-colors">พอร์ต</span>
+                        </button>
                     </div>
                 </div>
-            </div >
+            </div>
         </div >
     );
 };
